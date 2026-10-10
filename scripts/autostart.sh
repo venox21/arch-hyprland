@@ -27,8 +27,18 @@ fi
 
 WP_DIR="${HOME}/.config/hypr/wallpapers"
 CURRENT_WP="${WP_DIR}/current.jpg"
+REPO_DIR="${HOME}/arch-hyrland"
 
-# ── 2. Wallpaper-Datei sicherstellen ──────────────────────────
+# ── 2. Konfigurationen automatisch synchronisieren ────────────
+if [[ -d "${REPO_DIR}" ]]; then
+    mkdir -p "${HOME}/.config/waybar" "${HOME}/.config/hypr" "${HOME}/.config/rofi" "${WP_DIR}"
+    [[ -d "${REPO_DIR}/config/waybar" ]] && cp -f "${REPO_DIR}/config/waybar/"* "${HOME}/.config/waybar/" 2>/dev/null || true
+    [[ -f "${REPO_DIR}/config/hyprpaper/hyprpaper.conf" ]] && cp -f "${REPO_DIR}/config/hyprpaper/hyprpaper.conf" "${HOME}/.config/hypr/hyprpaper.conf" 2>/dev/null || true
+    [[ -d "${REPO_DIR}/config/rofi" ]] && cp -f "${REPO_DIR}/config/rofi/"* "${HOME}/.config/rofi/" 2>/dev/null || true
+    [[ -d "${REPO_DIR}/assets/wallpapers" ]] && cp -n "${REPO_DIR}/assets/wallpapers/"* "${WP_DIR}/" 2>/dev/null || true
+fi
+
+# ── 3. Wallpaper-Datei sicherstellen ──────────────────────────
 mkdir -p "${WP_DIR}"
 if [[ ! -f "${CURRENT_WP}" || ! -s "${CURRENT_WP}" ]]; then
     first_wp="$(find "${WP_DIR}" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -name 'current.jpg' 2>/dev/null | head -n 1 || true)"
@@ -39,16 +49,16 @@ if [[ ! -f "${CURRENT_WP}" || ! -s "${CURRENT_WP}" ]]; then
     fi
 fi
 
-# ── 3. XDG Desktop Portal & Umgebungsvariablen ───────────────
+# ── 4. XDG Desktop Portal & Umgebungsvariablen ───────────────
 dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP 2>/dev/null || true
 systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP 2>/dev/null || true
 
 # Cursor-Theme
 if command -v hyprctl &>/dev/null && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
-    hyprctl setcursor Adwaita 24 2>/dev/null || true
+    hyprctl setcursor Adwaita 24 >/dev/null 2>&1 || true
 fi
 
-# ── 4. Polkit Authentifizierungs-Agent ────────────────────────
+# ── 5. Polkit Authentifizierungs-Agent ────────────────────────
 if ! pgrep -f "polkit" &>/dev/null; then
     if command -v hyprpolkitagent &>/dev/null; then
         hyprpolkitagent &
@@ -59,29 +69,29 @@ if ! pgrep -f "polkit" &>/dev/null; then
     fi
 fi
 
-# ── 5. Hintergrundbild (hyprpaper) ───────────────────────────
+# ── 6. Hintergrundbild (hyprpaper) ───────────────────────────
 pkill -x hyprpaper 2>/dev/null || true
 sleep 0.1
 if [[ -f "${CURRENT_WP}" ]] && command -v hyprpaper &>/dev/null; then
     hyprpaper &
-    sleep 0.3
+    sleep 0.5
     # Wallpaper explizit per IPC zuweisen
     if command -v hyprctl &>/dev/null && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
-        hyprctl hyprpaper preload "${CURRENT_WP}" 2>/dev/null || true
-        hyprctl hyprpaper wallpaper ",${CURRENT_WP}" 2>/dev/null || true
-        hyprctl hyprpaper wallpaper "eDP-1,${CURRENT_WP}" 2>/dev/null || true
+        hyprctl hyprpaper preload "${CURRENT_WP}" >/dev/null 2>&1 || true
+        hyprctl hyprpaper wallpaper ",${CURRENT_WP}" >/dev/null 2>&1 || true
+        hyprctl hyprpaper wallpaper "eDP-1,${CURRENT_WP}" >/dev/null 2>&1 || true
     fi
     echo "[INFO] Hyprpaper gestartet"
 fi
 
-# ── 6. Statusleiste (waybar) ──────────────────────────────────
+# ── 7. Statusleiste (waybar) ──────────────────────────────────
 pkill -x waybar 2>/dev/null || true
 sleep 0.2
 mkdir -p "${HOME}/.cache"
 
 if command -v waybar &>/dev/null; then
     waybar > "${HOME}/.cache/waybar.log" 2>&1 &
-    sleep 0.5
+    sleep 0.6
     if pgrep -x waybar &>/dev/null; then
         echo "[INFO] Waybar erfolgreich gestartet!"
     else
@@ -92,14 +102,14 @@ else
     echo "[FEHLER] Waybar ist nicht installiert! (sudo pacman -S waybar)"
 fi
 
-# ── 7. Benachrichtigungs-Daemon (mako) ────────────────────────
+# ── 8. Benachrichtigungs-Daemon (mako) ────────────────────────
 if command -v mako &>/dev/null; then
     pkill -x mako 2>/dev/null || true
     sleep 0.1
     mako &
 fi
 
-# ── 8. Zwischenablage-Verlauf (cliphist) ──────────────────────
+# ── 9. Zwischenablage-Verlauf (cliphist) ──────────────────────
 if command -v cliphist &>/dev/null && command -v wl-paste &>/dev/null; then
     pkill -f "wl-paste.*cliphist" 2>/dev/null || true
     wl-paste --type text --watch cliphist store &
