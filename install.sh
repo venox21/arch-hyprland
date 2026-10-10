@@ -137,7 +137,7 @@ BACKUP_TARGETS=(
 MANIFEST="${BACKUP_DIR}/manifest.txt"
 echo "# Tokyo Night Hyprland Backup" > "${MANIFEST}"
 echo "# Erstellt: ${TIMESTAMP}" >> "${MANIFEST}"
-echo "# Benutzer: ${USER}@$(hostname)" >> "${MANIFEST}"
+echo "# Benutzer: ${USER}@$(uname -n 2>/dev/null || cat /etc/hostname 2>/dev/null || echo 'localhost')" >> "${MANIFEST}"
 echo "" >> "${MANIFEST}"
 
 BACKED_UP=0
@@ -367,8 +367,8 @@ mkdir -p "${WALLPAPER_DIR}"
 
 # Kopiere mitgelieferte Starter-Wallpaper aus Assets
 if [[ -d "${SCRIPT_DIR}/assets/wallpapers" ]]; then
-    for wp in "${SCRIPT_DIR}"/assets/wallpapers/*.{jpg,jpeg,png,webp} 2>/dev/null; do
-        if [[ -f "${wp}" ]]; then
+    for wp in "${SCRIPT_DIR}/assets/wallpapers"/*; do
+        if [[ -f "${wp}" && "${wp}" =~ \.(jpg|jpeg|png|webp)$ ]]; then
             cp -f "${wp}" "${WALLPAPER_DIR}/"
             success "Starter-Wallpaper kopiert: $(basename "${wp}")"
         fi
