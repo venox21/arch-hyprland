@@ -1,0 +1,158 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+ * ║  Rofi – Tokyo Night Wallpaper-Auswahl                       ║
+ * ║  Visuelle Kachelansicht für Hintergründe                     ║
+ * ╚══════════════════════════════════════════════════════════════╝ */
+
+configuration {
+    show-icons:          true;
+    font:                "JetBrainsMono Nerd Font 10";
+    click-to-exit:       true;
+    steal-focus:         true;
+}
+
+/* ── Globale Farben (Tokyo Night) ────────────────────────────── */
+* {
+    bg:           #1a1b26;
+    bg-alt:       #24283b;
+    bg-selected:  #33467c;
+    fg:           #c0caf5;
+    fg-alt:       #a9b1d6;
+    blue:         #7aa2f7;
+    cyan:         #7dcfff;
+    magenta:      #bb9af7;
+    red:          #f7768e;
+    green:        #9ece6a;
+    teal:         #73daca;
+    border:       #7aa2f7;
+
+    border-radius: 10px;
+    margin:        0px;
+    padding:       0px;
+    spacing:       0px;
+}
+
+/* ── Fenster ──────────────────────────────────────────────────── */
+window {
+    width:            860px;
+    background-color: @bg;
+    border:           2px solid;
+    border-color:     @border;
+    border-radius:    14px;
+    padding:          12px;
+}
+
+/* ── Hauptcontainer ───────────────────────────────────────────── */
+mainbox {
+    background-color: transparent;
+    children:         [ inputbar, message, listview ];
+    spacing:          10px;
+}
+
+/* ── Eingabefeld ──────────────────────────────────────────────── */
+inputbar {
+    background-color: @bg-alt;
+    border-radius:    10px;
+    padding:          10px 16px;
+    spacing:          10px;
+    children:         [ prompt, entry ];
+}
+
+prompt {
+    background-color: transparent;
+    text-color:       @cyan;
+    font:             "JetBrainsMono Nerd Font Bold 11";
+}
+
+entry {
+    background-color: transparent;
+    text-color:       @fg;
+    placeholder:      "Hintergrund suchen oder filtern...";
+    placeholder-color: @fg-alt;
+}
+
+/* ── Info-Meldung ─────────────────────────────────────────────── */
+message {
+    background-color: transparent;
+    padding:          2px 6px;
+}
+
+textbox {
+    background-color: @bg-alt;
+    text-color:       @teal;
+    padding:          8px 12px;
+    border-radius:    8px;
+    font:             "JetBrainsMono Nerd Font 10";
+}
+
+/* ── Kachel-Gitter (Grid) ─────────────────────────────────────── */
+listview {
+    background-color: transparent;
+    columns:          4;
+    lines:            3;
+    cycle:            true;
+    dynamic:          true;
+    layout:           vertical;
+    flow:             horizontal;
+    fixed-height:     true;
+    fixed-columns:    true;
+    spacing:          10px;
+    padding:          6px;
+    scrollbar:        false;
+}
+
+/* ── Kachel-Elemente ──────────────────────────────────────────── */
+element {
+    background-color: @bg-alt;
+    text-color:       @fg;
+    orientation:      vertical;
+    padding:          10px 8px 8px 8px;
+    border-radius:    10px;
+    spacing:          8px;
+    border:           1px solid transparent;
+}
+
+element normal.normal {
+    background-color: @bg-alt;
+    text-color:       @fg;
+}
+
+element normal.active {
+    background-color: @bg-selected;
+    text-color:       @teal;
+    border-color:     @teal;
+}
+
+element normal.urgent {
+    background-color: @red;
+    text-color:       @bg;
+}
+
+element selected.normal {
+    background-color: @bg-selected;
+    text-color:       @blue;
+    border-color:     @blue;
+}
+
+element selected.active {
+    background-color: @bg-selected;
+    text-color:       @cyan;
+    border-color:     @cyan;
+}
+
+/* Bild-Vorschau in der Kachel */
+element-icon {
+    background-color: transparent;
+    size:             110px;
+    horizontal-align: 0.5;
+    border-radius:    6px;
+}
+
+/* Beschriftung unter dem Bild */
+element-text {
+    background-color: transparent;
+    text-color:       inherit;
+    horizontal-align: 0.5;
+    vertical-align:   0.5;
+    font:             "JetBrainsMono Nerd Font 9";
+    margin:           2px 0px 0px 0px;
+}

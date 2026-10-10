@@ -1,0 +1,150 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+ * ║  Rofi – Tokyo Night Theme                                   ║
+ * ╚══════════════════════════════════════════════════════════════╝ */
+
+configuration {
+    modi:                "drun,run,filebrowser,window";
+    show-icons:          true;
+    icon-theme:          "Papirus-Dark";
+    display-drun:        " Apps";
+    display-run:         " Ausführen";
+    display-filebrowser: " Dateien";
+    display-window:      " Fenster";
+    drun-display-format: "{name}";
+    font:                "JetBrainsMono Nerd Font 11";
+    click-to-exit:       true;
+    steal-focus:         true;
+}
+
+/* ── Globale Farben ───────────────────────────────────────────── */
+* {
+    bg:           #1a1b26;
+    bg-alt:       #24283b;
+    bg-selected:  #33467c;
+    fg:           #c0caf5;
+    fg-alt:       #a9b1d6;
+    blue:         #7aa2f7;
+    magenta:      #bb9af7;
+    red:          #f7768e;
+    green:        #9ece6a;
+    teal:         #73daca;
+    border:       #7aa2f7;
+
+    border-radius: 8px;
+    margin:        0px;
+    padding:       0px;
+    spacing:       0px;
+}
+
+/* ── Fenster ──────────────────────────────────────────────────── */
+window {
+    width:            520px;
+    background-color: @bg;
+    border:           2px solid;
+    border-color:     @border;
+    border-radius:    12px;
+    padding:          4px;
+}
+
+/* ── Hauptcontainer ───────────────────────────────────────────── */
+mainbox {
+    background-color: transparent;
+    children:         [ inputbar, message, listview ];
+}
+
+/* ── Eingabefeld ──────────────────────────────────────────────── */
+inputbar {
+    background-color: @bg-alt;
+    border-radius:    8px;
+    padding:          10px 14px;
+    margin:           6px;
+    spacing:          10px;
+    children:         [ prompt, entry ];
+}
+
+prompt {
+    background-color: transparent;
+    text-color:       @blue;
+    font:             "JetBrainsMono Nerd Font Bold 12";
+}
+
+entry {
+    background-color: transparent;
+    text-color:       @fg;
+    placeholder:      "Suchen...";
+    placeholder-color: @fg-alt;
+}
+
+/* ── Nachrichtenbereich ───────────────────────────────────────── */
+message {
+    background-color: transparent;
+    margin:           4px 6px;
+}
+
+textbox {
+    background-color: @bg-alt;
+    text-color:       @fg-alt;
+    padding:          8px;
+    border-radius:    6px;
+}
+
+/* ── Liste ────────────────────────────────────────────────────── */
+listview {
+    background-color: transparent;
+    lines:            8;
+    columns:          1;
+    fixed-height:     true;
+    margin:           4px 6px;
+    spacing:          4px;
+    scrollbar:        false;
+}
+
+/* ── Listenelemente ───────────────────────────────────────────── */
+element {
+    background-color: transparent;
+    text-color:       @fg;
+    padding:          8px 12px;
+    border-radius:    8px;
+    spacing:          10px;
+}
+
+element normal.normal {
+    background-color: transparent;
+    text-color:       @fg;
+}
+
+element normal.urgent {
+    background-color: @red;
+    text-color:       @bg;
+}
+
+element normal.active {
+    background-color: @bg-selected;
+    text-color:       @teal;
+}
+
+element selected.normal {
+    background-color: @bg-selected;
+    text-color:       @blue;
+}
+
+element selected.urgent {
+    background-color: @red;
+    text-color:       @bg;
+}
+
+element selected.active {
+    background-color: @blue;
+    text-color:       @bg;
+}
+
+element-icon {
+    background-color: transparent;
+    size:             24px;
+}
+
+element-text {
+    background-color: transparent;
+    text-color:       inherit;
+    highlight:        bold underline;
+}
