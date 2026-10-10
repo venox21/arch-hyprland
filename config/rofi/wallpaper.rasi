@@ -35,7 +35,7 @@ configuration {
 window {
     width:            860px;
     background-color: @bg;
-    border:           2px solid;
+    border:           2px;
     border-color:     @border;
     border-radius:    14px;
     padding:          12px;
@@ -108,7 +108,8 @@ element {
     padding:          10px 8px 8px 8px;
     border-radius:    10px;
     spacing:          8px;
-    border:           1px solid transparent;
+    border:           1px;
+    border-color:     #00000000;
 }
 
 element normal.normal {

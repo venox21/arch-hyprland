@@ -40,7 +40,7 @@ configuration {
 window {
     width:            520px;
     background-color: @bg;
-    border:           2px solid;
+    border:           2px;
     border-color:     @border;
     border-radius:    12px;
     padding:          4px;
