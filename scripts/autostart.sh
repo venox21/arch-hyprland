@@ -102,16 +102,41 @@ fi
 
 # ── 7. Benachrichtigungs-Daemon & Kontrollzentrum (swaync / mako) ──
 if command -v swaync &>/dev/null; then
+    # Alle konkurrierenden Notification-Daemons hart beenden
+    pkill -9 -x mako 2>/dev/null || true
+    pkill -9 -x dunst 2>/dev/null || true
     pkill -x swaync 2>/dev/null || true
-    pkill -x mako 2>/dev/null || true
-    sleep 0.2
+    sleep 0.5  # Warten bis DBus-Name freigegeben wird
+
+    # WAYLAND_DISPLAY sicherstellen (kritisch für GTK-Apps)
+    if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+        wp_sock="$(find "${XDG_RUNTIME_DIR}" -maxdepth 1 -name 'wayland-*' ! -name '*.lock' 2>/dev/null | head -n 1 || true)"
+        if [[ -n "${wp_sock}" ]]; then
+            export WAYLAND_DISPLAY="$(basename "${wp_sock}")"
+        fi
+    fi
+
+    # SwayNC starten (mit Retry)
     swaync > "${HOME}/.cache/swaync.log" 2>&1 &
-    sleep 0.5
+    sleep 0.8
     if pgrep -x swaync &>/dev/null; then
         echo "[INFO] SwayNC Kontrollzentrum erfolgreich gestartet!"
     else
-        echo "[FEHLER] SwayNC konnte nicht gestartet werden. Fehler-Log:"
-        tail -n 20 "${HOME}/.cache/swaync.log" 2>/dev/null || true
+        echo "[WARNUNG] SwayNC erster Versuch fehlgeschlagen, Retry..."
+        sleep 1
+        swaync > "${HOME}/.cache/swaync.log" 2>&1 &
+        sleep 0.8
+        if pgrep -x swaync &>/dev/null; then
+            echo "[INFO] SwayNC Kontrollzentrum gestartet (Retry erfolgreich)!"
+        else
+            echo "[FEHLER] SwayNC konnte nicht gestartet werden. Fehler-Log:"
+            tail -n 20 "${HOME}/.cache/swaync.log" 2>/dev/null || true
+            # Fallback: Mako verwenden
+            if command -v mako &>/dev/null; then
+                mako &
+                echo "[INFO] Fallback auf Mako Benachrichtigungen"
+            fi
+        fi
     fi
 elif command -v mako &>/dev/null; then
     pkill -x mako 2>/dev/null || true

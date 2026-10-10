@@ -42,38 +42,38 @@
       "buttons-per-row": 2,
       "actions": [
         {
-          "label": "󰤨  WLAN",
+          "label": "WLAN",
           "type": "toggle",
           "active": true,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --wifi-toggle'",
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --wifi-status'"
         },
         {
-          "label": "󰂯 Bluetooth",
+          "label": "Bluetooth",
           "type": "toggle",
           "active": false,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --bluetooth-toggle'",
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --bluetooth-status'"
         },
         {
-          "label": "󰓃 Audio",
+          "label": "Audio",
           "type": "normal",
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --audio-toggle'"
         },
         {
-          "label": "󰖔 Nachtmodus",
+          "label": "Nachtmodus",
           "type": "toggle",
           "active": false,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --nightmode-toggle'",
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --nightmode-status'"
         },
         {
-          "label": "󰔎 Theme",
+          "label": "Theme",
           "type": "normal",
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --theme-toggle'"
         },
         {
-          "label": "󰌪 Sparmodus",
+          "label": "Sparmodus",
           "type": "toggle",
           "active": false,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --powersave-toggle'",
