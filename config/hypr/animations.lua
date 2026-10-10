@@ -21,24 +21,24 @@ hl.curve("tokyoSnap",      { type = "bezier", points = { {0.05, 0.9},  {0.1, 1} 
 
 -- ── Animationsregeln ─────────────────────────────────────────
 -- Fenster öffnen/schließen
-hl.animation("windows",      { enabled = true, duration = 250, curve = "tokyoSmooth",  style = "popin 80%" })
-hl.animation("windowsIn",    { enabled = true, duration = 200, curve = "tokyoSmooth",  style = "popin 80%" })
-hl.animation("windowsOut",   { enabled = true, duration = 200, curve = "easeOutQuint", style = "popin 80%" })
-hl.animation("windowsMove",  { enabled = true, duration = 200, curve = "tokyoSnap" })
+hl.animation({ leaf = "windows",     enabled = true, speed = 2.5, bezier = "tokyoSmooth",  style = "popin 80%" })
+hl.animation({ leaf = "windowsIn",   enabled = true, speed = 2.0, bezier = "tokyoSmooth",  style = "popin 80%" })
+hl.animation({ leaf = "windowsOut",  enabled = true, speed = 2.0, bezier = "easeOutQuint", style = "popin 80%" })
+hl.animation({ leaf = "windowsMove", enabled = true, speed = 2.0, bezier = "tokyoSnap" })
 
 -- Ein-/Ausblenden
-hl.animation("fade",         { enabled = true, duration = 200, curve = "easeOutQuint" })
-hl.animation("fadeIn",       { enabled = true, duration = 150, curve = "easeOutQuint" })
-hl.animation("fadeOut",      { enabled = true, duration = 150, curve = "easeOutQuint" })
+hl.animation({ leaf = "fade",        enabled = true, speed = 2.0, bezier = "easeOutQuint" })
+hl.animation({ leaf = "fadeIn",      enabled = true, speed = 1.5, bezier = "easeOutQuint" })
+hl.animation({ leaf = "fadeOut",     enabled = true, speed = 1.5, bezier = "easeOutQuint" })
 
 -- Layer-Animationen (z.B. Waybar, Rofi)
-hl.animation("layers",       { enabled = true, duration = 200, curve = "tokyoSmooth",  style = "fade" })
-hl.animation("layersIn",     { enabled = true, duration = 150, curve = "tokyoSmooth",  style = "fade" })
-hl.animation("layersOut",    { enabled = true, duration = 150, curve = "easeOutQuint", style = "fade" })
+hl.animation({ leaf = "layers",      enabled = true, speed = 2.0, bezier = "tokyoSmooth",  style = "fade" })
+hl.animation({ leaf = "layersIn",    enabled = true, speed = 1.5, bezier = "tokyoSmooth",  style = "fade" })
+hl.animation({ leaf = "layersOut",   enabled = true, speed = 1.5, bezier = "easeOutQuint", style = "fade" })
 
 -- Rahmenfarbe
-hl.animation("border",       { enabled = true, duration = 300, curve = "easeInOutCubic" })
-hl.animation("borderangle",  { enabled = true, duration = 600, curve = "linear", style = "loop" })
+hl.animation({ leaf = "border",      enabled = true, speed = 3.0, bezier = "easeInOutCubic" })
+hl.animation({ leaf = "borderangle", enabled = true, speed = 6.0, bezier = "linear", style = "loop" })
 
 -- Workspace-Wechsel
-hl.animation("workspaces",   { enabled = true, duration = 250, curve = "tokyoSmooth",  style = "slide" })
+hl.animation({ leaf = "workspaces",  enabled = true, speed = 2.5, bezier = "tokyoSmooth",  style = "slide" })

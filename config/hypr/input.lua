@@ -39,8 +39,11 @@ hl.config({
 })
 
 -- ── Gesten (neues API ab Hyprland 0.55+) ──────────────────
-hl.gesture({ fingers = 3, direction = "l", action = "workspace, e-1" })
-hl.gesture({ fingers = 3, direction = "r", action = "workspace, e+1" })
+hl.gesture({
+    fingers   = 3,
+    direction = "horizontal",
+    action    = "workspace",
+})
 
 -- ── Umgebungsvariablen für Cursor ────────────────────────────
 hl.env("XCURSOR_SIZE", "24")

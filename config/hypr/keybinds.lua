@@ -45,7 +45,7 @@ hl.bind("SUPER + SHIFT + M",     hl.dsp.exec_cmd("hyprctl dispatch exit"))
 hl.bind("SUPER + V",             hl.dsp.window.float({ action = "toggle" }))
 
 -- Fenster maximieren (Fullscreen Typ 1)
-hl.bind("SUPER + F",             hl.dsp.window.fullscreen({ mode = "maximize" }))
+hl.bind("SUPER + F",             hl.dsp.window.fullscreen({ mode = "maximized" }))
 
 -- Echtes Vollbild
 hl.bind("SUPER + SHIFT + F",     hl.dsp.window.fullscreen({ mode = "fullscreen" }))
@@ -54,7 +54,7 @@ hl.bind("SUPER + SHIFT + F",     hl.dsp.window.fullscreen({ mode = "fullscreen" 
 hl.bind("SUPER + P",             hl.dsp.window.pseudo())
 
 -- Splitrichtung wechseln
-hl.bind("SUPER + J",             hl.dsp.layout.toggle_split())
+hl.bind("SUPER + J",             hl.dsp.layout("togglesplit"))
 
 -- Fenster zentrieren
 hl.bind("SUPER + C",             hl.dsp.window.center())

@@ -5,98 +5,122 @@
 -- ── Schwebende Fenster ───────────────────────────────────────
 -- Dialoge und kleine Fenster
 hl.window_rule({
-    rule  = "float",
-    class = { "pavucontrol", "nm-connection-editor", "blueman-manager" },
+    match = { class = "pavucontrol" },
+    float = true,
+})
+hl.window_rule({
+    match = { class = "nm-connection-editor" },
+    float = true,
+})
+hl.window_rule({
+    match = { class = "blueman-manager" },
+    float = true,
 })
 
 hl.window_rule({
-    rule  = "float",
-    title = { "Open File", "Save File", "Datei öffnen", "Datei speichern",
-              "Confirm", "Bestätigen", "Properties", "Eigenschaften" },
+    match = { title = "Open File" },
+    float = true,
+})
+hl.window_rule({
+    match = { title = "Save File" },
+    float = true,
+})
+hl.window_rule({
+    match = { title = "Datei öffnen" },
+    float = true,
+})
+hl.window_rule({
+    match = { title = "Datei speichern" },
+    float = true,
+})
+hl.window_rule({
+    match = { title = "Confirm" },
+    float = true,
+})
+hl.window_rule({
+    match = { title = "Bestätigen" },
+    float = true,
+})
+hl.window_rule({
+    match = { title = "Properties" },
+    float = true,
+})
+hl.window_rule({
+    match = { title = "Eigenschaften" },
+    float = true,
 })
 
--- Dateimanager als Floating
+-- Dateimanager Dateivorgang als Floating
 hl.window_rule({
-    rule   = "float",
-    class  = { "thunar" },
-    title  = { "Dateivorgang", "File Operation Progress" },
+    match = { class = "thunar", title = "Dateivorgang" },
+    float = true,
+})
+hl.window_rule({
+    match = { class = "thunar", title = "File Operation Progress" },
+    float = true,
 })
 
 -- Einstellungs-App
 hl.window_rule({
-    rule  = "float",
-    class = { "tokyo-settings" },
-})
-hl.window_rule({
-    rule  = "size 900 650",
-    class = { "tokyo-settings" },
-})
-hl.window_rule({
-    rule  = "center",
-    class = { "tokyo-settings" },
+    match = { class = "tokyo-settings" },
+    float = true,
+    size = { 900, 650 },
+    center = true,
 })
 
 -- ── Polkit-Agent ─────────────────────────────────────────────
 hl.window_rule({
-    rule  = "float",
-    class = { "polkit-gnome-authentication-agent-1",
-              "hyprpolkitagent" },
+    match = { class = "polkit-gnome-authentication-agent-1" },
+    float = true,
+    center = true,
 })
 hl.window_rule({
-    rule  = "center",
-    class = { "polkit-gnome-authentication-agent-1",
-              "hyprpolkitagent" },
+    match = { class = "hyprpolkitagent" },
+    float = true,
+    center = true,
 })
 
 -- ── Bild-im-Bild ────────────────────────────────────────────
 hl.window_rule({
-    rule  = "float",
-    title = { "Picture-in-Picture", "Bild-im-Bild" },
+    match = { title = "Picture-in-Picture" },
+    float = true,
+    pin = true,
+    size = { 480, 270 },
+    move = { "100%-490", 40 },
 })
 hl.window_rule({
-    rule  = "pin",
-    title = { "Picture-in-Picture", "Bild-im-Bild" },
-})
-hl.window_rule({
-    rule  = "size 480 270",
-    title = { "Picture-in-Picture", "Bild-im-Bild" },
-})
-hl.window_rule({
-    rule  = "move 100%-490 40",
-    title = { "Picture-in-Picture", "Bild-im-Bild" },
+    match = { title = "Bild-im-Bild" },
+    float = true,
+    pin = true,
+    size = { 480, 270 },
+    move = { "100%-490", 40 },
 })
 
 -- ── Transparenz ──────────────────────────────────────────────
 hl.window_rule({
-    rule  = "opacity 0.92 0.88",
-    class = { "kitty" },
+    match = { class = "kitty" },
+    opacity = { 0.92, 0.88 },
 })
 
 -- ── Workspace-Zuweisungen (optional) ─────────────────────────
 -- Entkommentiere und passe an deine Bedürfnisse an:
--- hl.window_rule({ rule = "workspace 1", class = { "firefox" } })
--- hl.window_rule({ rule = "workspace 2", class = { "kitty" } })
--- hl.window_rule({ rule = "workspace 3", class = { "thunar" } })
--- hl.window_rule({ rule = "workspace 9", class = { "discord" } })
--- hl.window_rule({ rule = "workspace 10", class = { "spotify" } })
+-- hl.window_rule({ match = { class = "firefox" }, workspace = "1" })
+-- hl.window_rule({ match = { class = "kitty" },   workspace = "2" })
+-- hl.window_rule({ match = { class = "thunar" },  workspace = "3" })
+-- hl.window_rule({ match = { class = "discord" }, workspace = "9" })
+-- hl.window_rule({ match = { class = "spotify" }, workspace = "10" })
 
 -- ── Layerregeln ──────────────────────────────────────────────
 -- Rofi-Blur
 hl.layer_rule({
-    rule      = "blur",
-    namespace = { "rofi" },
-})
-hl.layer_rule({
-    rule      = "ignorezero",
-    namespace = { "rofi" },
+    match = { namespace = "rofi" },
+    blur = true,
+    ignore_alpha = 0.0,
 })
 
 -- Waybar-Blur
 hl.layer_rule({
-    rule      = "blur",
-    namespace = { "waybar" },
-})
-hl.layer_rule({
-    rule      = "ignorealpha 0.3",
-    namespace = { "waybar" },
+    match = { namespace = "waybar" },
+    blur = true,
+    ignore_alpha = 0.3,
 })
