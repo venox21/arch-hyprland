@@ -68,6 +68,10 @@ class TokyoSettingsApp(Adw.Application):
         self.config = ConfigManager()
 
     def do_activate(self):
+        try:
+            Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+        except Exception:
+            pass
         win = SettingsWindow(application=self, config=self.config)
         win.present()
 
@@ -79,6 +83,12 @@ class SettingsWindow(Adw.ApplicationWindow):
         super().__init__(**kwargs)
         self.config = config
         self.settings = config.load_settings()
+
+        # Dunkles Tokyo Night Theme erzwingen
+        try:
+            Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+        except Exception:
+            pass
 
         self.set_title("Tokyo Night – Einstellungen")
         self.set_default_size(900, 650)
@@ -151,27 +161,301 @@ class SettingsWindow(Adw.ApplicationWindow):
     def _apply_css(self):
         """Tokyo Night CSS anwenden."""
         css = b"""
+        @define-color accent_color #7aa2f7;
+        @define-color accent_bg_color #7aa2f7;
+        @define-color accent_fg_color #1a1b26;
+
+        @define-color window_bg_color #1a1b26;
+        @define-color window_fg_color #c0caf5;
+
+        @define-color view_bg_color #1a1b26;
+        @define-color view_fg_color #c0caf5;
+
+        @define-color headerbar_bg_color #16161e;
+        @define-color headerbar_fg_color #c0caf5;
+        @define-color headerbar_border_color rgba(51, 70, 124, 0.45);
+
+        @define-color card_bg_color #24283b;
+        @define-color card_fg_color #c0caf5;
+        @define-color card_border_color rgba(122, 162, 247, 0.16);
+
+        @define-color popover_bg_color #1f2335;
+        @define-color popover_fg_color #c0caf5;
+
+        @define-color dialog_bg_color #1a1b26;
+        @define-color dialog_fg_color #c0caf5;
+
+        @define-color secondary_sidebar_bg_color #16161e;
+        @define-color secondary_sidebar_fg_color #c0caf5;
+
+        @define-color destructive_color #f7768e;
+        @define-color destructive_bg_color #f7768e;
+        @define-color destructive_fg_color #1a1b26;
+
+        @define-color success_color #9ece6a;
+        @define-color success_bg_color #9ece6a;
+        @define-color success_fg_color #1a1b26;
+
+        @define-color warning_color #e0af68;
+        @define-color warning_bg_color #e0af68;
+        @define-color warning_fg_color #1a1b26;
+
+        @define-color error_color #f7768e;
+        @define-color error_bg_color #f7768e;
+        @define-color error_fg_color #1a1b26;
+
+        /* Fenster, Background & Typografie */
+        window, .background {
+            background-color: #1a1b26;
+            color: #c0caf5;
+            font-family: "JetBrainsMono Nerd Font", "Inter", sans-serif;
+        }
+
+        headerbar {
+            background-color: #16161e;
+            border-bottom: 1px solid rgba(51, 70, 124, 0.45);
+            box-shadow: none;
+            padding: 6px 12px;
+        }
+
+        headerbar windowhandle {
+            background: transparent;
+        }
+
+        headerbar .title {
+            color: #7aa2f7;
+            font-weight: 700;
+        }
+
+        headerbar .subtitle {
+            color: #a9b1d6;
+            font-size: 11px;
+        }
+
+        /* Sidebar Navigation */
+        .navigation-sidebar {
+            background-color: #16161e;
+            border-right: 1px solid rgba(41, 46, 66, 0.85);
+            padding: 10px 8px;
+        }
+
         .navigation-sidebar row {
-            padding: 4px 8px;
-            margin: 1px 4px;
-            border-radius: 8px;
+            padding: 9px 12px;
+            margin: 3px 6px;
+            border-radius: 9px;
+            color: #a9b1d6;
+            background-color: transparent;
+            transition: all 120ms ease;
         }
+
+        .navigation-sidebar row:hover {
+            background-color: rgba(122, 162, 247, 0.12);
+            color: #c0caf5;
+        }
+
         .navigation-sidebar row:selected {
-            background: alpha(#7aa2f7, 0.15);
+            background-color: rgba(122, 162, 247, 0.22);
+            color: #7aa2f7;
+            font-weight: bold;
+            border-left: 3px solid #7aa2f7;
         }
-        .settings-group {
-            margin: 8px 16px;
+
+        .navigation-sidebar row image {
+            margin-right: 6px;
+            color: #7aa2f7;
         }
-        .status-ok { color: #9ece6a; }
-        .status-warn { color: #e0af68; }
-        .status-error { color: #f7768e; }
+
+        /* Content-Bereich & Cards */
+        scrolledwindow, viewport {
+            background-color: #1a1b26;
+        }
+
+        preferencesgroup > box {
+            margin-bottom: 14px;
+        }
+
+        preferencesgroup > box > label {
+            color: #7aa2f7;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.3px;
+            margin-bottom: 6px;
+        }
+
+        .card, preferencesgroup list {
+            background-color: #24283b;
+            border: 1px solid rgba(122, 162, 247, 0.16);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            color: #c0caf5;
+        }
+
+        preferencesgroup list > row {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(41, 46, 66, 0.6);
+            color: #c0caf5;
+            background-color: transparent;
+        }
+
+        preferencesgroup list > row:last-child {
+            border-bottom: none;
+        }
+
+        preferencesgroup list > row:hover {
+            background-color: rgba(122, 162, 247, 0.05);
+        }
+
+        row label.title {
+            color: #c0caf5;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        row label.subtitle {
+            color: #9aa5ce;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        /* Buttons */
+        button {
+            background-color: #292e42;
+            color: #c0caf5;
+            border: 1px solid #33467c;
+            border-radius: 8px;
+            padding: 7px 16px;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 120ms ease;
+        }
+
+        button:hover {
+            background-color: #33467c;
+            color: #ffffff;
+            border-color: #7aa2f7;
+            box-shadow: 0 0 8px rgba(122, 162, 247, 0.25);
+        }
+
+        button:active {
+            background-color: #414868;
+        }
+
+        button.suggested-action {
+            background-color: #7aa2f7;
+            color: #1a1b26;
+            border: none;
+            font-weight: 700;
+        }
+
+        button.suggested-action:hover {
+            background-color: #89b4fa;
+            color: #16161e;
+            box-shadow: 0 0 12px rgba(122, 162, 247, 0.4);
+        }
+
+        button.destructive-action {
+            background-color: #f7768e;
+            color: #1a1b26;
+            border: none;
+            font-weight: 700;
+        }
+
+        button.destructive-action:hover {
+            background-color: #ff8b9e;
+            box-shadow: 0 0 12px rgba(247, 118, 142, 0.4);
+        }
+
+        /* Switches */
+        switch {
+            background-color: #1f2335;
+            border: 1px solid #33467c;
+            border-radius: 14px;
+            min-width: 44px;
+            min-height: 24px;
+        }
+
+        switch:checked {
+            background-color: #7aa2f7;
+            border-color: #7aa2f7;
+        }
+
+        switch slider {
+            background-color: #c0caf5;
+            border-radius: 12px;
+            min-width: 18px;
+            min-height: 18px;
+            margin: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        switch:checked slider {
+            background-color: #1a1b26;
+        }
+
+        /* Eingabefelder */
+        entry, spinbutton {
+            background-color: #1f2335;
+            color: #c0caf5;
+            border: 1px solid #33467c;
+            border-radius: 8px;
+            padding: 7px 12px;
+        }
+
+        entry:focus, spinbutton:focus {
+            border-color: #7aa2f7;
+            box-shadow: 0 0 0 1px #7aa2f7;
+        }
+
+        /* Dropdowns */
+        popover, popover.background, popover contents {
+            background-color: #1f2335;
+            border: 1px solid #33467c;
+            border-radius: 10px;
+            color: #c0caf5;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        popover listview row {
+            padding: 8px 12px;
+            color: #c0caf5;
+        }
+
+        popover listview row:hover {
+            background-color: rgba(122, 162, 247, 0.15);
+        }
+
+        popover listview row:selected {
+            background-color: rgba(122, 162, 247, 0.25);
+            color: #7aa2f7;
+        }
+
+        /* Scrollbars */
+        scrollbar {
+            background: transparent;
+        }
+
+        scrollbar slider {
+            background-color: rgba(122, 162, 247, 0.2);
+            border-radius: 6px;
+            min-width: 6px;
+            min-height: 6px;
+        }
+
+        scrollbar slider:hover {
+            background-color: rgba(122, 162, 247, 0.5);
+        }
+
+        /* Status */
+        .status-ok { color: #9ece6a; font-weight: bold; }
+        .status-warn { color: #e0af68; font-weight: bold; }
+        .status-error { color: #f7768e; font-weight: bold; }
         """
         provider = Gtk.CssProvider()
         provider.load_from_data(css)
         Gtk.StyleContext.add_provider_for_display(
             self.get_display(),
             provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            Gtk.STYLE_PROVIDER_PRIORITY_USER,
         )
 
     def _on_nav_selected(self, listbox, row):
@@ -191,9 +475,13 @@ class SettingsWindow(Adw.ApplicationWindow):
             header.set_show_back_button(True)
             page_box.append(header)
 
-            # Scroll-Container
+            # Scroll-Container mit großzügigen, sauberen Rändern
             scroll = Gtk.ScrolledWindow()
             scroll.set_vexpand(True)
+            content.set_margin_start(28)
+            content.set_margin_end(28)
+            content.set_margin_top(20)
+            content.set_margin_bottom(28)
             scroll.set_child(content)
             page_box.append(scroll)
 

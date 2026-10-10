@@ -350,9 +350,23 @@ for script in "${SCRIPT_DIR}"/scripts/*.sh; do
 done
 success "Alle Skripte installiert und ausführbar"
 
+# GTK Theme & Design
+info "Installiere GTK Tokyo Night Konfiguration..."
+mkdir -p "${CONFIG_DIR}/gtk-3.0" "${CONFIG_DIR}/gtk-4.0"
+[[ -f "${SCRIPT_DIR}/config/gtk-3.0/settings.ini" ]] && install_config "${SCRIPT_DIR}/config/gtk-3.0/settings.ini" "${CONFIG_DIR}/gtk-3.0/settings.ini"
+[[ -f "${SCRIPT_DIR}/config/gtk-4.0/settings.ini" ]] && install_config "${SCRIPT_DIR}/config/gtk-4.0/settings.ini" "${CONFIG_DIR}/gtk-4.0/settings.ini"
+[[ -f "${SCRIPT_DIR}/config/gtk-4.0/gtk.css" ]] && install_config "${SCRIPT_DIR}/config/gtk-4.0/gtk.css" "${CONFIG_DIR}/gtk-4.0/gtk.css"
+if command -v gsettings &>/dev/null; then
+    gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 10' 2>/dev/null || true
+fi
+
 # Settings-App installieren
 info "Installiere Einstellungs-App..."
 if [[ -d "${SCRIPT_DIR}/settings" ]]; then
+    mkdir -p "${CONFIG_DIR}/hypr/settings"
     cp -a "${SCRIPT_DIR}/settings/"* "${CONFIG_DIR}/hypr/settings/" 2>/dev/null || true
     success "Einstellungs-App installiert"
 fi

@@ -14,6 +14,11 @@ if [[ ! -f "${APP}" ]]; then
 fi
 
 if [[ ! -f "${APP}" ]]; then
+    # Fallback: Im Repository-Pfad suchen
+    APP="${HOME}/arch-hyrland/settings/app.py"
+fi
+
+if [[ ! -f "${APP}" ]]; then
     notify-send -a "Einstellungen" "Fehler" "Einstellungs-App nicht gefunden" -u critical 2>/dev/null || true
     echo "Fehler: ${APP} nicht gefunden" >&2
     exit 1

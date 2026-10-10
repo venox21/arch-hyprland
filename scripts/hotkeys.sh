@@ -13,6 +13,10 @@ if [[ ! -f "${APP}" ]]; then
 fi
 
 if [[ ! -f "${APP}" ]]; then
+    APP="${HOME}/arch-hyrland/settings/hotkey_manager.py"
+fi
+
+if [[ ! -f "${APP}" ]]; then
     notify-send -a "Hotkeys" "Fehler" "Hotkey-Manager nicht gefunden" -u critical 2>/dev/null || true
     echo "Fehler: ${APP} nicht gefunden" >&2
     exit 1

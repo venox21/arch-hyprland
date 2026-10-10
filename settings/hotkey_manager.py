@@ -274,6 +274,10 @@ class HotkeyManagerApp(Adw.Application):
         self.parser = KeybindParser(keybinds_path)
 
     def do_activate(self):
+        try:
+            Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+        except Exception:
+            pass
         win = HotkeyManagerWindow(application=self, parser=self.parser)
         win.present()
 
@@ -285,6 +289,11 @@ class HotkeyManagerWindow(Adw.ApplicationWindow):
         super().__init__(**kwargs)
         self.parser = parser
         self.bindings: list[Keybinding] = []
+
+        try:
+            Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+        except Exception:
+            pass
 
         self.set_title("Tokyo Night – Tastenkürzel")
         self.set_default_size(800, 600)
@@ -369,18 +378,79 @@ class HotkeyManagerWindow(Adw.ApplicationWindow):
 
     def _apply_css(self):
         css = b"""
+        @define-color accent_color #7aa2f7;
+        @define-color accent_bg_color #7aa2f7;
+        @define-color accent_fg_color #1a1b26;
+        @define-color window_bg_color #1a1b26;
+        @define-color window_fg_color #c0caf5;
+        @define-color view_bg_color #1a1b26;
+        @define-color view_fg_color #c0caf5;
+        @define-color headerbar_bg_color #16161e;
+        @define-color headerbar_fg_color #c0caf5;
+        @define-color headerbar_border_color rgba(51, 70, 124, 0.45);
+        @define-color card_bg_color #24283b;
+        @define-color card_fg_color #c0caf5;
+
+        window, .background {
+            background-color: #1a1b26;
+            color: #c0caf5;
+            font-family: "JetBrainsMono Nerd Font", monospace;
+        }
+
+        headerbar {
+            background-color: #16161e;
+            border-bottom: 1px solid rgba(51, 70, 124, 0.45);
+            box-shadow: none;
+            padding: 6px 12px;
+        }
+
+        .boxed-list {
+            background-color: #24283b;
+            border: 1px solid rgba(122, 162, 247, 0.16);
+            border-radius: 12px;
+            color: #c0caf5;
+        }
+
+        .boxed-list row {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(41, 46, 66, 0.6);
+            color: #c0caf5;
+            background-color: transparent;
+        }
+
+        .boxed-list row:hover {
+            background-color: rgba(122, 162, 247, 0.05);
+        }
+
         .keybind-keys {
             font-family: "JetBrainsMono Nerd Font", monospace;
             font-weight: bold;
             font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: alpha(#7aa2f7, 0.15);
+            padding: 4px 10px;
+            border-radius: 6px;
+            background-color: rgba(122, 162, 247, 0.2);
             color: #7aa2f7;
+            border: 1px solid rgba(122, 162, 247, 0.3);
         }
+
         .keybind-category {
             font-size: 11px;
             color: #bb9af7;
+            font-weight: 600;
+        }
+
+        searchentry {
+            background-color: #1f2335;
+            color: #c0caf5;
+            border: 1px solid #33467c;
+            border-radius: 8px;
+        }
+
+        dropdown button {
+            background-color: #1f2335;
+            color: #c0caf5;
+            border: 1px solid #33467c;
+            border-radius: 8px;
         }
         """
         provider = Gtk.CssProvider()
@@ -388,7 +458,7 @@ class HotkeyManagerWindow(Adw.ApplicationWindow):
         Gtk.StyleContext.add_provider_for_display(
             self.get_display(),
             provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            Gtk.STYLE_PROVIDER_PRIORITY_USER,
         )
 
     def _load_bindings(self):
