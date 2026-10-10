@@ -81,24 +81,24 @@ hl.bind("SUPER + K",             hl.dsp.focus({ direction = "u" }))
 -- ██ Fenster verschieben
 -- ══════════════════════════════════════════════════════════════
 
-hl.bind("SUPER + SHIFT + Left",  hl.dsp.window.move("l"))
-hl.bind("SUPER + SHIFT + Right", hl.dsp.window.move("r"))
-hl.bind("SUPER + SHIFT + Up",    hl.dsp.window.move("u"))
-hl.bind("SUPER + SHIFT + Down",  hl.dsp.window.move("d"))
+hl.bind("SUPER + SHIFT + Left",  hl.dsp.window.move({ direction = "l" }))
+hl.bind("SUPER + SHIFT + Right", hl.dsp.window.move({ direction = "r" }))
+hl.bind("SUPER + SHIFT + Up",    hl.dsp.window.move({ direction = "u" }))
+hl.bind("SUPER + SHIFT + Down",  hl.dsp.window.move({ direction = "d" }))
 
-hl.bind("SUPER + SHIFT + H",     hl.dsp.window.move("l"))
-hl.bind("SUPER + SHIFT + L",     hl.dsp.window.move("r"))
-hl.bind("SUPER + SHIFT + K",     hl.dsp.window.move("u"))
-hl.bind("SUPER + SHIFT + J",     hl.dsp.window.move("d"))
+hl.bind("SUPER + SHIFT + H",     hl.dsp.window.move({ direction = "l" }))
+hl.bind("SUPER + SHIFT + L",     hl.dsp.window.move({ direction = "r" }))
+hl.bind("SUPER + SHIFT + K",     hl.dsp.window.move({ direction = "u" }))
+hl.bind("SUPER + SHIFT + J",     hl.dsp.window.move({ direction = "d" }))
 
 -- ══════════════════════════════════════════════════════════════
 -- ██ Fenstergröße ändern
 -- ══════════════════════════════════════════════════════════════
 
-hl.bind("SUPER + CTRL + Left",   hl.dsp.window.resize("l", 40))
-hl.bind("SUPER + CTRL + Right",  hl.dsp.window.resize("r", 40))
-hl.bind("SUPER + CTRL + Up",     hl.dsp.window.resize("u", 40))
-hl.bind("SUPER + CTRL + Down",   hl.dsp.window.resize("d", 40))
+hl.bind("SUPER + CTRL + Left",   hl.dsp.exec_cmd("hyprctl dispatch resizeactive -40 0"))
+hl.bind("SUPER + CTRL + Right",  hl.dsp.exec_cmd("hyprctl dispatch resizeactive 40 0"))
+hl.bind("SUPER + CTRL + Up",     hl.dsp.exec_cmd("hyprctl dispatch resizeactive 0 -40"))
+hl.bind("SUPER + CTRL + Down",   hl.dsp.exec_cmd("hyprctl dispatch resizeactive 0 40"))
 
 -- ══════════════════════════════════════════════════════════════
 -- ██ Workspaces
