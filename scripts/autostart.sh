@@ -4,6 +4,18 @@
 # ╚══════════════════════════════════════════════════════════════╝
 set -Eeuo pipefail
 
+# ── Wayland-Umgebung ermitteln (wichtig bei SSH / TTY) ─────────
+if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+    export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    wp_sock="$(find "${XDG_RUNTIME_DIR}" -maxdepth 1 -name 'wayland-*' ! -name '*.lock' 2>/dev/null | head -n 1 || true)"
+    if [[ -n "${wp_sock}" ]]; then
+        export WAYLAND_DISPLAY="$(basename "${wp_sock}")"
+        echo "[INFO] WAYLAND_DISPLAY automatisch gesetzt auf: ${WAYLAND_DISPLAY}"
+    else
+        echo "[WARNUNG] Kein aktiver Wayland-Socket gefunden! Läuft Hyprland?"
+    fi
+fi
+
 WP_DIR="${HOME}/.config/hypr/wallpapers"
 CURRENT_WP="${WP_DIR}/current.jpg"
 
