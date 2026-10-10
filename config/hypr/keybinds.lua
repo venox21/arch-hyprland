@@ -134,29 +134,29 @@ hl.bind("SUPER + mouse:273",     hl.dsp.exec_cmd("hyprctl dispatch resizewindow 
 -- ══════════════════════════════════════════════════════════════
 
 -- Lautstärke
-hl.bind(", XF86AudioRaiseVolume",    hl.dsp.exec_cmd("pamixer -i 5"),  { locked = true })
-hl.bind(", XF86AudioLowerVolume",    hl.dsp.exec_cmd("pamixer -d 5"),  { locked = true })
-hl.bind(", XF86AudioMute",           hl.dsp.exec_cmd("pamixer -t"),    { locked = true })
-hl.bind(", XF86AudioMicMute",        hl.dsp.exec_cmd("pamixer --default-source -t"), { locked = true })
+hl.bind("XF86AudioRaiseVolume",    hl.dsp.exec_cmd("pamixer -i 5"),  { locked = true })
+hl.bind("XF86AudioLowerVolume",    hl.dsp.exec_cmd("pamixer -d 5"),  { locked = true })
+hl.bind("XF86AudioMute",           hl.dsp.exec_cmd("pamixer -t"),    { locked = true })
+hl.bind("XF86AudioMicMute",        hl.dsp.exec_cmd("pamixer --default-source -t"), { locked = true })
 
 -- Mediaplayer
-hl.bind(", XF86AudioPlay",           hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind(", XF86AudioNext",           hl.dsp.exec_cmd("playerctl next"),       { locked = true })
-hl.bind(", XF86AudioPrev",           hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
+hl.bind("XF86AudioPlay",           hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
+hl.bind("XF86AudioNext",           hl.dsp.exec_cmd("playerctl next"),       { locked = true })
+hl.bind("XF86AudioPrev",           hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
 
 -- ══════════════════════════════════════════════════════════════
 -- ██ Helligkeit
 -- ══════════════════════════════════════════════════════════════
 
-hl.bind(", XF86MonBrightnessUp",     hl.dsp.exec_cmd("brightnessctl set +5%"), { locked = true })
-hl.bind(", XF86MonBrightnessDown",   hl.dsp.exec_cmd("brightnessctl set 5%-"), { locked = true })
+hl.bind("XF86MonBrightnessUp",     hl.dsp.exec_cmd("brightnessctl set +5%"), { locked = true })
+hl.bind("XF86MonBrightnessDown",   hl.dsp.exec_cmd("brightnessctl set 5%-"), { locked = true })
 
 -- ══════════════════════════════════════════════════════════════
 -- ██ Screenshots
 -- ══════════════════════════════════════════════════════════════
 
 -- Ganzer Bildschirm
-hl.bind(", Print",                    hl.dsp.exec_cmd(scripts .. "/screenshot.sh full"))
+hl.bind("Print",                    hl.dsp.exec_cmd(scripts .. "/screenshot.sh full"))
 
 -- Bereich auswählen
 hl.bind("SUPER + SHIFT + S",         hl.dsp.exec_cmd(scripts .. "/screenshot.sh area"))
