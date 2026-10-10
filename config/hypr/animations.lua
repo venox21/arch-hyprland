@@ -5,7 +5,6 @@
 hl.config({
     animations = {
         enabled   = true,
-        first_launch_animation = true,
     },
 })
 

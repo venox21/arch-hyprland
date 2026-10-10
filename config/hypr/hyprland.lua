@@ -62,7 +62,6 @@ hl.config({
 
     -- ── Dwindle-Layout ───────────────────────────────────────
     dwindle = {
-        pseudotile     = true,
         preserve_split = true,
         force_split    = 2,       -- Immer rechts/unten splitten
         smart_split    = false,
@@ -83,7 +82,7 @@ hl.config({
         key_press_enables_dpms   = true,
         vrr                      = 0,
         focus_on_activate        = true,
-        new_window_takes_over_fullscreen = 2,
+        on_focus_under_fullscreen = 2,
     },
 
     -- ── XWayland ─────────────────────────────────────────────

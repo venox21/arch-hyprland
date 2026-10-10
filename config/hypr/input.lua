@@ -36,14 +36,11 @@ hl.config({
         no_hardware_cursors = false,
         inactive_timeout    = 5,
     },
-
-    -- Gesten
-    gestures = {
-        workspace_swipe          = true,
-        workspace_swipe_fingers  = 3,
-        workspace_swipe_distance = 300,
-    },
 })
+
+-- ── Gesten (neues API ab Hyprland 0.55+) ──────────────────
+hl.gesture({ fingers = 3, direction = "l", action = "workspace, e-1" })
+hl.gesture({ fingers = 3, direction = "r", action = "workspace, e+1" })
 
 -- ── Umgebungsvariablen für Cursor ────────────────────────────
 hl.env("XCURSOR_SIZE", "24")
