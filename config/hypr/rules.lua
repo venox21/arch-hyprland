@@ -99,7 +99,7 @@ hl.window_rule({
 -- ── Transparenz ──────────────────────────────────────────────
 hl.window_rule({
     match = { class = "kitty" },
-    opacity = { 0.92, 0.88 },
+    opacity = "0.92 0.88",
 })
 
 -- ── Workspace-Zuweisungen (optional) ─────────────────────────

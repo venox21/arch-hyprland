@@ -66,15 +66,15 @@ hl.bind("SUPER + SHIFT + P",     hl.dsp.window.pin())
 -- ██ Fokus bewegen
 -- ══════════════════════════════════════════════════════════════
 
-hl.bind("SUPER + Left",          hl.dsp.window.focus("l"))
-hl.bind("SUPER + Right",         hl.dsp.window.focus("r"))
-hl.bind("SUPER + Up",            hl.dsp.window.focus("u"))
-hl.bind("SUPER + Down",          hl.dsp.window.focus("d"))
+hl.bind("SUPER + Left",          hl.dsp.focus({ direction = "l" }))
+hl.bind("SUPER + Right",         hl.dsp.focus({ direction = "r" }))
+hl.bind("SUPER + Up",            hl.dsp.focus({ direction = "u" }))
+hl.bind("SUPER + Down",          hl.dsp.focus({ direction = "d" }))
 
 -- Alternativ mit H/J/K/L (Vim-Stil)
-hl.bind("SUPER + H",             hl.dsp.window.focus("l"))
-hl.bind("SUPER + L",             hl.dsp.window.focus("r"))
-hl.bind("SUPER + K",             hl.dsp.window.focus("u"))
+hl.bind("SUPER + H",             hl.dsp.focus({ direction = "l" }))
+hl.bind("SUPER + L",             hl.dsp.focus({ direction = "r" }))
+hl.bind("SUPER + K",             hl.dsp.focus({ direction = "u" }))
 -- SUPER+J wird bereits für toggle_split verwendet
 
 -- ══════════════════════════════════════════════════════════════
