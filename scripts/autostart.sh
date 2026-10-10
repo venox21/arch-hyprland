@@ -40,8 +40,8 @@ fi
 
 # ── 5. Statusleiste (waybar) ──────────────────────────────────
 pkill -x waybar 2>/dev/null || true
-sleep 0.2
-waybar &
+mkdir -p "${HOME}/.cache"
+waybar > "${HOME}/.cache/waybar.log" 2>&1 &
 
 # ── 6. Benachrichtigungs-Daemon (mako) ────────────────────────
 pkill -x mako 2>/dev/null || true

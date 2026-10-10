@@ -25,7 +25,8 @@ if pgrep -x waybar &>/dev/null; then
 fi
 
 # Waybar neu starten
-waybar &
+mkdir -p "${HOME}/.cache"
+waybar > "${HOME}/.cache/waybar.log" 2>&1 &
 disown
 
 echo "Waybar erfolgreich neu gestartet."
