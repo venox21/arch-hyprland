@@ -1,7 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-import SddmComponents 2.0
 
 Rectangle {
     id: root
@@ -120,7 +119,7 @@ Rectangle {
                 width: parent.width
                 height: 44
                 placeholderText: "Benutzername"
-                text: userModel.lastUser
+                text: (typeof userModel !== "undefined" && userModel.lastUser) ? userModel.lastUser : ""
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 13
                 color: fg
@@ -166,8 +165,8 @@ Rectangle {
                 id: sessionSelector
                 width: parent.width
                 height: 38
-                model: sessionModel
-                currentIndex: sessionModel.lastIndex
+                model: (typeof sessionModel !== "undefined") ? sessionModel : []
+                currentIndex: (typeof sessionModel !== "undefined" && typeof sessionModel.lastIndex !== "undefined") ? sessionModel.lastIndex : 0
                 textRole: "name"
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 12
@@ -238,7 +237,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: 20
-        text: keyboard.layouts[keyboard.currentLayout].longName
+        text: (typeof keyboard !== "undefined" && keyboard.layouts && keyboard.layouts.length > keyboard.currentLayout) ? keyboard.layouts[keyboard.currentLayout].longName : ""
         color: fgDark
         font.family: "JetBrainsMono Nerd Font"
         font.pixelSize: 12
@@ -247,11 +246,13 @@ Rectangle {
     // ── Login-Funktion ───────────────────────────────────────
     function doLogin() {
         errorMessage.text = ""
-        sddm.login(usernameField.text, passwordField.text, sessionSelector.currentIndex)
+        if (typeof sddm !== "undefined") {
+            sddm.login(usernameField.text, passwordField.text, sessionSelector.currentIndex)
+        }
     }
 
     Connections {
-        target: sddm
+        target: (typeof sddm !== "undefined") ? sddm : null
         function onLoginSucceeded() {
             errorMessage.text = ""
         }
