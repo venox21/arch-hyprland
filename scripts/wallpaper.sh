@@ -5,6 +5,23 @@
 # ╚══════════════════════════════════════════════════════════════╝
 set -Eeuo pipefail
 
+# ── Wayland & Hyprland Umgebung ermitteln (SSH / TTY Support) ──
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+    wp_sock="$(find "${XDG_RUNTIME_DIR}" -maxdepth 1 -name 'wayland-*' ! -name '*.lock' 2>/dev/null | head -n 1 || true)"
+    if [[ -n "${wp_sock}" ]]; then
+        export WAYLAND_DISPLAY="$(basename "${wp_sock}")"
+    fi
+fi
+
+if [[ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    sig="$(ls -1 "${XDG_RUNTIME_DIR}/hypr" 2>/dev/null | grep -v '\.lock' | head -n 1 || true)"
+    if [[ -n "${sig}" ]]; then
+        export HYPRLAND_INSTANCE_SIGNATURE="${sig}"
+    fi
+fi
+
 WALLPAPER_DIR="${HOME}/.config/hypr/wallpapers"
 PICTURES_DIR="${HOME}/Pictures/wallpapers"
 CURRENT_LINK="${WALLPAPER_DIR}/current.jpg"
@@ -14,6 +31,27 @@ REPO_URL="https://github.com/JaKooLit/Wallpaper-Bank.git"
 BANK_DIR="${WALLPAPER_DIR}/Wallpaper-Bank"
 
 mkdir -p "${WALLPAPER_DIR}" "${THUMB_DIR}"
+
+# ── Rofi-Theme sicherstellen ──────────────────────────────────
+if [[ ! -f "${ROFI_THEME}" ]]; then
+    if [[ -f "${HOME}/arch-hyrland/config/rofi/wallpaper.rasi" ]]; then
+        mkdir -p "${HOME}/.config/rofi"
+        cp "${HOME}/arch-hyrland/config/rofi/wallpaper.rasi" "${ROFI_THEME}" 2>/dev/null || true
+    fi
+fi
+
+ROFI_OPTS=()
+if [[ -f "${ROFI_THEME}" ]]; then
+    ROFI_OPTS+=(-theme "${ROFI_THEME}")
+elif [[ -f "${HOME}/.config/rofi/config.rasi" ]]; then
+    ROFI_OPTS+=(-theme "${HOME}/.config/rofi/config.rasi")
+fi
+
+# ── Starter-Wallpapers kopieren falls Verzeichnis leer ist ─────
+wp_count=$(find "${WALLPAPER_DIR}" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -name 'current.jpg' 2>/dev/null | wc -l)
+if [[ "${wp_count}" -eq 0 && -d "${HOME}/arch-hyrland/assets/wallpapers" ]]; then
+    cp -f "${HOME}/arch-hyrland/assets/wallpapers/"* "${WALLPAPER_DIR}/" 2>/dev/null || true
+fi
 
 # ── Benachrichtigungs-Helfer ──────────────────────────────────
 notify() {
@@ -50,6 +88,7 @@ apply_wallpaper() {
 
     if [[ ! -f "${target}" ]]; then
         notify "Fehler" "Datei nicht gefunden: ${target}" "dialog-error"
+        echo "Fehler: Datei nicht gefunden: ${target}" >&2
         exit 1
     fi
 
@@ -57,10 +96,14 @@ apply_wallpaper() {
     cp -f "${target}" "${CURRENT_LINK}"
 
     # Hyprpaper aktualisieren
-    if pgrep -x hyprpaper &>/dev/null; then
+    if pgrep -x hyprpaper &>/dev/null && command -v hyprctl &>/dev/null; then
         hyprctl hyprpaper unload all 2>/dev/null || true
         hyprctl hyprpaper preload "${CURRENT_LINK}" 2>/dev/null || true
-        hyprctl hyprpaper wallpaper ", ${CURRENT_LINK}" 2>/dev/null || true
+        hyprctl hyprpaper wallpaper ",${CURRENT_LINK}" 2>/dev/null || true
+        hyprctl hyprpaper wallpaper "eDP-1,${CURRENT_LINK}" 2>/dev/null || true
+        for mon in $(hyprctl monitors -j 2>/dev/null | jq -r '.[].name' 2>/dev/null || echo ""); do
+            [[ -n "${mon}" ]] && hyprctl hyprpaper wallpaper "${mon},${CURRENT_LINK}" 2>/dev/null || true
+        done
     fi
 
     # SWWW aktualisieren (falls im Einsatz)
@@ -73,22 +116,27 @@ apply_wallpaper() {
     local thumb
     thumb="$(get_thumbnail "${target}")"
     notify "Hintergrundbild gewechselt" "${name}" "${thumb}"
+    echo "Hintergrundbild erfolgreich gewechselt zu: ${name}"
 }
 
 # ── JaKooLit Wallpaper-Bank synchronisieren ───────────────────
 sync_wallpaper_bank() {
     notify "Wallpaper-Bank" "Synchronisierung gestartet (JaKooLit)..." "emblem-downloads"
+    echo "Synchronisiere JaKooLit Wallpaper-Bank..."
 
     if [[ ! -d "${BANK_DIR}/.git" ]]; then
         if git clone --depth 1 "${REPO_URL}" "${BANK_DIR}" 2>/dev/null; then
             notify "Wallpaper-Bank" "Erfolgreich heruntergeladen!" "emblem-default"
+            echo "JaKooLit Wallpaper-Bank erfolgreich heruntergeladen!"
         else
             notify "Fehler" "Konnte JaKooLit Wallpaper-Bank nicht klonen." "dialog-error"
+            echo "Fehler beim Klonen der Wallpaper-Bank" >&2
             return 1
         fi
     else
         if git -C "${BANK_DIR}" pull --ff-only 2>/dev/null; then
             notify "Wallpaper-Bank" "Erfolgreich aktualisiert!" "emblem-default"
+            echo "JaKooLit Wallpaper-Bank aktualisiert!"
         else
             notify "Hinweis" "Keine Updates oder Git-Fehler beim Aktualisieren." "dialog-warning"
         fi
@@ -111,6 +159,7 @@ random_wallpaper() {
     mapfile -t ALL_WP < <(collect_wallpapers)
     if [[ ${#ALL_WP[@]} -eq 0 ]]; then
         notify "Wallpaper" "Keine Bilder gefunden. Lade die Wallpaper-Bank herunter." "dialog-warning"
+        echo "Keine Bilder gefunden." >&2
         exit 0
     fi
     local rand_idx=$(( RANDOM % ${#ALL_WP[@]} ))
@@ -149,7 +198,7 @@ mapfile -t FILES < <(collect_wallpapers)
 
 # Falls keine Wallpaper vorhanden sind: Sofort Download anbieten
 if [[ ${#FILES[@]} -eq 0 ]]; then
-    CHOICE="$(printf "📥 JaKooLit Wallpaper-Bank jetzt herunterladen\nAbbrechen" | rofi -dmenu -i -p "  Wallpaper" -theme "${ROFI_THEME}" 2>/dev/null || true)"
+    CHOICE="$(printf "📥 JaKooLit Wallpaper-Bank jetzt herunterladen\nAbbrechen" | rofi -dmenu -i -p "  Wallpaper" "${ROFI_OPTS[@]}" 2>/dev/null || true)"
     if [[ "${CHOICE}" =~ "herunterladen" ]]; then
         sync_wallpaper_bank
         mapfile -t FILES < <(collect_wallpapers)
@@ -160,18 +209,17 @@ fi
 
 if [[ ${#FILES[@]} -eq 0 ]]; then
     notify "Wallpaper" "Keine Bilder in ${WALLPAPER_DIR} vorhanden." "dialog-warning"
+    echo "Keine Bilder in ${WALLPAPER_DIR} vorhanden." >&2
     exit 0
 fi
 
 # Auswahl-Liste mit Bild-Icons aufbauen
 ENTRY_LIST=""
-# Sonderaktionen an den Anfang
 ENTRY_LIST+="🎲 Zufälliges Wallpaper\0icon\x1fpreferences-desktop-wallpaper\n"
 ENTRY_LIST+="📥 Wallpaper-Bank synchronisieren\0icon\x1fsystem-software-update\n"
 
 for f in "${FILES[@]}"; do
     filename="$(basename "${f}")"
-    # Kürzel oder Kategorie bei Wallpaper-Bank
     display_name="${filename%.*}"
     thumb="$(get_thumbnail "${f}")"
     ENTRY_LIST+="${display_name}\0icon\x1f${thumb}\n"
@@ -181,7 +229,7 @@ done
 CHOSEN="$(printf '%b' "${ENTRY_LIST}" | rofi -dmenu \
     -i \
     -p "  Wallpaper" \
-    -theme "${ROFI_THEME}" \
+    "${ROFI_OPTS[@]}" \
     -show-icons \
     2>/dev/null || true)"
 

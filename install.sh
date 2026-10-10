@@ -315,6 +315,7 @@ install_config "${SCRIPT_DIR}/config/kitty/kitty.conf" "${CONFIG_DIR}/kitty/kitt
 # Rofi
 info "Installiere Rofi-Konfiguration..."
 install_config "${SCRIPT_DIR}/config/rofi/config.rasi" "${CONFIG_DIR}/rofi/config.rasi"
+install_config "${SCRIPT_DIR}/config/rofi/wallpaper.rasi" "${CONFIG_DIR}/rofi/wallpaper.rasi"
 
 # Mako
 info "Installiere Mako-Konfiguration..."
