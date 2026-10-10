@@ -36,60 +36,60 @@ hl.bind("SUPER + I",             hl.dsp.exec_cmd(scripts .. "/settings.sh"))
 -- ══════════════════════════════════════════════════════════════
 
 -- Fenster schließen
-hl.bind("SUPER + Q",             hl.dsp.window.close())
+hl.bind("SUPER + Q",             hl.dsp.exec_cmd("hyprctl dispatch killactive"))
 
 -- Hyprland beenden
 hl.bind("SUPER + SHIFT + M",     hl.dsp.exec_cmd("hyprctl dispatch exit"))
 
 -- Fenster schwebend
-hl.bind("SUPER + V",             hl.dsp.window.float({ action = "toggle" }))
+hl.bind("SUPER + V",             hl.dsp.exec_cmd("hyprctl dispatch togglefloating"))
 
 -- Fenster maximieren (Fullscreen Typ 1)
-hl.bind("SUPER + F",             hl.dsp.window.fullscreen({ mode = "maximized" }))
+hl.bind("SUPER + F",             hl.dsp.exec_cmd("hyprctl dispatch fullscreen 1"))
 
 -- Echtes Vollbild
-hl.bind("SUPER + SHIFT + F",     hl.dsp.window.fullscreen({ mode = "fullscreen" }))
+hl.bind("SUPER + SHIFT + F",     hl.dsp.exec_cmd("hyprctl dispatch fullscreen 0"))
 
 -- Pseudo-Kachel
-hl.bind("SUPER + P",             hl.dsp.window.pseudo())
+hl.bind("SUPER + P",             hl.dsp.exec_cmd("hyprctl dispatch pseudo"))
 
 -- Splitrichtung wechseln
-hl.bind("SUPER + J",             hl.dsp.layout("togglesplit"))
+hl.bind("SUPER + J",             hl.dsp.exec_cmd("hyprctl dispatch layoutmsg togglesplit"))
 
 -- Fenster zentrieren
-hl.bind("SUPER + C",             hl.dsp.window.center())
+hl.bind("SUPER + C",             hl.dsp.exec_cmd("hyprctl dispatch centerwindow"))
 
 -- Fenster anpinnen (immer im Vordergrund)
-hl.bind("SUPER + SHIFT + P",     hl.dsp.window.pin())
+hl.bind("SUPER + SHIFT + P",     hl.dsp.exec_cmd("hyprctl dispatch pin"))
 
 -- ══════════════════════════════════════════════════════════════
 -- ██ Fokus bewegen
 -- ══════════════════════════════════════════════════════════════
 
-hl.bind("SUPER + Left",          hl.dsp.focus({ direction = "l" }))
-hl.bind("SUPER + Right",         hl.dsp.focus({ direction = "r" }))
-hl.bind("SUPER + Up",            hl.dsp.focus({ direction = "u" }))
-hl.bind("SUPER + Down",          hl.dsp.focus({ direction = "d" }))
+hl.bind("SUPER + Left",          hl.dsp.exec_cmd("hyprctl dispatch movefocus l"))
+hl.bind("SUPER + Right",         hl.dsp.exec_cmd("hyprctl dispatch movefocus r"))
+hl.bind("SUPER + Up",            hl.dsp.exec_cmd("hyprctl dispatch movefocus u"))
+hl.bind("SUPER + Down",          hl.dsp.exec_cmd("hyprctl dispatch movefocus d"))
 
 -- Alternativ mit H/J/K/L (Vim-Stil)
-hl.bind("SUPER + H",             hl.dsp.focus({ direction = "l" }))
-hl.bind("SUPER + L",             hl.dsp.focus({ direction = "r" }))
-hl.bind("SUPER + K",             hl.dsp.focus({ direction = "u" }))
+hl.bind("SUPER + H",             hl.dsp.exec_cmd("hyprctl dispatch movefocus l"))
+hl.bind("SUPER + L",             hl.dsp.exec_cmd("hyprctl dispatch movefocus r"))
+hl.bind("SUPER + K",             hl.dsp.exec_cmd("hyprctl dispatch movefocus u"))
 -- SUPER+J wird bereits für toggle_split verwendet
 
 -- ══════════════════════════════════════════════════════════════
 -- ██ Fenster verschieben
 -- ══════════════════════════════════════════════════════════════
 
-hl.bind("SUPER + SHIFT + Left",  hl.dsp.window.move({ direction = "l" }))
-hl.bind("SUPER + SHIFT + Right", hl.dsp.window.move({ direction = "r" }))
-hl.bind("SUPER + SHIFT + Up",    hl.dsp.window.move({ direction = "u" }))
-hl.bind("SUPER + SHIFT + Down",  hl.dsp.window.move({ direction = "d" }))
+hl.bind("SUPER + SHIFT + Left",  hl.dsp.exec_cmd("hyprctl dispatch movewindow l"))
+hl.bind("SUPER + SHIFT + Right", hl.dsp.exec_cmd("hyprctl dispatch movewindow r"))
+hl.bind("SUPER + SHIFT + Up",    hl.dsp.exec_cmd("hyprctl dispatch movewindow u"))
+hl.bind("SUPER + SHIFT + Down",  hl.dsp.exec_cmd("hyprctl dispatch movewindow d"))
 
-hl.bind("SUPER + SHIFT + H",     hl.dsp.window.move({ direction = "l" }))
-hl.bind("SUPER + SHIFT + L",     hl.dsp.window.move({ direction = "r" }))
-hl.bind("SUPER + SHIFT + K",     hl.dsp.window.move({ direction = "u" }))
-hl.bind("SUPER + SHIFT + J",     hl.dsp.window.move({ direction = "d" }))
+hl.bind("SUPER + SHIFT + H",     hl.dsp.exec_cmd("hyprctl dispatch movewindow l"))
+hl.bind("SUPER + SHIFT + L",     hl.dsp.exec_cmd("hyprctl dispatch movewindow r"))
+hl.bind("SUPER + SHIFT + K",     hl.dsp.exec_cmd("hyprctl dispatch movewindow u"))
+hl.bind("SUPER + SHIFT + J",     hl.dsp.exec_cmd("hyprctl dispatch movewindow d"))
 
 -- ══════════════════════════════════════════════════════════════
 -- ██ Fenstergröße ändern
@@ -106,28 +106,28 @@ hl.bind("SUPER + CTRL + Down",   hl.dsp.exec_cmd("hyprctl dispatch resizeactive 
 
 -- Workspace wechseln (1–10)
 for i = 1, 9 do
-    hl.bind("SUPER + " .. i,           hl.dsp.workspace.go(i))
-    hl.bind("SUPER + SHIFT + " .. i,   hl.dsp.window.to_workspace(i))
+    hl.bind("SUPER + " .. i,           hl.dsp.exec_cmd("hyprctl dispatch workspace " .. i))
+    hl.bind("SUPER + SHIFT + " .. i,   hl.dsp.exec_cmd("hyprctl dispatch movetoworkspace " .. i))
 end
-hl.bind("SUPER + 0",                   hl.dsp.workspace.go(10))
-hl.bind("SUPER + SHIFT + 0",           hl.dsp.window.to_workspace(10))
+hl.bind("SUPER + 0",                   hl.dsp.exec_cmd("hyprctl dispatch workspace 10"))
+hl.bind("SUPER + SHIFT + 0",           hl.dsp.exec_cmd("hyprctl dispatch movetoworkspace 10"))
 
 -- Zum nächsten/vorherigen Workspace scrollen
-hl.bind("SUPER + mouse_down",          hl.dsp.workspace.go("+1"))
-hl.bind("SUPER + mouse_up",            hl.dsp.workspace.go("-1"))
+hl.bind("SUPER + mouse_down",          hl.dsp.exec_cmd("hyprctl dispatch workspace e+1"))
+hl.bind("SUPER + mouse_up",            hl.dsp.exec_cmd("hyprctl dispatch workspace e-1"))
 
 -- Spezieller Workspace (Scratchpad)
-hl.bind("SUPER + S",                   hl.dsp.workspace.toggle_special("magic"))
-hl.bind("SUPER + SHIFT + S",           hl.dsp.window.to_workspace("special:magic"))
+hl.bind("SUPER + S",                   hl.dsp.exec_cmd("hyprctl dispatch togglespecialworkspace magic"))
+hl.bind("SUPER + SHIFT + S",           hl.dsp.exec_cmd("hyprctl dispatch movetoworkspace special:magic"))
 
 -- ══════════════════════════════════════════════════════════════
 -- ██ Maus-Bindings
 -- ══════════════════════════════════════════════════════════════
 
 -- Fenster mit Maus bewegen
-hl.bind("SUPER + mouse:272",     hl.dsp.window.move_with_mouse(), { mouse = true })
+hl.bind("SUPER + mouse:272",     hl.dsp.exec_cmd("hyprctl dispatch movewindow l"), { mouse = true })
 -- Fenster mit Maus vergrößern
-hl.bind("SUPER + mouse:273",     hl.dsp.window.resize_with_mouse(), { mouse = true })
+hl.bind("SUPER + mouse:273",     hl.dsp.exec_cmd("hyprctl dispatch resizewindow l"), { mouse = true })
 
 -- ══════════════════════════════════════════════════════════════
 -- ██ Audio
