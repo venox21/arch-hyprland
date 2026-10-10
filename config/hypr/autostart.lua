@@ -6,33 +6,7 @@ local scripts = os.getenv("HOME") .. "/.config/hypr/scripts"
 
 -- ── Einmalig beim Hyprland-Start ─────────────────────────────
 hl.on("hyprland.start", function()
-    -- Polkit-Agent für grafische Authentifizierung
-    hl.exec_cmd("hyprpolkitagent &")
-
-    -- Hintergrundbild
-    hl.exec_cmd("hyprpaper &")
-
-    -- Statusleiste (mit Kill-Guard gegen Duplikate)
-    hl.exec_cmd("pkill waybar; sleep 0.3 && waybar &")
-
-    -- Benachrichtigungsdienst (mit Kill-Guard)
-    hl.exec_cmd("pkill mako; sleep 0.1 && mako &")
-
-    -- Zwischenablage-Daemon
-    hl.exec_cmd("wl-paste --type text --watch cliphist store &")
-    hl.exec_cmd("wl-paste --type image --watch cliphist store &")
-
-    -- XDG Desktop Portal
-    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP &")
-    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP &")
-
-    -- Cursor-Theme setzen
-    hl.exec_cmd("hyprctl setcursor Adwaita 24")
-
-    -- NetworkManager Applet (optional)
-    -- hl.exec_cmd("nm-applet --indicator &")
-
-    -- Fastfetch beim ersten Terminal (deaktiviert – wird in .zshrc gesteuert)
+    hl.exec_cmd(scripts .. "/autostart.sh")
 end)
 
 -- ── Umgebungsvariablen ───────────────────────────────────────

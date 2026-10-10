@@ -64,7 +64,7 @@ hl.window_rule({
 hl.window_rule({
     match = { class = "tokyo-settings" },
     float = true,
-    size = { 900, 650 },
+    size = "900 650",
     center = true,
 })
 
@@ -85,15 +85,15 @@ hl.window_rule({
     match = { title = "Picture-in-Picture" },
     float = true,
     pin = true,
-    size = { 480, 270 },
-    move = { "100%-490", 40 },
+    size = "480 270",
+    move = "100%-490 40",
 })
 hl.window_rule({
     match = { title = "Bild-im-Bild" },
     float = true,
     pin = true,
-    size = { 480, 270 },
-    move = { "100%-490", 40 },
+    size = "480 270",
+    move = "100%-490 40",
 })
 
 -- ── Transparenz ──────────────────────────────────────────────
