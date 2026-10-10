@@ -100,7 +100,27 @@ if [[ -f "${CURRENT_WP}" ]] && command -v hyprpaper &>/dev/null; then
     echo "[INFO] Hyprpaper gestartet"
 fi
 
-# ── 7. Statusleiste (waybar) ──────────────────────────────────
+# ── 7. Benachrichtigungs-Daemon & Kontrollzentrum (swaync / mako) ──
+if command -v swaync &>/dev/null; then
+    pkill -x swaync 2>/dev/null || true
+    pkill -x mako 2>/dev/null || true
+    sleep 0.2
+    swaync > "${HOME}/.cache/swaync.log" 2>&1 &
+    sleep 0.5
+    if pgrep -x swaync &>/dev/null; then
+        echo "[INFO] SwayNC Kontrollzentrum erfolgreich gestartet!"
+    else
+        echo "[FEHLER] SwayNC konnte nicht gestartet werden. Fehler-Log:"
+        tail -n 20 "${HOME}/.cache/swaync.log" 2>/dev/null || true
+    fi
+elif command -v mako &>/dev/null; then
+    pkill -x mako 2>/dev/null || true
+    sleep 0.1
+    mako &
+    echo "[INFO] Mako Benachrichtigungen gestartet"
+fi
+
+# ── 8. Statusleiste (waybar) ──────────────────────────────────
 pkill -x waybar 2>/dev/null || true
 sleep 0.2
 mkdir -p "${HOME}/.cache"
@@ -116,20 +136,6 @@ if command -v waybar &>/dev/null; then
     fi
 else
     echo "[FEHLER] Waybar ist nicht installiert! (sudo pacman -S waybar)"
-fi
-
-# ── 8. Benachrichtigungs-Daemon & Kontrollzentrum (swaync / mako) ──
-if command -v swaync &>/dev/null; then
-    pkill -x swaync 2>/dev/null || true
-    pkill -x mako 2>/dev/null || true
-    sleep 0.1
-    swaync &
-    echo "[INFO] SwayNC Kontrollzentrum gestartet"
-elif command -v mako &>/dev/null; then
-    pkill -x mako 2>/dev/null || true
-    sleep 0.1
-    mako &
-    echo "[INFO] Mako Benachrichtigungen gestartet"
 fi
 
 # ── 9. Zwischenablage-Verlauf (cliphist) ──────────────────────
