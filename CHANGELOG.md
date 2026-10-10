@@ -2,6 +2,25 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 
+## [1.2.0] – 2026-10-11
+
+### Hinzugefügt
+- **SwayNC Kontrollzentrum (Control Center) in Waybar**:
+  - Interaktives Panel für schnellen Zugriff auf Schnelleinstellungen
+  - **WLAN-Umschalter**: Schnelles Ein-/Ausschalten und Statusprüfung per `nmcli`
+  - **Bluetooth-Umschalter**: Adapter-Steuerung per `bluetoothctl`
+  - **Audioausgabe**: Schneller Mixer-Zugriff (`pavucontrol` / `pamixer`)
+  - **Nachtmodus**: Blaulichtfilter / Farbtemperatur-Regelung (`wlsunset` / `gammastep` / `hyprshade`)
+  - **Theme-Manager**: Direkter Schnellstart der Tokyo Night Einstellungs-App
+  - **Energiesparmodus**: Dynamisches Deaktivieren von Blur, Animationen und Schatten für maximale Akkulaufzeit & Performance
+  - **Benachrichtigungen**: Scrollbare Benachrichtigungsliste, DND (Nicht stören) Schalter und Alle-Löschen-Funktion
+  - **Lautstärke- & Helligkeits-Schieberegler** sowie MPRIS Media Player
+- **Neues Hilfsskript**: `scripts/control-center.sh`
+- **Waybar-Modul**: `custom/swaync` mit dynamischen Glocken- und DND-Icons sowie Klick-Aktionen
+- **Neue Tastenkürzel**:
+  - `SUPER + N` – Kontrollzentrum öffnen/schließen
+  - `SUPER + SHIFT + N` – Nicht stören (DND) umschalten
+
 ## [1.1.0] – 2026-10-10
 
 ### Hinzugefügt

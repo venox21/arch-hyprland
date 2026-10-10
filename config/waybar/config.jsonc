@@ -35,6 +35,7 @@
         "pulseaudio",
         "pulseaudio#microphone",
         "battery",
+        "custom/swaync",
         "custom/settings",
         "custom/hotkeys",
         "custom/power"
@@ -182,9 +183,32 @@
         "show-passive-items": true
     },
 
+    // ── Kontrollzentrum & Benachrichtigungen ─────────────────
+    "custom/swaync": {
+        "tooltip": true,
+        "tooltip-format": "Kontrollzentrum & Benachrichtigungen\nLinksklick: Öffnen/Schließen\nRechtsklick: Nicht stören (DND)",
+        "format": "{icon}",
+        "format-icons": {
+            "notification": "󱅫",
+            "none": "󰂚",
+            "dnd-notification": "󰂛",
+            "dnd-none": "󰂛",
+            "inhibited-notification": "󱅫",
+            "inhibited-none": "󰂚",
+            "dnd-inhibited-notification": "󰂛",
+            "dnd-inhibited-none": "󰂛"
+        },
+        "return-type": "json",
+        "exec-if": "which swaync-client",
+        "exec": "swaync-client -swb",
+        "on-click": "sleep 0.1 && swaync-client -t -sw",
+        "on-click-right": "sleep 0.1 && swaync-client -d -sw",
+        "escape": true
+    },
+
     // ── Einstellungen ────────────────────────────────────────
     "custom/settings": {
-        "format": "",
+        "format": "",
         "tooltip": true,
         "tooltip-format": "Einstellungen öffnen",
         "on-click": "~/.config/hypr/scripts/settings.sh"
@@ -192,7 +216,7 @@
 
     // ── Hotkey-Manager ───────────────────────────────────────
     "custom/hotkeys": {
-        "format": "",
+        "format": "",
         "tooltip": true,
         "tooltip-format": "Tastenkürzel anzeigen",
         "on-click": "~/.config/hypr/scripts/hotkeys.sh"

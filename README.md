@@ -90,6 +90,8 @@ Das Installationsskript:
 | `SUPER + SHIFT + X` | Bildschirm sperren |
 | `SUPER + SHIFT + E` | Power-Menü |
 | `SUPER + I` | Einstellungen |
+| `SUPER + N` | Kontrollzentrum & Benachrichtigungen (SwayNC) |
+| `SUPER + SHIFT + N` | Nicht stören (DND) umschalten |
 | `SUPER + SHIFT + K` | Hotkey-Manager |
 | `SUPER + W` | Wallpaper-Manager (Visuelle Kachelauswahl / Wallpaper-Bank) |
 | `SUPER + SHIFT + W` | Wallpaper-Manager (Alternative) |
@@ -98,6 +100,19 @@ Das Installationsskript:
 | `SUPER + SHIFT + B` | Waybar neu starten |
 
 Alle Tastenkürzel sind im Hotkey-Manager anzeig- und bearbeitbar.
+
+## Kontrollzentrum & Benachrichtigungen (SwayNC)
+
+Das integrierte Tokyo Night Kontrollzentrum bietet schnellen Zugriff auf alle essenziellen Systemeinstellungen:
+- **Aufruf**: Klick auf das Glockensymbol in der Waybar oder per `SUPER + N` (DND-Schnellschalter: Rechtsklick oder `SUPER + SHIFT + N`)
+- **WLAN**: Drahtlosverbindung per Ein-/Ausschalter umschalten
+- **Bluetooth**: Bluetooth-Adapter aktivieren/deaktivieren
+- **Audioausgabe**: Schneller Zugriff auf Lautstärkeregler und Mixer
+- **Nachtmodus**: Blaulichtfilter mit warmer Farbtemperatur (4000K)
+- **Theme**: Sofortiger Aufruf der Tokyo Night Einstellungs-App
+- **Energiesparmodus**: Schaltet rechenintensive Effekte (Blur, Schatten, Animationen) temporär aus, um die Akkulaufzeit zu maximieren
+- **Benachrichtigungen**: Interaktive Benachrichtigungsliste, Einzel- und Gesamtlöschung, DND-Modus
+- **Schieberegler & Medien**: Lautstärke- und Helligkeitsregler sowie MPRIS Media Player Steuerung
 
 ## Hintergrundbild & JaKooLit Wallpaper-Bank
 

@@ -141,6 +141,8 @@ echo -e "${BLUE}── Weitere Konfigurationen ──${NC}"
 
 OTHER_FILES=(
     "config/kitty/kitty.conf"
+    "config/swaync/config.json"
+    "config/swaync/style.css"
     "config/mako/config"
     "config/hyprlock/hyprlock.conf"
     "config/hyprpaper/hyprpaper.conf"
@@ -164,6 +166,7 @@ echo -e "${BLUE}── Hilfsskripte ──${NC}"
 SCRIPTS=(
     screenshot.sh power-menu.sh clipboard.sh wallpaper.sh
     waybar-restart.sh backup.sh diagnostics.sh settings.sh hotkeys.sh
+    control-center.sh
 )
 
 for s in "${SCRIPTS[@]}"; do

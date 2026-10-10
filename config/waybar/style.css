@@ -48,6 +48,7 @@ tooltip label {
 #pulseaudio,
 #battery,
 #tray,
+#custom-swaync,
 #custom-settings,
 #custom-hotkeys,
 #custom-power {
@@ -190,6 +191,29 @@ tooltip label {
 
 #tray > .needs-attention {
     -gtk-icon-effect: highlight;
+}
+
+/* ── Kontrollzentrum & Benachrichtigungen ─────────────────────── */
+#custom-swaync {
+    color: #7aa2f7;
+    font-size: 15px;
+    padding: 0 8px;
+}
+
+#custom-swaync:hover {
+    background: rgba(122, 162, 247, 0.15);
+    color: #7dcfff;
+}
+
+#custom-swaync.dnd-none,
+#custom-swaync.dnd-notification,
+#custom-swaync.dnd-inhibited-none,
+#custom-swaync.dnd-inhibited-notification {
+    color: #f7768e;
+}
+
+#custom-swaync.notification {
+    color: #bb9af7;
 }
 
 /* ── Einstellungen ────────────────────────────────────────────── */

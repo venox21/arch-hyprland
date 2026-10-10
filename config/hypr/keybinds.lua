@@ -31,6 +31,10 @@ hl.bind("SUPER + B",             hl.dsp.exec_cmd(browser))
 -- Einstellungen
 hl.bind("SUPER + I",             hl.dsp.exec_cmd(scripts .. "/settings.sh"))
 
+-- Kontrollzentrum & Benachrichtigungen (SwayNC)
+hl.bind("SUPER + N",             hl.dsp.exec_cmd("swaync-client -t -sw"))
+hl.bind("SUPER + SHIFT + N",     hl.dsp.exec_cmd("swaync-client -d -sw"))
+
 -- ══════════════════════════════════════════════════════════════
 -- ██ Fensterverwaltung (Native Hyprland Dispatchers)
 -- ══════════════════════════════════════════════════════════════

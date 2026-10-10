@@ -84,7 +84,8 @@ CONFIG_FILES=(
     "${HOME}/.config/waybar/style.css"
     "${HOME}/.config/kitty/kitty.conf"
     "${HOME}/.config/rofi/config.rasi"
-    "${HOME}/.config/mako/config"
+    "${HOME}/.config/swaync/config.json"
+    "${HOME}/.config/swaync/style.css"
     "${HOME}/.config/hypr/hyprlock.conf"
     "${HOME}/.config/hypr/hyprpaper.conf"
     "${HOME}/.zshrc"
@@ -121,7 +122,15 @@ fi
 
 # ── Laufende Prozesse ─────────────────────────────────────────
 section "Laufende Prozesse"
-for proc in waybar mako hyprpaper; do
+if pgrep -x "swaync" &>/dev/null; then
+    check_pass "swaync läuft (Kontrollzentrum)"
+elif pgrep -x "mako" &>/dev/null; then
+    check_pass "mako läuft"
+else
+    check_warn "Weder swaync noch mako läuft"
+fi
+
+for proc in waybar hyprpaper; do
     if pgrep -x "${proc}" &>/dev/null; then
         check_pass "${proc} läuft"
     else

@@ -1,0 +1,272 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+ * ║  SwayNC – Tokyo Night Kontrollzentrum CSS                    ║
+ * ╚══════════════════════════════════════════════════════════════╝ */
+
+@define-color bg-dark #1a1b26;
+@define-color bg-surface #24283b;
+@define-color bg-surface-hover #2f354f;
+@define-color text-main #c0caf5;
+@define-color text-muted #a9b1d6;
+@define-color border-color rgba(51, 70, 124, 0.55);
+@define-color accent-blue #7aa2f7;
+@define-color accent-cyan #7dcfff;
+@define-color accent-magenta #bb9af7;
+@define-color accent-yellow #e0af68;
+@define-color accent-orange #ff9e64;
+@define-color accent-red #f7768e;
+@define-color accent-green #9ece6a;
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-size: 13px;
+}
+
+/* ── Hauptfenster des Kontrollzentrums ────────────────────────── */
+.control-center {
+    background: rgba(26, 27, 38, 0.94);
+    border: 1px solid @border-color;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    color: @text-main;
+    padding: 14px;
+}
+
+/* ── Titel & Alle löschen Button ─────────────────────────────── */
+.widget-title {
+    color: @accent-cyan;
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    padding: 0 4px;
+}
+
+.widget-title > button {
+    background: rgba(36, 40, 59, 0.8);
+    border: 1px solid rgba(247, 118, 142, 0.35);
+    border-radius: 6px;
+    color: @accent-red;
+    font-size: 12px;
+    padding: 4px 10px;
+    transition: all 0.2s ease;
+}
+
+.widget-title > button:hover {
+    background: rgba(247, 118, 142, 0.2);
+    border-color: @accent-red;
+    color: #ff9e64;
+}
+
+/* ── DND (Nicht stören) ───────────────────────────────────────── */
+.widget-dnd {
+    background: rgba(36, 40, 59, 0.6);
+    border: 1px solid @border-color;
+    border-radius: 8px;
+    margin: 6px 0;
+    padding: 8px 12px;
+    color: @text-main;
+}
+
+.widget-dnd > switch {
+    background: rgba(26, 27, 38, 0.8);
+    border: 1px solid @border-color;
+    border-radius: 12px;
+}
+
+.widget-dnd > switch:checked {
+    background: @accent-red;
+    border-color: @accent-red;
+}
+
+.widget-dnd > switch slider {
+    background: @text-main;
+    border-radius: 10px;
+}
+
+/* ── Quick-Settings Grid (WLAN, BT, Audio, Nachtmodus, etc.) ─── */
+.widget-buttons-grid {
+    margin: 8px 0;
+    padding: 0;
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button {
+    background: rgba(36, 40, 59, 0.85);
+    border: 1px solid @border-color;
+    border-radius: 8px;
+    color: @text-main;
+    font-size: 13px;
+    font-weight: 500;
+    min-height: 42px;
+    min-width: 105px;
+    padding: 8px 12px;
+    margin: 3px;
+    transition: all 0.2s ease;
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button:hover {
+    background: @bg-surface-hover;
+    border-color: @accent-blue;
+    color: @accent-cyan;
+    box-shadow: 0 2px 8px rgba(122, 162, 247, 0.2);
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button.active,
+.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
+    background: @accent-blue;
+    border-color: @accent-blue;
+    color: #1a1b26;
+    font-weight: bold;
+    box-shadow: 0 0 12px rgba(122, 162, 247, 0.45);
+}
+
+/* ── Volume & Backlight Sliders ──────────────────────────────── */
+.widget-volume,
+.widget-backlight {
+    background: rgba(36, 40, 59, 0.6);
+    border: 1px solid @border-color;
+    border-radius: 8px;
+    margin: 6px 0;
+    padding: 8px 12px;
+}
+
+.widget-volume label {
+    color: @accent-blue;
+    font-size: 15px;
+    margin-right: 8px;
+}
+
+.widget-backlight label {
+    color: @accent-yellow;
+    font-size: 15px;
+    margin-right: 8px;
+}
+
+scale trough {
+    background: rgba(26, 27, 38, 0.8);
+    border: 1px solid rgba(51, 70, 124, 0.3);
+    border-radius: 6px;
+    min-height: 8px;
+}
+
+scale highlight {
+    border-radius: 6px;
+}
+
+.widget-volume scale highlight {
+    background: @accent-blue;
+}
+
+.widget-backlight scale highlight {
+    background: @accent-yellow;
+}
+
+scale slider {
+    background: @text-main;
+    border-radius: 50%;
+    min-height: 14px;
+    min-width: 14px;
+    margin: -3px;
+}
+
+/* ── MPRIS (Media Player) ────────────────────────────────────── */
+.widget-mpris {
+    background: rgba(36, 40, 59, 0.7);
+    border: 1px solid @border-color;
+    border-radius: 8px;
+    margin: 6px 0;
+    padding: 10px;
+}
+
+.widget-mpris-player {
+    padding: 4px;
+}
+
+.widget-mpris-title {
+    color: @text-main;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.widget-mpris-subtitle {
+    color: @text-muted;
+    font-size: 12px;
+}
+
+.widget-mpris > box > button {
+    background: transparent;
+    border: none;
+    color: @accent-blue;
+    font-size: 16px;
+    padding: 4px 8px;
+}
+
+.widget-mpris > box > button:hover {
+    color: @accent-cyan;
+}
+
+/* ── Benachrichtigungs-Liste ─────────────────────────────────── */
+.notification-row {
+    background: transparent;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.notification-row .notification-background {
+    background: rgba(36, 40, 59, 0.9);
+    border: 1px solid @border-color;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    color: @text-main;
+    margin: 4px 0;
+    padding: 10px 12px;
+}
+
+.notification-row .notification-background:hover {
+    background: rgba(47, 53, 79, 0.95);
+    border-color: @accent-blue;
+}
+
+.notification-row.low .notification-background {
+    border-left: 3px solid #414868;
+}
+
+.notification-row.normal .notification-background {
+    border-left: 3px solid @accent-blue;
+}
+
+.notification-row.critical .notification-background {
+    border-left: 3px solid @accent-red;
+    background: rgba(45, 25, 35, 0.95);
+}
+
+.notification-content {
+    margin: 4px 0;
+}
+
+.summary {
+    color: @accent-cyan;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.body {
+    color: @text-main;
+    font-size: 12px;
+}
+
+.time {
+    color: @text-muted;
+    font-size: 11px;
+}
+
+.close-button {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: @text-muted;
+    padding: 2px 6px;
+}
+
+.close-button:hover {
+    background: rgba(247, 118, 142, 0.2);
+    color: @accent-red;
+}

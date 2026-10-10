@@ -31,13 +31,16 @@ REPO_DIR="${HOME}/arch-hyrland"
 
 # ── 2. Konfigurationen automatisch synchronisieren ────────────
 if [[ -d "${REPO_DIR}" ]]; then
-    mkdir -p "${HOME}/.config/waybar" "${HOME}/.config/hypr" "${HOME}/.config/rofi" "${WP_DIR}" "${HOME}/.config/gtk-3.0" "${HOME}/.config/gtk-4.0" "${HOME}/.config/hypr/settings"
+    mkdir -p "${HOME}/.config/waybar" "${HOME}/.config/hypr" "${HOME}/.config/rofi" "${WP_DIR}" "${HOME}/.config/gtk-3.0" "${HOME}/.config/gtk-4.0" "${HOME}/.config/hypr/settings" "${HOME}/.config/swaync" "${HOME}/.config/hypr/scripts"
     [[ -d "${REPO_DIR}/config/waybar" ]] && cp -f "${REPO_DIR}/config/waybar/"* "${HOME}/.config/waybar/" 2>/dev/null || true
+    [[ -d "${REPO_DIR}/config/swaync" ]] && cp -f "${REPO_DIR}/config/swaync/"* "${HOME}/.config/swaync/" 2>/dev/null || true
     [[ -f "${REPO_DIR}/config/hyprpaper/hyprpaper.conf" ]] && cp -f "${REPO_DIR}/config/hyprpaper/hyprpaper.conf" "${HOME}/.config/hypr/hyprpaper.conf" 2>/dev/null || true
     [[ -d "${REPO_DIR}/config/rofi" ]] && cp -f "${REPO_DIR}/config/rofi/"* "${HOME}/.config/rofi/" 2>/dev/null || true
     [[ -d "${REPO_DIR}/config/gtk-3.0" ]] && cp -f "${REPO_DIR}/config/gtk-3.0/"* "${HOME}/.config/gtk-3.0/" 2>/dev/null || true
     [[ -d "${REPO_DIR}/config/gtk-4.0" ]] && cp -f "${REPO_DIR}/config/gtk-4.0/"* "${HOME}/.config/gtk-4.0/" 2>/dev/null || true
     [[ -d "${REPO_DIR}/settings" ]] && cp -f "${REPO_DIR}/settings/"*.py "${HOME}/.config/hypr/settings/" 2>/dev/null || true
+    [[ -d "${REPO_DIR}/scripts" ]] && cp -f "${REPO_DIR}/scripts/"*.sh "${HOME}/.config/hypr/scripts/" 2>/dev/null || true
+    chmod +x "${HOME}/.config/hypr/scripts/"*.sh 2>/dev/null || true
     [[ -d "${REPO_DIR}/assets/wallpapers" ]] && cp -n "${REPO_DIR}/assets/wallpapers/"* "${WP_DIR}/" 2>/dev/null || true
 fi
 
@@ -115,11 +118,18 @@ else
     echo "[FEHLER] Waybar ist nicht installiert! (sudo pacman -S waybar)"
 fi
 
-# ── 8. Benachrichtigungs-Daemon (mako) ────────────────────────
-if command -v mako &>/dev/null; then
+# ── 8. Benachrichtigungs-Daemon & Kontrollzentrum (swaync / mako) ──
+if command -v swaync &>/dev/null; then
+    pkill -x swaync 2>/dev/null || true
+    pkill -x mako 2>/dev/null || true
+    sleep 0.1
+    swaync &
+    echo "[INFO] SwayNC Kontrollzentrum gestartet"
+elif command -v mako &>/dev/null; then
     pkill -x mako 2>/dev/null || true
     sleep 0.1
     mako &
+    echo "[INFO] Mako Benachrichtigungen gestartet"
 fi
 
 # ── 9. Zwischenablage-Verlauf (cliphist) ──────────────────────

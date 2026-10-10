@@ -129,6 +129,7 @@ BACKUP_TARGETS=(
     "${CONFIG_DIR}/waybar"
     "${CONFIG_DIR}/kitty"
     "${CONFIG_DIR}/rofi"
+    "${CONFIG_DIR}/swaync"
     "${CONFIG_DIR}/mako"
     "${HOME}/.zshrc"
     "${CONFIG_DIR}/starship.toml"
@@ -176,7 +177,8 @@ PACKAGES=(
     # Terminal
     kitty
 
-    # Benachrichtigungen
+    # Benachrichtigungen & Kontrollzentrum
+    swaync
     mako
 
     # Lock & Wallpaper
@@ -231,6 +233,9 @@ PACKAGES=(
     jq
     networkmanager
     nm-connection-editor
+    bluez
+    bluez-utils
+    wlsunset
 )
 
 # Bereits installierte Pakete ermitteln
@@ -316,6 +321,12 @@ install_config "${SCRIPT_DIR}/config/kitty/kitty.conf" "${CONFIG_DIR}/kitty/kitt
 info "Installiere Rofi-Konfiguration..."
 install_config "${SCRIPT_DIR}/config/rofi/config.rasi" "${CONFIG_DIR}/rofi/config.rasi"
 install_config "${SCRIPT_DIR}/config/rofi/wallpaper.rasi" "${CONFIG_DIR}/rofi/wallpaper.rasi"
+
+# SwayNC Kontrollzentrum
+info "Installiere SwayNC-Konfiguration..."
+mkdir -p "${CONFIG_DIR}/swaync"
+install_config "${SCRIPT_DIR}/config/swaync/config.json" "${CONFIG_DIR}/swaync/config.json"
+install_config "${SCRIPT_DIR}/config/swaync/style.css" "${CONFIG_DIR}/swaync/style.css"
 
 # Mako
 info "Installiere Mako-Konfiguration..."
@@ -554,6 +565,8 @@ REQUIRED_FILES=(
     "${CONFIG_DIR}/waybar/style.css"
     "${CONFIG_DIR}/kitty/kitty.conf"
     "${CONFIG_DIR}/rofi/config.rasi"
+    "${CONFIG_DIR}/swaync/config.json"
+    "${CONFIG_DIR}/swaync/style.css"
     "${CONFIG_DIR}/mako/config"
 )
 
@@ -568,7 +581,7 @@ done
 
 # Paketversionen loggen
 info "Installierte Paketversionen:"
-for pkg in hyprland waybar kitty sddm mako hyprlock hyprpaper; do
+for pkg in hyprland waybar kitty sddm swaync mako hyprlock hyprpaper; do
     if pacman -Qi "${pkg}" &>/dev/null; then
         VERSION="$(pacman -Qi "${pkg}" | grep "^Version" | awk '{print $3}')"
         echo "    ${pkg}: ${VERSION}" | tee -a "${LOG_FILE}"
