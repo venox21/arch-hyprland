@@ -32,7 +32,7 @@ hl.bind("SUPER + B",             hl.dsp.exec_cmd(browser))
 hl.bind("SUPER + I",             hl.dsp.exec_cmd(scripts .. "/settings.sh"))
 
 -- Kontrollzentrum & Benachrichtigungen (SwayNC)
-hl.bind("SUPER + N",             hl.dsp.exec_cmd("swaync-client -t -sw"))
+hl.bind("SUPER + N",             hl.dsp.exec_cmd(scripts .. "/control-center.sh --toggle"))
 hl.bind("SUPER + SHIFT + N",     hl.dsp.exec_cmd("swaync-client -d -sw"))
 
 -- ══════════════════════════════════════════════════════════════

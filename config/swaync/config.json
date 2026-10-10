@@ -3,6 +3,7 @@
   "positionX": "right",
   "positionY": "top",
   "layer": "top",
+  "control-center-layer": "top",
   "layer-shell": true,
   "cssPriority": "user",
   "control-center-margin-top": 8,
@@ -38,6 +39,7 @@
       "text": "Nicht stören (DND)"
     },
     "buttons-grid": {
+      "buttons-per-row": 2,
       "actions": [
         {
           "label": "󰤨  WLAN",
@@ -92,7 +94,7 @@
     },
     "mpris": {
       "image-size": 68,
-      "image-radius": 8
+      "show-album-art": "when-available"
     }
   }
 }

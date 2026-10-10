@@ -183,6 +183,11 @@ powersave_status() {
 
 # ── 7. SwayNC Panel umschalten ────────────────────────────────
 toggle_panel() {
+    if ! pgrep -x swaync &>/dev/null; then
+        pkill -x mako 2>/dev/null || true
+        swaync &
+        sleep 0.3
+    fi
     if command -v swaync-client &>/dev/null; then
         swaync-client -t -sw
     fi
