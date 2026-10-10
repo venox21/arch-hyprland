@@ -73,7 +73,9 @@ fi
 if ! pgrep -f "polkit" &>/dev/null; then
     if command -v hyprpolkitagent &>/dev/null; then
         hyprpolkitagent &
-    elif [[ -x /usr/lib/hyprpolkitagent ]]; then
+    elif [[ -x /usr/lib/hyprpolkitagent/hyprpolkitagent ]]; then
+        /usr/lib/hyprpolkitagent/hyprpolkitagent &
+    elif [[ -x /usr/lib/hyprpolkitagent && ! -d /usr/lib/hyprpolkitagent ]]; then
         /usr/lib/hyprpolkitagent &
     elif [[ -x /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 ]]; then
         /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &

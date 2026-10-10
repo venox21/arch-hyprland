@@ -10,11 +10,29 @@
 
 import sys
 import os
+import glob
 import re
 import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+
+# Wayland-Umgebung automatisch ermitteln (SSH / TTY Support)
+if "WAYLAND_DISPLAY" not in os.environ:
+    uid = os.getuid() if hasattr(os, "getuid") else 1000
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{uid}")
+    os.environ["XDG_RUNTIME_DIR"] = runtime_dir
+    sockets = [s for s in glob.glob(f"{runtime_dir}/wayland-*") if not s.endswith(".lock")]
+    if sockets:
+        os.environ["WAYLAND_DISPLAY"] = os.path.basename(sockets[0])
+
+if "HYPRLAND_INSTANCE_SIGNATURE" not in os.environ:
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR", "/run/user/1000")
+    hypr_dir = os.path.join(runtime_dir, "hypr")
+    if os.path.isdir(hypr_dir):
+        sigs = [f for f in os.listdir(hypr_dir) if not f.endswith(".lock")]
+        if sigs:
+            os.environ["HYPRLAND_INSTANCE_SIGNATURE"] = sigs[0]
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 

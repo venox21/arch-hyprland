@@ -4,6 +4,23 @@
 # ╚══════════════════════════════════════════════════════════════╝
 set -Eeuo pipefail
 
+# ── Wayland & Hyprland Umgebung ermitteln (SSH / TTY Support) ──
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+    wp_sock="$(find "${XDG_RUNTIME_DIR}" -maxdepth 1 -name 'wayland-*' ! -name '*.lock' 2>/dev/null | head -n 1 || true)"
+    if [[ -n "${wp_sock}" ]]; then
+        export WAYLAND_DISPLAY="$(basename "${wp_sock}")"
+    fi
+fi
+
+if [[ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    sig="$(ls -1 "${XDG_RUNTIME_DIR}/hypr" 2>/dev/null | grep -v '\.lock' | head -n 1 || true)"
+    if [[ -n "${sig}" ]]; then
+        export HYPRLAND_INSTANCE_SIGNATURE="${sig}"
+    fi
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SETTINGS_DIR="$(dirname "${SCRIPT_DIR}")/settings"
 APP="${SETTINGS_DIR}/hotkey_manager.py"
