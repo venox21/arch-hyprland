@@ -173,6 +173,59 @@ class TestConfigManager(unittest.TestCase):
         self.assertTrue(current.exists())
         self.assertEqual(current.read_bytes(), b"dummy image 1")
 
+    def test_timedate_info(self):
+        """Timedatectl Abfrage testen (mit Fallbacks)."""
+        info = self.cm.get_timedate_info()
+        self.assertIn("local_time", info)
+        self.assertIn("timezone", info)
+        self.assertIn("ntp_active", info)
+        self.assertIn("rtc_local", info)
+
+    def test_input_settings(self):
+        """Tastatur- und Mauseinstellungen laden und speichern."""
+        self.cm.hypr_dir = Path(self.temp_dir)
+        inp = self.cm.load_input_settings()
+        self.assertIn("kb_layout", inp)
+        self.assertIn("sensitivity", inp)
+        self.assertIn("natural_scroll", inp)
+
+        inp["kb_layout"] = "us"
+        inp["sensitivity"] = 0.5
+        self.assertTrue(self.cm.save_input_settings(inp))
+        input_file = self.cm.hypr_dir / "input.lua"
+        self.assertTrue(input_file.exists())
+        content = input_file.read_text(encoding="utf-8")
+        self.assertIn('kb_layout  = "us"', content)
+        self.assertIn("sensitivity = 0.50", content)
+
+    def test_save_monitor_config(self):
+        """Monitorkonfiguration speichern."""
+        self.cm.hypr_dir = Path(self.temp_dir)
+        self.assertTrue(self.cm.save_monitor_config("DP-1", 2560, 1440, 144, 1.25))
+        mon_file = self.cm.hypr_dir / "monitors.lua"
+        self.assertTrue(mon_file.exists())
+        content = mon_file.read_text(encoding="utf-8")
+        self.assertIn('output   = "DP-1"', content)
+        self.assertIn('mode     = "2560x1440@144"', content)
+        self.assertIn('scale    = "1.25"', content)
+
+    def test_theme_palettes(self):
+        """Tokyo Night Akzent-Paletten prüfen und anwenden."""
+        self.cm.hypr_dir = Path(self.temp_dir)
+        palettes = self.cm.THEME_PALETTES
+        self.assertIn("classic", palettes)
+        self.assertIn("storm", palettes)
+        self.assertIn("teal", palettes)
+        self.assertIn("neon", palettes)
+        self.assertIn("sunset", palettes)
+
+        self.assertTrue(self.cm.apply_color_theme("neon"))
+        colors_file = self.cm.hypr_dir / "colors.lua"
+        self.assertTrue(colors_file.exists())
+        content = colors_file.read_text(encoding="utf-8")
+        self.assertIn("Tokyo Night Neon", content)
+
+
 
 class TestKeybindParser(unittest.TestCase):
     """Tests für den Keybind-Parser."""

@@ -40,6 +40,28 @@ except ImportError:
     class _MockBase:
         def __init__(self, *args, **kwargs):
             pass
+        def set_selected(self, *a, **kw): pass
+        def get_selected(self, *a, **kw): return 0
+        def get_text(self, *a, **kw): return ""
+        def set_text(self, *a, **kw): pass
+        def add_suffix(self, *a, **kw): pass
+        def set_subtitle(self, *a, **kw): pass
+        def set_title(self, *a, **kw): pass
+        def add_css_class(self, *a, **kw): pass
+        def connect(self, *a, **kw): pass
+        def get_active(self, *a, **kw): return False
+        def set_active(self, *a, **kw): pass
+        def get_value(self, *a, **kw): return 0.0
+        def set_value(self, *a, **kw): pass
+        def append(self, *a, **kw): pass
+        def add(self, *a, **kw): pass
+        def set_model(self, *a, **kw): pass
+        def set_margin_start(self, *a, **kw): pass
+        def set_margin_end(self, *a, **kw): pass
+        def set_margin_top(self, *a, **kw): pass
+        def set_margin_bottom(self, *a, **kw): pass
+        @classmethod
+        def new_with_range(cls, *a, **kw): return cls()
     class _MockAdw:
         Application = _MockBase
         ApplicationWindow = _MockBase
@@ -60,10 +82,12 @@ except ImportError:
         ListBox = _MockBase
         SelectionMode = type("SelectionMode", (), {"SINGLE": 0})
         Orientation = type("Orientation", (), {"VERTICAL": 0, "HORIZONTAL": 1})
+        Align = type("Align", (), {"CENTER": 0, "START": 1, "END": 2})
         ScrolledWindow = _MockBase
         Label = _MockBase
         Image = _MockBase
         FlowBox = _MockBase
+        StringList = type("StringList", (), {"new": staticmethod(lambda items: _MockBase())})
         class IconTheme:
             @staticmethod
             def get_for_display(display):
@@ -193,6 +217,17 @@ class SettingsWindow(Adw.ApplicationWindow):
                 "x-office-calendar-symbolic",
                 "appointment-soon-symbolic",
             ], self._page_clock),
+            ("Eingabegeräte", [
+                "input-mouse-symbolic",
+                "input-keyboard-symbolic",
+                "preferences-desktop-peripherals-symbolic",
+                "input-gaming-symbolic",
+            ], self._page_input),
+            ("Monitore & Bildschirme", [
+                "video-display-symbolic",
+                "preferences-desktop-display-symbolic",
+                "display-symbolic",
+            ], self._page_monitors),
             ("Systemleistung", [
                 "utilities-system-monitor-symbolic",
                 "speedometer-symbolic",
@@ -690,27 +725,130 @@ class SettingsWindow(Adw.ApplicationWindow):
         return box
 
     def _page_clock(self) -> Gtk.Widget:
-        """Uhr-Einstellungen."""
+        """Uhr- und Systemzeit-Einstellungen."""
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         box.set_margin_top(16)
         box.set_margin_bottom(16)
 
-        clock = self.settings.get("clock", {})
-        group = Adw.PreferencesGroup(title="Uhr", description="Uhrzeit und Datumseinstellungen")
+        # ── 1. Systemzeit & Zeitsynchronisation ──────────────────
+        timedate = self.config.get_timedate_info()
+        sys_group = Adw.PreferencesGroup(
+            title="Systemzeit & Zeitsynchronisation",
+            description="Rechner-Uhrzeit, Internet-Synchronisation (NTP) und Zeitzone",
+        )
 
-        # 24-Stunden-Format
+        status_row = Adw.ActionRow(
+            title="Aktuelle Systemzeit",
+            subtitle=f"{timedate.get('local_time', '')} ({timedate.get('timezone', '')})",
+        )
+        refresh_btn = Gtk.Button(label="Aktualisieren", valign=Gtk.Align.CENTER)
+        def on_refresh_time(_):
+            fresh = self.config.get_timedate_info()
+            status_row.set_subtitle(f"{fresh.get('local_time', '')} ({fresh.get('timezone', '')})")
+            ntp_row.set_active(fresh.get("ntp_active", True))
+        refresh_btn.connect("clicked", on_refresh_time)
+        status_row.add_suffix(refresh_btn)
+        sys_group.add(status_row)
+
+        ntp_row = Adw.SwitchRow(
+            title="Automatische Uhrzeit (NTP / Internet)",
+            subtitle="Gleicht die Uhrzeit automatisch über Zeitserver im Internet ab",
+        )
+        ntp_row.set_active(timedate.get("ntp_active", True))
+        def on_ntp_toggled(r, _):
+            ok, msg = self.config.set_ntp(r.get_active())
+            if not ok:
+                self._show_info("NTP-Fehler", msg)
+        ntp_row.connect("notify::active", on_ntp_toggled)
+        sys_group.add(ntp_row)
+
+        tz_row = Adw.ComboRow(
+            title="Zeitzone",
+            subtitle="Regionale Zeitzone für Sommer- und Winterzeit",
+        )
+        tz_options = [
+            ("Europe/Berlin (Deutschland / MEZ)", "Europe/Berlin"),
+            ("Europe/Vienna (Österreich)", "Europe/Vienna"),
+            ("Europe/Zurich (Schweiz)", "Europe/Zurich"),
+            ("Europe/London (Großbritannien / GMT)", "Europe/London"),
+            ("UTC (Koordinierte Weltzeit)", "UTC"),
+            ("America/New_York (US Osten / EST)", "America/New_York"),
+            ("America/Los_Angeles (US Westen / PST)", "America/Los_Angeles"),
+            ("Asia/Tokyo (Japan / JST)", "Asia/Tokyo"),
+        ]
+        tz_labels = [opt[0] for opt in tz_options]
+        tz_model = Gtk.StringList.new(tz_labels)
+        tz_row.set_model(tz_model)
+
+        curr_tz = timedate.get("timezone", "Europe/Berlin")
+        selected_idx = 0
+        for i, opt in enumerate(tz_options):
+            if opt[1] == curr_tz:
+                selected_idx = i
+                break
+        tz_row.set_selected(selected_idx)
+
+        def on_tz_changed(r, _):
+            idx = r.get_selected()
+            if idx < len(tz_options):
+                chosen_tz = tz_options[idx][1]
+                ok, msg = self.config.set_timezone(chosen_tz)
+                if ok:
+                    fresh = self.config.get_timedate_info()
+                    status_row.set_subtitle(f"{fresh.get('local_time', '')} ({fresh.get('timezone', '')})")
+                else:
+                    self._show_info("Zeitzonen-Fehler", msg)
+        tz_row.connect("notify::selected", on_tz_changed)
+        sys_group.add(tz_row)
+
+        manual_row = Adw.EntryRow(title="Manuelle Zeit setzen (Format: HH:MM:SS)")
+        set_time_btn = Gtk.Button(label="Uhrzeit setzen", valign=Gtk.Align.CENTER)
+        set_time_btn.add_css_class("suggested-action")
+        def on_set_manual_time(_):
+            val = manual_row.get_text().strip()
+            if not val:
+                self._show_info("Eingabefehler", "Bitte eine Uhrzeit im Format HH:MM:SS angeben.")
+                return
+            ok, msg = self.config.set_system_time(val)
+            if ok:
+                ntp_row.set_active(False)
+                fresh = self.config.get_timedate_info()
+                status_row.set_subtitle(f"{fresh.get('local_time', '')} ({fresh.get('timezone', '')})")
+                self._show_info("Uhrzeit aktualisiert", f"Systemzeit erfolgreich auf {val} gesetzt.")
+            else:
+                self._show_info("Fehler", msg)
+        set_time_btn.connect("clicked", on_set_manual_time)
+        manual_row.add_suffix(set_time_btn)
+        sys_group.add(manual_row)
+
+        rtc_row = Adw.SwitchRow(
+            title="Hardware-Uhr (RTC) auf lokale Zeit stellen",
+            subtitle="Empfohlen bei Windows Dual-Boot gegen Zeitversatz",
+        )
+        rtc_row.set_active(timedate.get("rtc_local", False))
+        def on_rtc_toggled(r, _):
+            ok, msg = self.config.set_rtc_mode(r.get_active())
+            if not ok:
+                self._show_info("RTC-Fehler", msg)
+        rtc_row.connect("notify::active", on_rtc_toggled)
+        sys_group.add(rtc_row)
+
+        box.append(sys_group)
+
+        # ── 2. Anzeige in der Waybar ─────────────────────────────
+        clock = self.settings.get("clock", {})
+        group = Adw.PreferencesGroup(title="Anzeige in der Waybar", description="Format der Uhr in der Statusleiste")
+
         fmt_row = Adw.SwitchRow(title="24-Stunden-Format")
         fmt_row.set_active(clock.get("format_24h", True))
         fmt_row.connect("notify::active", lambda r, _: self._update_setting("clock", "format_24h", r.get_active()))
         group.add(fmt_row)
 
-        # Datum anzeigen
         date_row = Adw.SwitchRow(title="Datum anzeigen")
         date_row.set_active(clock.get("show_date", False))
         date_row.connect("notify::active", lambda r, _: self._update_setting("clock", "show_date", r.get_active()))
         group.add(date_row)
 
-        # Datumsformat
         datefmt_row = Adw.ComboRow(title="Datumsformat")
         formats = Gtk.StringList.new(["%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d", "%d. %B %Y"])
         datefmt_row.set_model(formats)
@@ -721,19 +859,16 @@ class SettingsWindow(Adw.ApplicationWindow):
             "clock", "date_format", fmt_list[r.get_selected()] if r.get_selected() < len(fmt_list) else fmt_list[0]))
         group.add(datefmt_row)
 
-        # Sekunden
         sec_row = Adw.SwitchRow(title="Sekunden anzeigen")
         sec_row.set_active(clock.get("show_seconds", False))
         sec_row.connect("notify::active", lambda r, _: self._update_setting("clock", "show_seconds", r.get_active()))
         group.add(sec_row)
 
-        # Zeitzone
-        tz_row = Adw.SwitchRow(title="Zeitzone anzeigen")
-        tz_row.set_active(clock.get("show_timezone", False))
-        tz_row.connect("notify::active", lambda r, _: self._update_setting("clock", "show_timezone", r.get_active()))
-        group.add(tz_row)
+        tz_disp_row = Adw.SwitchRow(title="Zeitzone anzeigen")
+        tz_disp_row.set_active(clock.get("show_timezone", False))
+        tz_disp_row.connect("notify::active", lambda r, _: self._update_setting("clock", "show_timezone", r.get_active()))
+        group.add(tz_disp_row)
 
-        # Tooltip
         tip_row = Adw.SwitchRow(title="Tooltip aktivieren")
         tip_row.set_active(clock.get("tooltip_enabled", True))
         tip_row.connect("notify::active", lambda r, _: self._update_setting("clock", "tooltip_enabled", r.get_active()))
@@ -741,12 +876,203 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         box.append(group)
 
-        # Speichern
         apply_btn = Gtk.Button(label="Anwenden und Waybar neu starten")
         apply_btn.add_css_class("suggested-action")
         apply_btn.set_margin_start(16)
         apply_btn.set_margin_end(16)
         apply_btn.connect("clicked", self._apply_waybar_settings)
+        box.append(apply_btn)
+
+        return box
+
+    def _page_input(self) -> Gtk.Widget:
+        """Eingabegeräte – Tastaturlayout, Maus und Touchpad."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        box.set_margin_top(16)
+        box.set_margin_bottom(16)
+
+        inp = self.config.load_input_settings()
+
+        # Tastatur
+        kb_group = Adw.PreferencesGroup(title="Tastatur", description="Tastaturlayout und Eingabesprache")
+        layout_row = Adw.ComboRow(title="Tastaturlayout", subtitle="Sofort aktiv für alle neuen Fenster")
+        kb_options = [
+            ("Deutsch (QWERTZ) - Standard", "de", ""),
+            ("Deutsch (ohne Akzenttasten / nodeadkeys)", "de", "nodeadkeys"),
+            ("Englisch / US (QWERTY)", "us", ""),
+            ("Schweiz (Deutsch/Französisch)", "ch", ""),
+            ("UK (Großbritannien)", "gb", ""),
+        ]
+        layout_row.set_model(Gtk.StringList.new([opt[0] for opt in kb_options]))
+        cur_layout = inp.get("kb_layout", "de")
+        cur_variant = inp.get("kb_variant", "")
+        selected_idx = 0
+        for i, opt in enumerate(kb_options):
+            if opt[1] == cur_layout and opt[2] == cur_variant:
+                selected_idx = i
+                break
+        layout_row.set_selected(selected_idx)
+
+        def on_layout_changed(r, _):
+            idx = r.get_selected()
+            if idx < len(kb_options):
+                inp["kb_layout"] = kb_options[idx][1]
+                inp["kb_variant"] = kb_options[idx][2]
+                self.config.save_input_settings(inp)
+        layout_row.connect("notify::selected", on_layout_changed)
+        kb_group.add(layout_row)
+        box.append(kb_group)
+
+        # Maus
+        mouse_group = Adw.PreferencesGroup(title="Maus", description="Zeigergeschwindigkeit und Beschleunigung")
+        sens_row = Adw.SpinRow.new_with_range(-1.0, 1.0, 0.05)
+        sens_row.set_title("Mausempfindlichkeit (-1.0 bis +1.0)")
+        sens_row.set_subtitle("0.0 = Standard, höhere Werte = schneller")
+        sens_row.set_value(float(inp.get("sensitivity", 0.0)))
+        def on_sens_changed(r, _):
+            inp["sensitivity"] = float(r.get_value())
+            self.config.save_input_settings(inp)
+        sens_row.connect("notify::value", on_sens_changed)
+        mouse_group.add(sens_row)
+        box.append(mouse_group)
+
+        # Touchpad
+        touch_group = Adw.PreferencesGroup(title="Touchpad", description="Gesten und Verhalten für Laptops")
+        nat_row = Adw.SwitchRow(
+            title="Natürliches Scrollen (Natural Scroll)",
+            subtitle="Inhalt bewegt sich in Fingerrichtung wie auf Smartphones",
+        )
+        nat_row.set_active(inp.get("natural_scroll", True))
+        def on_nat_toggled(r, _):
+            inp["natural_scroll"] = r.get_active()
+            self.config.save_input_settings(inp)
+        nat_row.connect("notify::active", on_nat_toggled)
+        touch_group.add(nat_row)
+
+        tap_row = Adw.SwitchRow(
+            title="Tippen zum Klicken (Tap-to-Click)",
+            subtitle="Leichtes Antippen der Touchpad-Oberfläche als Klick werten",
+        )
+        tap_row.set_active(inp.get("tap_to_click", True))
+        def on_tap_toggled(r, _):
+            inp["tap_to_click"] = r.get_active()
+            self.config.save_input_settings(inp)
+        tap_row.connect("notify::active", on_tap_toggled)
+        touch_group.add(tap_row)
+
+        type_row = Adw.SwitchRow(
+            title="Während des Tippens deaktivieren",
+            subtitle="Verhindert versehentliche Zeigersprünge beim Schreiben",
+        )
+        type_row.set_active(inp.get("disable_while_typing", True))
+        def on_type_toggled(r, _):
+            inp["disable_while_typing"] = r.get_active()
+            self.config.save_input_settings(inp)
+        type_row.connect("notify::active", on_type_toggled)
+        touch_group.add(type_row)
+        box.append(touch_group)
+
+        save_btn = Gtk.Button(label="Eingabeeinstellungen speichern & anwenden")
+        save_btn.add_css_class("suggested-action")
+        save_btn.set_margin_start(16)
+        save_btn.set_margin_end(16)
+        save_btn.connect("clicked", lambda _: (self.config.save_input_settings(inp), self._show_info("Eingabegeräte", "Tastatur- und Mauseinstellungen erfolgreich angewendet!")))
+        box.append(save_btn)
+
+        return box
+
+    def _page_monitors(self) -> Gtk.Widget:
+        """Monitore & Bildschirme – Auflösung, Hz und Skalierung."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        box.set_margin_top(16)
+        box.set_margin_bottom(16)
+
+        # Aktuelle Monitore
+        mon_group = Adw.PreferencesGroup(title="Erkannte Monitore", description="Aktuell an das System angeschlossene Displays")
+        monitors = self.config.get_monitors()
+        primary_name = ""
+        if monitors and isinstance(monitors, list):
+            for m in monitors:
+                name = m.get("name", "Display")
+                if not primary_name:
+                    primary_name = name
+                w = m.get("width", 1920)
+                h = m.get("height", 1080)
+                hz = m.get("refreshRate", 60)
+                scale = m.get("scale", 1.0)
+                row = Adw.ActionRow(
+                    title=f"Monitor: {name}",
+                    subtitle=f"Auflösung: {w}x{h} @ {hz:.0f} Hz  |  Skalierung: {scale:.2f}x",
+                )
+                mon_group.add(row)
+        else:
+            mon_group.add(Adw.ActionRow(title="Keine Monitordaten", subtitle="Hyprland läuft nicht oder kein Display erkannt"))
+        box.append(mon_group)
+
+        # Bildschirmeinstellungen
+        cfg_group = Adw.PreferencesGroup(title="Bildschirm-Einstellungen", description="Auflösung, Bildwiederholrate (Hz) und Skalierung festlegen")
+
+        hz_row = Adw.ComboRow(title="Bildwiederholfrequenz (Hz)", subtitle="Höhere Hz-Werte sorgen für flüssigere Bewegungen")
+        hz_options = [
+            ("Automatisch (Standard)", 0),
+            ("60 Hz (Standard)", 60),
+            ("75 Hz", 75),
+            ("120 Hz", 120),
+            ("144 Hz (Gaming)", 144),
+            ("165 Hz (Gaming)", 165),
+            ("240 Hz (High Refresh)", 240),
+        ]
+        hz_row.set_model(Gtk.StringList.new([opt[0] for opt in hz_options]))
+        hz_row.set_selected(0)
+        cfg_group.add(hz_row)
+
+        res_row = Adw.ComboRow(title="Auflösung", subtitle="Native Pixelauflösung des Bildschirms")
+        res_options = [
+            ("Automatisch / Bevorzugt", 0, 0),
+            ("1920 x 1080 (Full HD 1080p)", 1920, 1080),
+            ("2560 x 1440 (2K / WQHD 1440p)", 2560, 1440),
+            ("3840 x 2160 (4K / UHD)", 3840, 2160),
+            ("1366 x 768 (Laptop HD)", 1366, 768),
+        ]
+        res_row.set_model(Gtk.StringList.new([opt[0] for opt in res_options]))
+        res_row.set_selected(0)
+        cfg_group.add(res_row)
+
+        scale_row = Adw.ComboRow(title="Skalierung (UI-Größe)", subtitle="Vergrößert Schrift und Fenster auf hochauflösenden Displays")
+        scale_options = [
+            ("100% (1.0x - Normal)", 1.0),
+            ("125% (1.25x)", 1.25),
+            ("150% (1.5x)", 1.5),
+            ("175% (1.75x)", 1.75),
+            ("200% (2.0x - HiDPI)", 2.0),
+        ]
+        scale_row.set_model(Gtk.StringList.new([opt[0] for opt in scale_options]))
+        scale_row.set_selected(0)
+        cfg_group.add(scale_row)
+        box.append(cfg_group)
+
+        apply_btn = Gtk.Button(label="Monitoreinstellungen speichern & anwenden")
+        apply_btn.add_css_class("suggested-action")
+        apply_btn.set_margin_start(16)
+        apply_btn.set_margin_end(16)
+
+        def on_apply_monitor(_):
+            hz_idx = hz_row.get_selected()
+            res_idx = res_row.get_selected()
+            sc_idx = scale_row.get_selected()
+
+            hz_val = hz_options[hz_idx][1] if hz_idx < len(hz_options) else 0
+            w_val = res_options[res_idx][1] if res_idx < len(res_options) else 0
+            h_val = res_options[res_idx][2] if res_idx < len(res_options) else 0
+            sc_val = scale_options[sc_idx][1] if sc_idx < len(scale_options) else 1.0
+
+            ok = self.config.save_monitor_config(primary_name, w_val, h_val, hz_val, sc_val)
+            if ok:
+                self._show_info("Monitore", "Bildschirmeinstellungen erfolgreich in monitors.lua gespeichert und angewendet!")
+            else:
+                self._show_info("Fehler", "Monitoreinstellungen konnten nicht angewendet werden.")
+
+        apply_btn.connect("clicked", on_apply_monitor)
         box.append(apply_btn)
 
         return box
@@ -941,13 +1267,48 @@ class SettingsWindow(Adw.ApplicationWindow):
         return box
 
     def _page_colors(self) -> Gtk.Widget:
-        """Farben und Transparenz."""
+        """Farben, Tokyo Night Akzente und Transparenz."""
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         box.set_margin_top(16)
         box.set_margin_bottom(16)
 
-        app = self.settings.get("appearance", {})
+        # ── 1. Tokyo Night Farbschemata ────────────────────────
+        palettes = getattr(self.config, "THEME_PALETTES", {})
+        theme_group = Adw.PreferencesGroup(
+            title="Tokyo Night Farbschemata & Akzente",
+            description="Passe die Primär- und Rahmen-Akzentfarben des gesamten Desktops an",
+        )
 
+        theme_row = Adw.ComboRow(title="Akzentfarb-Schema", subtitle="Ändert Fensterrahmen-Gradienten, Waybar- und Systemfarben")
+        theme_keys = list(palettes.keys()) if palettes else ["classic"]
+        theme_labels = [palettes[k]["name"] for k in theme_keys] if palettes else ["Tokyo Night Classic"]
+        theme_row.set_model(Gtk.StringList.new(theme_labels))
+
+        cur_variant = self.settings.get("theme", {}).get("variant", "classic")
+        selected_idx = theme_keys.index(cur_variant) if cur_variant in theme_keys else 0
+        theme_row.set_selected(selected_idx)
+        theme_group.add(theme_row)
+
+        apply_theme_btn = Gtk.Button(label="Farbschema sofort anwenden")
+        apply_theme_btn.add_css_class("suggested-action")
+        apply_theme_btn.set_margin_start(16)
+        apply_theme_btn.set_margin_end(16)
+
+        def on_theme_clicked(_):
+            idx = theme_row.get_selected()
+            if idx < len(theme_keys):
+                k = theme_keys[idx]
+                if self.config.apply_color_theme(k):
+                    self._show_info("Farbschema gewechselt", f"Akzentfarben erfolgreich auf '{palettes[k]['name']}' umgestellt!")
+                else:
+                    self._show_info("Fehler", "Farbschema konnte nicht angewendet werden.")
+
+        apply_theme_btn.connect("clicked", on_theme_clicked)
+        theme_group.add(apply_theme_btn)
+        box.append(theme_group)
+
+        # ── 2. Transparenz ────────────────────────────────────
+        app = self.settings.get("appearance", {})
         group = Adw.PreferencesGroup(title="Transparenz", description="Fenster-Durchsichtigkeit")
 
         # Aktive Fenster-Transparenz (als Prozent)

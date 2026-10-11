@@ -280,6 +280,319 @@ class ConfigManager:
             print(f"Backup-Fehler: {e}")
             return None
 
+    # ── Systemzeit, NTP & Zeitzone ───────────────────────────
+
+    def get_timedate_info(self) -> dict:
+        """Liest aktuelle Zeit-, NTP- und Zeitzoneninformationen aus."""
+        info = {
+            "local_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timezone": "Europe/Berlin",
+            "ntp_active": True,
+            "rtc_local": False,
+        }
+        try:
+            res = subprocess.run(["timedatectl", "status"], capture_output=True, text=True, timeout=3)
+            if res.returncode == 0:
+                for line in res.stdout.splitlines():
+                    line = line.strip()
+                    if line.startswith("Local time:"):
+                        info["local_time"] = line.split("Local time:", 1)[1].strip()
+                    elif line.startswith("Time zone:"):
+                        tz_part = line.split("Time zone:", 1)[1].strip()
+                        info["timezone"] = tz_part.split()[0] if tz_part else "Europe/Berlin"
+                    elif "NTP service: active" in line or "System clock synchronized: yes" in line:
+                        info["ntp_active"] = True
+                    elif "NTP service: inactive" in line or "System clock synchronized: no" in line:
+                        info["ntp_active"] = False
+                    elif "RTC in local TZ: yes" in line:
+                        info["rtc_local"] = True
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        return info
+
+    def set_ntp(self, enabled: bool) -> tuple[bool, str]:
+        """Aktiviert oder deaktiviert NTP (automatische Zeitsynchronisation)."""
+        val = "true" if enabled else "false"
+        cmd = ["timedatectl", "set-ntp", val]
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            if res.returncode == 0:
+                return True, f"NTP {'aktiviert' if enabled else 'deaktiviert'}"
+            res_pk = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True, timeout=10)
+            if res_pk.returncode == 0:
+                return True, f"NTP {'aktiviert' if enabled else 'deaktiviert'}"
+            return False, res.stderr or res_pk.stderr or "Berechtigung verweigert"
+        except (OSError, subprocess.TimeoutExpired) as e:
+            return False, str(e)
+
+    def set_timezone(self, tz: str) -> tuple[bool, str]:
+        """Setzt die Systemzeitzone."""
+        cmd = ["timedatectl", "set-timezone", tz]
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            if res.returncode == 0:
+                return True, f"Zeitzone auf {tz} gesetzt"
+            res_pk = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True, timeout=10)
+            if res_pk.returncode == 0:
+                return True, f"Zeitzone auf {tz} gesetzt"
+            return False, res.stderr or res_pk.stderr or "Berechtigung verweigert"
+        except (OSError, subprocess.TimeoutExpired) as e:
+            return False, str(e)
+
+    def set_system_time(self, time_str: str) -> tuple[bool, str]:
+        """Setzt die Systemzeit manuell (deaktiviert zuvor NTP)."""
+        try:
+            subprocess.run(["timedatectl", "set-ntp", "false"], capture_output=True, timeout=3)
+            cmd = ["timedatectl", "set-time", time_str]
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            if res.returncode == 0:
+                return True, f"Uhrzeit auf {time_str} gesetzt"
+            res_pk = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True, timeout=10)
+            if res_pk.returncode == 0:
+                return True, f"Uhrzeit auf {time_str} gesetzt"
+            return False, res.stderr or res_pk.stderr or "Fehler beim Setzen der Uhrzeit"
+        except (OSError, subprocess.TimeoutExpired) as e:
+            return False, str(e)
+
+    def set_rtc_mode(self, local_tz: bool) -> tuple[bool, str]:
+        """Konfiguriert Hardware-Uhr (RTC). local_tz=True verhindert Zeitversatz bei Windows Dual-Boot."""
+        val = "1" if local_tz else "0"
+        cmd = ["timedatectl", "set-local-rtc", val, "--adjust-system-clock"]
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            if res.returncode == 0:
+                return True, "RTC-Modus aktualisiert"
+            res_pk = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True, timeout=10)
+            if res_pk.returncode == 0:
+                return True, "RTC-Modus aktualisiert"
+            return False, res.stderr or "Berechtigung verweigert"
+        except (OSError, subprocess.TimeoutExpired) as e:
+            return False, str(e)
+
+    # ── Eingabegeräte (Maus, Touchpad, Tastaturlayout) ───────
+
+    def load_input_settings(self) -> dict:
+        """Lädt die aktuellen Tastatur- und Mauseinstellungen."""
+        settings = self.load_settings().get("input", {})
+        defaults = self._default_settings()["input"]
+        return self._deep_merge(defaults, settings)
+
+    def save_input_settings(self, inp: dict) -> bool:
+        """Speichert Tastatur- und Mauseinstellungen und aktualisiert input.lua."""
+        self.update_setting("input", "kb_layout", inp.get("kb_layout", "de"))
+        self.update_setting("input", "kb_variant", inp.get("kb_variant", ""))
+        self.update_setting("input", "sensitivity", inp.get("sensitivity", 0.0))
+        self.update_setting("input", "natural_scroll", inp.get("natural_scroll", True))
+        self.update_setting("input", "tap_to_click", inp.get("tap_to_click", True))
+        self.update_setting("input", "disable_while_typing", inp.get("disable_while_typing", True))
+
+        input_file = self.hypr_dir / "input.lua"
+        content = f"""-- ╔══════════════════════════════════════════════════════════════╗
+-- ║  Eingabegeräte – Tastatur, Maus, Touchpad                  ║
+-- ╚══════════════════════════════════════════════════════════════╝
+
+hl.config({{
+    input = {{
+        kb_layout  = "{inp.get('kb_layout', 'de')}",
+        kb_variant = "{inp.get('kb_variant', '')}",
+        kb_model   = "",
+        kb_options = "",
+        kb_rules   = "",
+
+        follow_mouse = 1,
+        sensitivity = {inp.get('sensitivity', 0.0):.2f},
+
+        repeat_rate  = 25,
+        repeat_delay = 600,
+
+        touchpad = {{
+            natural_scroll    = {'true' if inp.get('natural_scroll', True) else 'false'},
+            disable_while_typing = {'true' if inp.get('disable_while_typing', True) else 'false'},
+            tap_to_click      = {'true' if inp.get('tap_to_click', True) else 'false'},
+            drag_lock         = false,
+            scroll_factor     = 1.0,
+        }},
+    }},
+
+    cursor = {{
+        no_hardware_cursors = false,
+        inactive_timeout    = 5,
+    }},
+}})
+
+hl.gesture({{
+    fingers   = 3,
+    direction = "horizontal",
+    action    = "workspace",
+}})
+
+hl.env("XCURSOR_SIZE", "24")
+hl.env("HYPRCURSOR_SIZE", "24")
+hl.env("XCURSOR_THEME", "Adwaita")
+"""
+        try:
+            input_file.parent.mkdir(parents=True, exist_ok=True)
+            self._backup_file(input_file)
+            input_file.write_text(content, encoding="utf-8")
+
+            # Sofort per hyprctl anwenden
+            try:
+                subprocess.run(["hyprctl", "keyword", "input:kb_layout", inp.get("kb_layout", "de")], capture_output=True, timeout=2)
+                subprocess.run(["hyprctl", "keyword", "input:kb_variant", inp.get("kb_variant", "")], capture_output=True, timeout=2)
+                subprocess.run(["hyprctl", "keyword", "input:sensitivity", str(inp.get("sensitivity", 0.0))], capture_output=True, timeout=2)
+                subprocess.run(["hyprctl", "keyword", "input:touchpad:natural_scroll", "true" if inp.get("natural_scroll", True) else "false"], capture_output=True, timeout=2)
+                subprocess.run(["hyprctl", "keyword", "input:touchpad:tap-to-click", "true" if inp.get("tap_to_click", True) else "false"], capture_output=True, timeout=2)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+            return True
+        except OSError as e:
+            print(f"Fehler beim Speichern von input.lua: {e}")
+            return False
+
+    # ── Monitore & Bildschirme ─────────────────────────────────
+
+    def save_monitor_config(self, output: str, width: int, height: int, hz: int, scale: float) -> bool:
+        """Speichert Monitoreinstellungen in monitors.lua und wendet sie an."""
+        mon_file = self.hypr_dir / "monitors.lua"
+        mode_str = f"{width}x{height}@{hz}" if width > 0 and height > 0 and hz > 0 else "preferred"
+        scale_str = f"{scale:.2f}" if scale > 0 else "1"
+
+        content = f"""-- ╔══════════════════════════════════════════════════════════════╗
+-- ║  Monitor-Konfiguration                                      ║
+-- ║  Automatische Erkennung + individuelle Profile              ║
+-- ╚══════════════════════════════════════════════════════════════╝
+
+hl.monitor({{
+    output   = "{output}",
+    mode     = "{mode_str}",
+    position = "auto",
+    scale    = "{scale_str}",
+}})
+"""
+        try:
+            mon_file.parent.mkdir(parents=True, exist_ok=True)
+            self._backup_file(mon_file)
+            mon_file.write_text(content, encoding="utf-8")
+
+            try:
+                mon_arg = f"{output},{mode_str},auto,{scale_str}" if output else f",{mode_str},auto,{scale_str}"
+                subprocess.run(["hyprctl", "keyword", "monitor", mon_arg], capture_output=True, timeout=3)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+            return True
+        except OSError as e:
+            print(f"Fehler beim Speichern von monitors.lua: {e}")
+            return False
+
+    # ── Tokyo Night Farbvarianten ──────────────────────────────
+
+    THEME_PALETTES = {
+        "classic": {
+            "name": "Tokyo Night Classic (Blau & Lila)",
+            "primary": "#7aa2f7",
+            "secondary": "#bb9af7",
+            "rgba_primary": "rgba(7aa2f7ee)",
+            "rgba_secondary": "rgba(bb9af7ee)",
+        },
+        "storm": {
+            "name": "Tokyo Night Storm (Cyan & Blau)",
+            "primary": "#7dcfff",
+            "secondary": "#7aa2f7",
+            "rgba_primary": "rgba(7dcfffee)",
+            "rgba_secondary": "rgba(7aa2f7ee)",
+        },
+        "teal": {
+            "name": "Tokyo Night Cyberpunk (Teal & Cyan)",
+            "primary": "#73daca",
+            "secondary": "#2ac3de",
+            "rgba_primary": "rgba(73dacaee)",
+            "rgba_secondary": "rgba(2ac3deee)",
+        },
+        "neon": {
+            "name": "Tokyo Night Neon (Lila & Pink)",
+            "primary": "#bb9af7",
+            "secondary": "#f7768e",
+            "rgba_primary": "rgba(bb9af7ee)",
+            "rgba_secondary": "rgba(f7768eee)",
+        },
+        "sunset": {
+            "name": "Tokyo Night Sunset (Orange & Gold)",
+            "primary": "#ff9e64",
+            "secondary": "#e0af68",
+            "rgba_primary": "rgba(ff9e64ee)",
+            "rgba_secondary": "rgba(e0af68ee)",
+        },
+    }
+
+    def apply_color_theme(self, theme_key: str) -> bool:
+        """Wendet ein Tokyo Night Akzentfarb-Schema an."""
+        if theme_key not in self.THEME_PALETTES:
+            return False
+        palette = self.THEME_PALETTES[theme_key]
+        self.update_setting("theme", "variant", theme_key)
+
+        colors_file = self.hypr_dir / "colors.lua"
+        content = f"""-- ╔══════════════════════════════════════════════════════════════╗
+-- ║  Tokyo Night – Zentrale Farbpalette                        ║
+-- ║  Farbvariante: {palette['name']}
+-- ╚══════════════════════════════════════════════════════════════╝
+
+local M = {{}}
+
+-- ── Hintergrund ──────────────────────────────────────────────
+M.bg_dark   = "rgba(1a1b26ff)"
+M.bg        = "rgba(24283bff)"
+M.bg_light  = "rgba(292e42ff)"
+M.bg_hl     = "rgba(33467cff)"
+
+-- ── Vordergrund ──────────────────────────────────────────────
+M.fg        = "rgba(c0caf5ff)"
+M.fg_dark   = "rgba(a9b1d6ff)"
+M.fg_gutter = "rgba(3b4261ff)"
+
+-- ── Farben ───────────────────────────────────────────────────
+M.red       = "rgba(f7768eff)"
+M.orange    = "rgba(ff9e64ff)"
+M.yellow    = "rgba(e0af68ff)"
+M.green     = "rgba(9ece6aff)"
+M.teal      = "rgba(73dacaff)"
+M.cyan      = "rgba(7dcfffff)"
+M.blue      = "rgba(7aa2f7ff)"
+M.magenta   = "rgba(bb9af7ff)"
+M.purple    = "rgba(9d7cd8ff)"
+
+-- ── Rahmen und Oberflächen ───────────────────────────────────
+M.border_active   = "{palette['rgba_primary']}"
+M.border_inactive = "rgba(33467caa)"
+M.border_locked   = "{palette['rgba_secondary']}"
+
+-- ── Schatten ─────────────────────────────────────────────────
+M.shadow = 0xee1a1b26
+
+-- ── Gradient für aktive Rahmen ───────────────────────────────
+M.border_gradient = {{
+    colors = {{ "{palette['rgba_primary']}", "{palette['rgba_secondary']}" }},
+    angle  = 45,
+}}
+
+-- ── Transparenzstufen ────────────────────────────────────────
+M.opacity_active   = 1.0
+M.opacity_inactive = 0.92
+M.dim_inactive     = 0.08
+
+return M
+"""
+        try:
+            colors_file.parent.mkdir(parents=True, exist_ok=True)
+            self._backup_file(colors_file)
+            colors_file.write_text(content, encoding="utf-8")
+            self.reload_hyprland()
+            self.restart_waybar()
+            return True
+        except OSError as e:
+            print(f"Fehler beim Setzen des Farbschemas: {e}")
+            return False
+
     # ── Hilfsfunktionen ───────────────────────────────────────
 
     def _backup_file(self, path: Path):
@@ -355,5 +668,21 @@ class ConfigManager:
                 "active_opacity": 1.0,
                 "inactive_opacity": 0.92,
                 "animations_enabled": True,
+            },
+            "input": {
+                "kb_layout": "de",
+                "kb_variant": "",
+                "sensitivity": 0.0,
+                "natural_scroll": True,
+                "tap_to_click": True,
+                "disable_while_typing": True,
+                "follow_mouse": 1,
+            },
+            "monitors": {
+                "profile": "auto",
+                "custom": {},
+            },
+            "theme": {
+                "variant": "classic",
             },
         }
