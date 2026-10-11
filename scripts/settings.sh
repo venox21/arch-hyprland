@@ -21,23 +21,26 @@ if [[ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
     fi
 fi
 
+# Auto-Sync: Falls ein Git-Repository mit neueren Einstellungsdateien existiert, automatisch synchronisieren
+APP=""
+for candidate in "${HOME}/arch-hyrland" "${HOME}/tokyo-hypr-dots" "${HOME}/arch-hyprland" "${HOME}/hyprland"; do
+    if [[ -d "${candidate}/settings" && -f "${candidate}/settings/app.py" ]]; then
+        mkdir -p "${HOME}/.config/hypr/settings"
+        cp -u "${candidate}/settings/"*.py "${HOME}/.config/hypr/settings/" 2>/dev/null || cp -f "${candidate}/settings/"*.py "${HOME}/.config/hypr/settings/" 2>/dev/null || true
+        APP="${HOME}/.config/hypr/settings/app.py"
+        break
+    fi
+done
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SETTINGS_DIR="$(dirname "${SCRIPT_DIR}")/settings"
-APP="${SETTINGS_DIR}/app.py"
 
-if [[ ! -f "${APP}" ]]; then
-    # Fallback: Im installierten Pfad suchen
-    APP="${HOME}/.config/hypr/settings/app.py"
+if [[ -z "${APP}" || ! -f "${APP}" ]]; then
+    APP="${SETTINGS_DIR}/app.py"
 fi
 
 if [[ ! -f "${APP}" ]]; then
-    # Fallback: Im Repository-Pfad suchen
-    for candidate in "${HOME}/tokyo-hypr-dots" "${HOME}/arch-hyprland" "${HOME}/arch-hyrland" "${HOME}/hyprland"; do
-        if [[ -f "${candidate}/settings/app.py" ]]; then
-            APP="${candidate}/settings/app.py"
-            break
-        fi
-    done
+    APP="${HOME}/.config/hypr/settings/app.py"
 fi
 
 if [[ ! -f "${APP}" ]]; then

@@ -205,7 +205,7 @@ class SettingsWindow(Adw.ApplicationWindow):
                 "org.gnome.Settings-symbolic",
                 "preferences-other-symbolic",
             ], self._page_general),
-            ("Waybar", [
+            ("Leisten-Stil & Waybar", [
                 "view-app-grid-symbolic",
                 "view-grid-symbolic",
                 "open-menu-symbolic",
@@ -631,6 +631,16 @@ class SettingsWindow(Adw.ApplicationWindow):
             content_page.set_child(page_box)
             self.split_view.set_content(content_page)
 
+    def _select_page_by_title(self, target_title: str):
+        """Wechselt direkt zu einer bestimmten Seite."""
+        for idx, (title, _, _) in enumerate(self.pages):
+            if title == target_title or target_title in title:
+                row = self.nav_list.get_row_at_index(idx)
+                if row:
+                    self.nav_list.select_row(row)
+                    self._on_nav_selected(self.nav_list, row)
+                break
+
     # ══════════════════════════════════════════════════════════
     # ██ Seiten
     # ══════════════════════════════════════════════════════════
@@ -665,6 +675,19 @@ class SettingsWindow(Adw.ApplicationWindow):
         reload_row.add_suffix(reload_btn)
         reload_row.set_activatable_widget(reload_btn)
         actions.add(reload_row)
+
+        # Schnellauswahl für Leisten-Stil
+        active_layout_id = self.config.get_active_waybar_layout()
+        active_meta = self.config.get_waybar_layouts().get(active_layout_id, {})
+        wb_style_row = Adw.ActionRow(
+            title="Leisten-Stil & Layout",
+            subtitle=f"Aktuell: {active_meta.get('name', 'Classic')} – {active_meta.get('description', '')}",
+        )
+        wb_btn = Gtk.Button(label="Stil ändern...", valign=Gtk.Align.CENTER)
+        wb_btn.add_css_class("suggested-action")
+        wb_btn.connect("clicked", lambda _: self._select_page_by_title("Leisten-Stil"))
+        wb_style_row.add_suffix(wb_btn)
+        actions.add(wb_style_row)
 
         box.append(actions)
         return box
