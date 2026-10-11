@@ -193,6 +193,15 @@ bluetooth_toggle() {
         return 1
     fi
 
+    # Bluetooth-Dienst sicherstellen
+    if command -v systemctl &>/dev/null && ! systemctl is-active --quiet bluetooth 2>/dev/null; then
+        systemctl start bluetooth 2>/dev/null || sudo -n systemctl start bluetooth 2>/dev/null || true
+        if ! systemctl is-active --quiet bluetooth 2>/dev/null; then
+            notify "Bluetooth-Dienst inaktiv" "Bitte 'sudo systemctl enable --now bluetooth' ausführen" "dialog-warning"
+            return 1
+        fi
+    fi
+
     if bluetoothctl show 2>/dev/null | grep -q "Powered: yes"; then
         bluetoothctl power off >/dev/null 2>&1 || true
         notify "Bluetooth deaktiviert" "Bluetooth-Adapter ausgeschaltet" "bluetooth-disabled"
@@ -206,6 +215,15 @@ bluetooth_menu() {
     if ! command -v bluetoothctl &>/dev/null; then
         notify "Bluetooth-Fehler" "bluetoothctl ist nicht installiert" "dialog-error"
         return 1
+    fi
+
+    # Bluetooth-Dienst sicherstellen
+    if command -v systemctl &>/dev/null && ! systemctl is-active --quiet bluetooth 2>/dev/null; then
+        systemctl start bluetooth 2>/dev/null || sudo -n systemctl start bluetooth 2>/dev/null || true
+        if ! systemctl is-active --quiet bluetooth 2>/dev/null; then
+            notify "Bluetooth-Dienst inaktiv" "Bitte 'sudo systemctl enable --now bluetooth' ausführen" "dialog-warning"
+            return 1
+        fi
     fi
 
     # Bluetooth aktivieren falls Adapter aus

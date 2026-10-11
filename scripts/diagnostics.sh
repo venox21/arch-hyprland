@@ -114,6 +114,12 @@ else
     check_warn "NetworkManager nicht aktiv"
 fi
 
+if systemctl is-active --quiet bluetooth 2>/dev/null; then
+    check_pass "Bluetooth aktiv"
+else
+    check_warn "Bluetooth nicht aktiv (sudo systemctl enable --now bluetooth)"
+fi
+
 if systemctl --user is-active --quiet pipewire 2>/dev/null; then
     check_pass "PipeWire aktiv"
 else

@@ -504,6 +504,12 @@ if command -v pipewire &>/dev/null; then
     success "PipeWire-Dienste aktiviert"
 fi
 
+# Netzwerk- und Bluetooth-Dienste aktivieren
+info "Aktiviere Systemd-Dienste..."
+sudo systemctl enable --now NetworkManager.service 2>/dev/null || true
+sudo systemctl enable --now bluetooth.service 2>/dev/null || true
+success "NetworkManager und Bluetooth aktiviert"
+
 # Zsh als Standard-Shell setzen
 if [[ "$(basename "${SHELL}")" != "zsh" ]]; then
     ZSH_PATH="$(command -v zsh)"
