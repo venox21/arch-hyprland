@@ -120,6 +120,97 @@ class ConfigManager:
         except (OSError, subprocess.TimeoutExpired):
             return False
 
+    # ── Waybar Layout-Verwaltung ──────────────────────────────
+
+    WAYBAR_LAYOUTS: dict[str, dict] = {
+        "classic": {
+            "id": "classic",
+            "name": "Tokyo Night Classic",
+            "description": "Ausgewogene Leiste mit Systemmetriken und sanft abgerundeten Ecken",
+            "preview": "󰂚   ⏻ | 36px Oben",
+            "height": 36,
+            "position": "top",
+        },
+        "pills": {
+            "id": "pills",
+            "name": "Floating Pills",
+            "description": "Moderne schwebende Insel-Kapseln mit transparentem Hintergrund",
+            "preview": "󱅫 Island-Look | 38px Schwebend",
+            "height": 38,
+            "position": "top",
+        },
+        "compact": {
+            "id": "compact",
+            "name": "Kompakte Top-Bar",
+            "description": "Randlose, platzsparende Leiste direkt an der oberen Kante (28px)",
+            "preview": "󰘔 Randlos Edge-to-Edge | 28px Oben",
+            "height": 28,
+            "position": "top",
+        },
+        "minimal": {
+            "id": "minimal",
+            "name": "Minimalist",
+            "description": "Clean & ablenkungsfrei – nur Workspaces, Uhr, Audio & Benachrichtigungen",
+            "preview": "󰍹 Aufgeräumt ohne CPU/RAM | 32px Schwebend",
+            "height": 32,
+            "position": "top",
+        },
+        "dock": {
+            "id": "dock",
+            "name": "Floating Bottom Dock",
+            "description": "Elegantes schwebendes Dock am unteren Bildschirmrand (40px)",
+            "preview": "󰞌 Dock am unteren Rand | 40px Unten",
+            "height": 40,
+            "position": "bottom",
+        },
+    }
+
+    def get_waybar_layouts(self) -> dict:
+        """Gibt alle verfügbaren Waybar-Layouts zurück."""
+        return self.WAYBAR_LAYOUTS
+
+    def get_active_waybar_layout(self) -> str:
+        """Ermittelt das aktuell aktive Waybar-Layout."""
+        settings = self.load_settings()
+        return settings.get("waybar", {}).get("layout", "classic")
+
+    def apply_waybar_layout(self, layout_id: str) -> tuple[bool, str]:
+        """Aktiviert ein Waybar-Layout, kopiert Config & CSS und startet Waybar neu."""
+        if layout_id not in self.WAYBAR_LAYOUTS:
+            return False, f"Unbekanntes Layout: {layout_id}"
+
+        # 1. Quelle ermitteln
+        src_dir = self.waybar_dir / "layouts" / layout_id
+        if not (src_dir / "config.jsonc").exists():
+            repo_src = Path(__file__).resolve().parent.parent / "config" / "waybar" / "layouts" / layout_id
+            if (repo_src / "config.jsonc").exists():
+                src_dir = repo_src
+
+        if not (src_dir / "config.jsonc").exists() or not (src_dir / "style.css").exists():
+            return False, f"Dateien für Layout '{layout_id}' wurden nicht gefunden."
+
+        try:
+            self.waybar_dir.mkdir(parents=True, exist_ok=True)
+            self._backup_file(self.waybar_dir / "config.jsonc")
+            self._backup_file(self.waybar_dir / "style.css")
+
+            shutil.copy2(src_dir / "config.jsonc", self.waybar_dir / "config.jsonc")
+            shutil.copy2(src_dir / "style.css", self.waybar_dir / "style.css")
+
+            meta = self.WAYBAR_LAYOUTS[layout_id]
+            settings = self.load_settings()
+            if "waybar" not in settings:
+                settings["waybar"] = {}
+            settings["waybar"]["layout"] = layout_id
+            settings["waybar"]["height"] = meta["height"]
+            settings["waybar"]["position"] = meta["position"]
+            self.save_settings(settings)
+
+            self.restart_waybar()
+            return True, f"Waybar-Layout '{meta['name']}' erfolgreich aktiviert!"
+        except OSError as e:
+            return False, f"Fehler beim Aktivieren des Layouts: {e}"
+
     # ── Hyprland-Einstellungen ────────────────────────────────
 
     def reload_hyprland(self) -> bool:
@@ -678,6 +769,7 @@ return M
                 "tooltip_details": True,
             },
             "waybar": {
+                "layout": "classic",
                 "position": "top",
                 "height": 36,
                 "margin_top": 4,

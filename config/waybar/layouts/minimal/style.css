@@ -1,0 +1,96 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+ * ║  Waybar – Minimalist (Clean & Ablenkungsfrei CSS)           ║
+ * ╚══════════════════════════════════════════════════════════════╝ */
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-size: 13px;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+}
+
+window#waybar {
+    background: rgba(22, 22, 30, 0.82);
+    border: 1px solid rgba(122, 162, 247, 0.2);
+    border-radius: 16px;
+    color: #c0caf5;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+window#waybar.hidden {
+    opacity: 0.2;
+}
+
+tooltip {
+    background: #1a1b26;
+    border: 1px solid #33467c;
+    border-radius: 10px;
+    color: #c0caf5;
+}
+
+tooltip label {
+    color: #c0caf5;
+    padding: 6px 10px;
+}
+
+#workspaces {
+    padding: 0 6px;
+}
+
+#workspaces button {
+    padding: 0 6px;
+    margin: 3px 2px;
+    border-radius: 10px;
+    color: #a9b1d6;
+    background: transparent;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    min-width: 20px;
+}
+
+#workspaces button:hover {
+    background: rgba(122, 162, 247, 0.15);
+    color: #c0caf5;
+}
+
+#workspaces button.active {
+    background: rgba(122, 162, 247, 0.25);
+    color: #7aa2f7;
+    font-weight: bold;
+}
+
+#clock {
+    color: #c0caf5;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 0 14px;
+}
+
+#network,
+#pulseaudio,
+#battery,
+#custom-swaync,
+#custom-power {
+    padding: 0 8px;
+    margin: 3px 2px;
+    color: #c0caf5;
+    background: transparent;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+#network:hover,
+#pulseaudio:hover,
+#battery:hover,
+#custom-swaync:hover,
+#custom-power:hover {
+    background: rgba(122, 162, 247, 0.12);
+}
+
+#network { color: #7aa2f7; }
+#pulseaudio { color: #e0af68; }
+#pulseaudio.muted { color: #565f89; }
+#battery { color: #9ece6a; }
+#custom-swaync { color: #7aa2f7; }
+#custom-power { color: #f7768e; margin-right: 6px; }

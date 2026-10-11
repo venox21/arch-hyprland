@@ -55,7 +55,13 @@ mkdir -p \
     "${CONFIG_DIR}/gtk-4.0"
 
 # Waybar
-[[ -d "${REPO_DIR}/config/waybar" ]] && cp -f "${REPO_DIR}/config/waybar/"* "${CONFIG_DIR}/waybar/" 2>/dev/null || true
+if [[ -d "${REPO_DIR}/config/waybar" ]]; then
+    cp -f "${REPO_DIR}/config/waybar/"* "${CONFIG_DIR}/waybar/" 2>/dev/null || true
+    if [[ -d "${REPO_DIR}/config/waybar/layouts" ]]; then
+        mkdir -p "${CONFIG_DIR}/waybar/layouts"
+        cp -rf "${REPO_DIR}/config/waybar/layouts/"* "${CONFIG_DIR}/waybar/layouts/" 2>/dev/null || true
+    fi
+fi
 # SwayNC
 [[ -d "${REPO_DIR}/config/swaync" ]] && cp -f "${REPO_DIR}/config/swaync/"* "${CONFIG_DIR}/swaync/" 2>/dev/null || true
 # Hyprland Lua

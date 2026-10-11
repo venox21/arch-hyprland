@@ -1,0 +1,185 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+ * ║  Waybar – Floating Pills (Tokyo Night Island CSS)           ║
+ * ╚══════════════════════════════════════════════════════════════╝ */
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-size: 13px;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: #c0caf5;
+}
+
+window#waybar.hidden {
+    opacity: 0.2;
+}
+
+tooltip {
+    background: #1a1b26;
+    border: 1px solid #33467c;
+    border-radius: 12px;
+    color: #c0caf5;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+tooltip label {
+    color: #c0caf5;
+    padding: 6px 10px;
+}
+
+/* ── Workspaces Pill ─────────────────────────────────────────── */
+#workspaces {
+    background: rgba(26, 27, 38, 0.92);
+    border: 1px solid rgba(122, 162, 247, 0.28);
+    border-radius: 20px;
+    padding: 2px 6px;
+    margin: 2px 4px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+#workspaces button {
+    padding: 0 8px;
+    margin: 3px 2px;
+    border-radius: 14px;
+    color: #a9b1d6;
+    background: transparent;
+    font-size: 12px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 24px;
+}
+
+#workspaces button:hover {
+    background: rgba(122, 162, 247, 0.2);
+    color: #c0caf5;
+}
+
+#workspaces button.active {
+    background: #7aa2f7;
+    color: #1a1b26;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(122, 162, 247, 0.4);
+}
+
+#workspaces button.urgent {
+    background: #f7768e;
+    color: #1a1b26;
+    font-weight: bold;
+}
+
+/* ── Fenstertitel Pill ────────────────────────────────────────── */
+#window {
+    background: rgba(26, 27, 38, 0.82);
+    border: 1px solid rgba(51, 70, 124, 0.35);
+    border-radius: 20px;
+    padding: 2px 14px;
+    margin: 2px 4px;
+    color: #a9b1d6;
+    font-style: italic;
+    font-size: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Uhr Pill (Mitte) ─────────────────────────────────────────── */
+#clock {
+    background: rgba(26, 27, 38, 0.95);
+    border: 1px solid rgba(122, 162, 247, 0.38);
+    border-radius: 20px;
+    padding: 2px 18px;
+    margin: 2px 4px;
+    color: #7aa2f7;
+    font-weight: bold;
+    font-size: 13px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    transition: all 0.2s ease;
+}
+
+#clock:hover {
+    border-color: #7dcfff;
+    color: #7dcfff;
+    box-shadow: 0 4px 20px rgba(122, 162, 247, 0.25);
+}
+
+/* ── Rechte Module als Kapseln ────────────────────────────────── */
+#cpu,
+#memory,
+#network,
+#pulseaudio,
+#battery,
+#tray,
+#custom-swaync,
+#custom-settings,
+#custom-power {
+    background: rgba(26, 27, 38, 0.92);
+    border: 1px solid rgba(51, 70, 124, 0.35);
+    border-radius: 20px;
+    padding: 2px 11px;
+    margin: 2px 3px;
+    color: #c0caf5;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+#cpu:hover,
+#memory:hover,
+#network:hover,
+#pulseaudio:hover,
+#battery:hover,
+#custom-swaync:hover,
+#custom-settings:hover,
+#custom-power:hover {
+    background: rgba(36, 40, 59, 0.95);
+    border-color: rgba(122, 162, 247, 0.45);
+    transform: translateY(-1px);
+}
+
+#cpu { color: #73daca; }
+#cpu.warning { color: #ff9e64; }
+#cpu.critical { color: #f7768e; }
+
+#memory { color: #bb9af7; }
+
+#network { color: #7aa2f7; }
+#network.disconnected { color: #565f89; }
+
+#pulseaudio { color: #e0af68; }
+#pulseaudio.muted { color: #565f89; }
+#pulseaudio.microphone { color: #ff9e64; }
+
+#battery { color: #9ece6a; }
+#battery.warning:not(.charging) { color: #ff9e64; }
+#battery.critical:not(.charging) { color: #f7768e; }
+#battery.charging { color: #9ece6a; }
+
+#tray {
+    padding: 2px 8px;
+}
+
+#custom-swaync {
+    color: #7aa2f7;
+    font-size: 15px;
+    padding: 2px 10px;
+}
+#custom-swaync.dnd-none,
+#custom-swaync.dnd-notification {
+    color: #f7768e;
+}
+
+#custom-settings {
+    color: #7aa2f7;
+    font-size: 14px;
+}
+
+#custom-power {
+    color: #f7768e;
+    font-size: 14px;
+    padding: 2px 10px;
+}
+#custom-power:hover {
+    color: #ff9e64;
+    border-color: rgba(247, 118, 142, 0.6);
+}

@@ -670,14 +670,49 @@ class SettingsWindow(Adw.ApplicationWindow):
         return box
 
     def _page_waybar(self) -> Gtk.Widget:
-        """Waybar-Einstellungen."""
+        """Waybar-Einstellungen und Layout-Auswahl."""
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         box.set_margin_top(16)
         box.set_margin_bottom(16)
 
         wb = self.settings.get("waybar", {})
 
-        group = Adw.PreferencesGroup(title="Waybar", description="Leisteneinstellungen")
+        # ── 1. Leisten-Stil & Layout-Auswahl ──────────────────
+        layout_group = Adw.PreferencesGroup(
+            title="Leisten-Stil & Layout",
+            description="Wähle zwischen schwebenden Inseln, randloser Top-Bar oder minimalistischem Look",
+        )
+
+        layouts = self.config.get_waybar_layouts()
+        layout_keys = list(layouts.keys())
+        layout_titles = [f"{layouts[k]['name']} ({layouts[k]['preview']})" for k in layout_keys]
+
+        layout_row = Adw.ComboRow(
+            title="Aktives Waybar-Layout",
+            subtitle="Schaltet das komplette Design, Modul-Set und CSS der Statusleiste um",
+        )
+        layout_row.set_model(Gtk.StringList.new(layout_titles))
+
+        active_layout = self.config.get_active_waybar_layout()
+        selected_layout_idx = 0
+        if active_layout in layout_keys:
+            selected_layout_idx = layout_keys.index(active_layout)
+        layout_row.set_selected(selected_layout_idx)
+
+        # Aktueller Status & Beschreibung
+        desc_row = Adw.ActionRow(
+            title="Layout-Beschreibung",
+            subtitle=layouts.get(active_layout, {}).get("description", ""),
+        )
+        layout_group.add(layout_row)
+        layout_group.add(desc_row)
+        box.append(layout_group)
+
+        # ── 2. Feinabstimmung ─────────────────────────────────
+        group = Adw.PreferencesGroup(
+            title="Feinabstimmung",
+            description="Individuelle Anpassung von Position, Höhe und Modulen",
+        )
 
         # Position
         pos_row = Adw.ComboRow(title="Position")
@@ -689,8 +724,8 @@ class SettingsWindow(Adw.ApplicationWindow):
         group.add(pos_row)
 
         # Höhe
-        height_row = Adw.SpinRow.new_with_range(24, 60, 2)
-        height_row.set_title("Leistenhöhe")
+        height_row = Adw.SpinRow.new_with_range(20, 60, 2)
+        height_row.set_title("Leistenhöhe (px)")
         height_row.set_value(wb.get("height", 36))
         height_row.connect("notify::value", lambda r, _: self._update_waybar_setting(
             "height", int(r.get_value())))
@@ -698,14 +733,14 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         # Schriftgröße
         font_row = Adw.SpinRow.new_with_range(9, 18, 1)
-        font_row.set_title("Schriftgröße")
+        font_row.set_title("Schriftgröße (pt)")
         font_row.set_value(wb.get("font_size", 13))
         font_row.connect("notify::value", lambda r, _: self._update_waybar_setting(
             "font_size", int(r.get_value())))
         group.add(font_row)
 
         # Tray
-        tray_row = Adw.SwitchRow(title="System-Tray anzeigen")
+        tray_row = Adw.SwitchRow(title="System-Tray anzeigen", subtitle="Hintergrundprogramme und Tray-Icons einblenden")
         tray_row.set_active(wb.get("show_tray", True))
         tray_row.connect("notify::active", lambda r, _: self._update_waybar_setting(
             "show_tray", r.get_active()))
@@ -713,8 +748,30 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         box.append(group)
 
+        # Listener für Layout-Wechsel
+        curr_layout = [active_layout]
+
+        def on_layout_changed(r, _):
+            idx = r.get_selected()
+            if idx < len(layout_keys):
+                chosen_id = layout_keys[idx]
+                if chosen_id == curr_layout[0]:
+                    return
+                ok, msg = self.config.apply_waybar_layout(chosen_id)
+                if ok:
+                    curr_layout[0] = chosen_id
+                    meta = layouts[chosen_id]
+                    desc_row.set_subtitle(meta.get("description", ""))
+                    pos_row.set_selected(0 if meta["position"] == "top" else 1)
+                    height_row.set_value(meta["height"])
+                    self._show_info("Waybar-Layout", msg)
+                else:
+                    self._show_info("Fehler", msg)
+
+        layout_row.connect("notify::selected", on_layout_changed)
+
         # Speichern & Anwenden
-        apply_btn = Gtk.Button(label="Anwenden und Waybar neu starten")
+        apply_btn = Gtk.Button(label="Einstellungen anwenden und Waybar neu starten")
         apply_btn.add_css_class("suggested-action")
         apply_btn.set_margin_start(16)
         apply_btn.set_margin_end(16)

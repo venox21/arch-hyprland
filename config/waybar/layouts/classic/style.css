@@ -1,0 +1,271 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+ * ║  Waybar – Tokyo Night CSS                                   ║
+ * ║  Verwendet Standard-CSS mit Tokyo Night Hex-Werten           ║
+ * ╚══════════════════════════════════════════════════════════════╝ */
+
+/* ── Gesamte Leiste ───────────────────────────────────────────── */
+* {
+    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-size: 13px;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+}
+
+window#waybar {
+    background: rgba(36, 40, 59, 0.85);
+    border-radius: 12px;
+    border: 1px solid rgba(51, 70, 124, 0.4);
+    color: #c0caf5;
+    transition-property: background-color;
+    transition-duration: 0.3s;
+}
+
+window#waybar.hidden {
+    opacity: 0.2;
+}
+
+tooltip {
+    background: #1a1b26;
+    border: 1px solid #33467c;
+    border-radius: 8px;
+    color: #c0caf5;
+}
+
+tooltip label {
+    color: #c0caf5;
+    padding: 4px 8px;
+}
+
+/* ── Allgemeines Modul-Styling ────────────────────────────────── */
+#workspaces,
+#window,
+#clock,
+#cpu,
+#memory,
+#temperature,
+#network,
+#pulseaudio,
+#battery,
+#tray,
+#custom-swaync,
+#custom-settings,
+#custom-hotkeys,
+#custom-power {
+    padding: 0 10px;
+    margin: 4px 2px;
+    border-radius: 8px;
+    background: transparent;
+    color: #c0caf5;
+    transition: all 0.2s ease;
+}
+
+/* ── Workspaces ───────────────────────────────────────────────── */
+#workspaces {
+    padding: 0 4px;
+    margin-left: 4px;
+}
+
+#workspaces button {
+    padding: 0 6px;
+    margin: 3px 2px;
+    border-radius: 6px;
+    color: #a9b1d6;
+    background: transparent;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    min-width: 24px;
+}
+
+#workspaces button:hover {
+    background: rgba(51, 70, 124, 0.5);
+    color: #c0caf5;
+}
+
+#workspaces button.active {
+    background: rgba(122, 162, 247, 0.25);
+    color: #7aa2f7;
+    font-weight: bold;
+    border-bottom: 2px solid #7aa2f7;
+}
+
+#workspaces button.urgent {
+    background: rgba(247, 118, 142, 0.4);
+    color: #f7768e;
+    border-bottom: 2px solid #f7768e;
+}
+
+/* ── Fenstertitel ─────────────────────────────────────────────── */
+#window {
+    color: #a9b1d6;
+    font-style: italic;
+    font-size: 12px;
+}
+
+/* ── Uhr ──────────────────────────────────────────────────────── */
+#clock {
+    color: #c0caf5;
+    font-weight: bold;
+    background: rgba(41, 46, 66, 0.6);
+    border-radius: 8px;
+    padding: 0 14px;
+}
+
+/* ── CPU ──────────────────────────────────────────────────────── */
+#cpu {
+    color: #73daca;
+}
+
+#cpu.warning {
+    color: #ff9e64;
+}
+
+#cpu.critical {
+    color: #f7768e;
+}
+
+/* ── Arbeitsspeicher ──────────────────────────────────────────── */
+#memory {
+    color: #bb9af7;
+}
+
+/* ── Temperatur ───────────────────────────────────────────────── */
+#temperature {
+    color: #7dcfff;
+}
+
+#temperature.critical {
+    color: #f7768e;
+    animation: urgentPulse 1.5s ease infinite;
+}
+
+/* ── Netzwerk ─────────────────────────────────────────────────── */
+#network {
+    color: #7aa2f7;
+}
+
+#network.disconnected {
+    color: #3b4261;
+}
+
+/* ── Audio ────────────────────────────────────────────────────── */
+#pulseaudio {
+    color: #e0af68;
+}
+
+#pulseaudio.muted {
+    color: #3b4261;
+}
+
+/* ── Mikrofon ─────────────────────────────────────────────────── */
+#pulseaudio.microphone {
+    color: #ff9e64;
+}
+
+/* ── Akku ─────────────────────────────────────────────────────── */
+#battery {
+    color: #9ece6a;
+}
+
+#battery.warning:not(.charging) {
+    color: #ff9e64;
+}
+
+#battery.critical:not(.charging) {
+    color: #f7768e;
+    animation: urgentPulse 1s ease infinite;
+}
+
+#battery.charging {
+    color: #9ece6a;
+}
+
+/* ── System-Tray ──────────────────────────────────────────────── */
+#tray {
+    padding: 0 6px;
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+}
+
+/* ── Kontrollzentrum & Benachrichtigungen ─────────────────────── */
+#custom-swaync {
+    color: #7aa2f7;
+    font-size: 15px;
+    padding: 0 8px;
+}
+
+#custom-swaync:hover {
+    background: rgba(122, 162, 247, 0.15);
+    color: #7dcfff;
+}
+
+#custom-swaync.dnd-none,
+#custom-swaync.dnd-notification,
+#custom-swaync.dnd-inhibited-none,
+#custom-swaync.dnd-inhibited-notification {
+    color: #f7768e;
+}
+
+#custom-swaync.notification {
+    color: #bb9af7;
+}
+
+/* ── Einstellungen ────────────────────────────────────────────── */
+#custom-settings {
+    color: #7aa2f7;
+    font-size: 15px;
+    padding: 0 8px;
+}
+
+#custom-settings:hover {
+    background: rgba(122, 162, 247, 0.15);
+    color: #7dcfff;
+}
+
+/* ── Hotkey-Manager ───────────────────────────────────────────── */
+#custom-hotkeys {
+    color: #bb9af7;
+    font-size: 14px;
+    padding: 0 8px;
+}
+
+#custom-hotkeys:hover {
+    background: rgba(187, 154, 247, 0.15);
+    color: #9d7cd8;
+}
+
+/* ── Power-Menü ───────────────────────────────────────────────── */
+#custom-power {
+    color: #f7768e;
+    font-size: 15px;
+    padding: 0 8px;
+    margin-right: 4px;
+}
+
+#custom-power:hover {
+    background: rgba(247, 118, 142, 0.15);
+    color: #ff9e64;
+}
+
+/* ── Hover-Effekte für alle Module ────────────────────────────── */
+#cpu:hover,
+#memory:hover,
+#temperature:hover,
+#network:hover,
+#pulseaudio:hover,
+#battery:hover {
+    background: rgba(41, 46, 66, 0.6);
+}
+
+/* ── Trennlinie (optisch durch Abstände) ──────────────────────── */
+#tray {
+    border-right: 1px solid rgba(59, 66, 97, 0.3);
+    padding-right: 10px;
+    margin-right: 4px;
+}

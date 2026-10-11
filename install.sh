@@ -314,6 +314,10 @@ info "Installiere Waybar-Konfiguration..."
 mkdir -p "${CONFIG_DIR}/waybar"
 install_config "${SCRIPT_DIR}/config/waybar/config.jsonc" "${CONFIG_DIR}/waybar/config.jsonc"
 install_config "${SCRIPT_DIR}/config/waybar/style.css" "${CONFIG_DIR}/waybar/style.css"
+if [[ -d "${SCRIPT_DIR}/config/waybar/layouts" ]]; then
+    mkdir -p "${CONFIG_DIR}/waybar/layouts"
+    cp -rf "${SCRIPT_DIR}/config/waybar/layouts/"* "${CONFIG_DIR}/waybar/layouts/" 2>/dev/null || true
+fi
 
 # Kitty
 info "Installiere Kitty-Konfiguration..."

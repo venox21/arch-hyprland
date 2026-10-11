@@ -225,6 +225,29 @@ class TestConfigManager(unittest.TestCase):
         content = colors_file.read_text(encoding="utf-8")
         self.assertIn("Tokyo Night Neon", content)
 
+    def test_waybar_layouts(self):
+        """Waybar-Layouts prüfen und aktivieren."""
+        self.cm.waybar_dir = Path(self.temp_dir) / "waybar"
+        layouts = self.cm.get_waybar_layouts()
+        self.assertIn("classic", layouts)
+        self.assertIn("pills", layouts)
+        self.assertIn("compact", layouts)
+        self.assertIn("minimal", layouts)
+        self.assertIn("dock", layouts)
+
+        # Layout Pills anwenden
+        with patch.object(self.cm, "restart_waybar", return_value=True):
+            ok, msg = self.cm.apply_waybar_layout("pills")
+            self.assertTrue(ok)
+            self.assertTrue((self.cm.waybar_dir / "config.jsonc").exists())
+            self.assertTrue((self.cm.waybar_dir / "style.css").exists())
+            self.assertEqual(self.cm.get_active_waybar_layout(), "pills")
+
+            # Layout Compact anwenden
+            ok, msg = self.cm.apply_waybar_layout("compact")
+            self.assertTrue(ok)
+            self.assertEqual(self.cm.get_active_waybar_layout(), "compact")
+
 
 
 class TestKeybindParser(unittest.TestCase):

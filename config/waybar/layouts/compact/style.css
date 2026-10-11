@@ -1,0 +1,114 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+ * ║  Waybar – Kompakte Top-Bar (Tokyo Night Slim CSS)          ║
+ * ╚══════════════════════════════════════════════════════════════╝ */
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-size: 12px;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+}
+
+window#waybar {
+    background: #16161e;
+    border-bottom: 2px solid #7aa2f7;
+    color: #c0caf5;
+}
+
+window#waybar.hidden {
+    opacity: 0.2;
+}
+
+tooltip {
+    background: #1a1b26;
+    border: 1px solid #33467c;
+    border-radius: 6px;
+    color: #c0caf5;
+}
+
+tooltip label {
+    color: #c0caf5;
+    padding: 4px 8px;
+}
+
+#workspaces,
+#window,
+#clock,
+#cpu,
+#memory,
+#network,
+#pulseaudio,
+#battery,
+#tray,
+#custom-swaync,
+#custom-settings,
+#custom-power {
+    padding: 0 8px;
+    margin: 0;
+    color: #c0caf5;
+    background: transparent;
+    transition: all 0.15s ease;
+}
+
+#workspaces {
+    padding: 0;
+}
+
+#workspaces button {
+    padding: 0 7px;
+    margin: 0;
+    border-radius: 0;
+    color: #a9b1d6;
+    background: transparent;
+    font-size: 11px;
+    border-bottom: 2px solid transparent;
+}
+
+#workspaces button:hover {
+    background: rgba(122, 162, 247, 0.15);
+    color: #c0caf5;
+}
+
+#workspaces button.active {
+    background: rgba(122, 162, 247, 0.25);
+    color: #7aa2f7;
+    font-weight: bold;
+    border-bottom: 2px solid #7aa2f7;
+}
+
+#window {
+    color: #a9b1d6;
+    font-style: italic;
+    font-size: 11px;
+    padding-left: 10px;
+}
+
+#clock {
+    background: #1f2335;
+    color: #7aa2f7;
+    font-weight: bold;
+    padding: 0 12px;
+    border-left: 1px solid #292e42;
+    border-right: 1px solid #292e42;
+}
+
+#cpu { color: #73daca; }
+#memory { color: #bb9af7; }
+#network { color: #7aa2f7; }
+#pulseaudio { color: #e0af68; }
+#battery { color: #9ece6a; }
+#custom-swaync { color: #7aa2f7; }
+#custom-settings { color: #7aa2f7; }
+#custom-power { color: #f7768e; padding: 0 10px; }
+
+#cpu:hover,
+#memory:hover,
+#network:hover,
+#pulseaudio:hover,
+#battery:hover,
+#custom-swaync:hover,
+#custom-settings:hover,
+#custom-power:hover {
+    background: rgba(41, 46, 66, 0.8);
+}
