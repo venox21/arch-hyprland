@@ -28,7 +28,7 @@ Ein vollständiges, minimalistisches Hyprland-Desktop-Setup im Tokyo-Night-Stil 
 
 ```bash
 # Repository klonen oder herunterladen
-git clonehttps://github.com/venox21/arch-hyrland.git
+git clone https://github.com/venox21/arch-hyrland.git
 cd ~/arch-hyprland
 
 # Tests vor der Installation ausführen (optional)
