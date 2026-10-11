@@ -1,0 +1,3 @@
+# Tokyo Night Hyprland – Erlaubt Benutzern der Gruppe 'wheel',
+# Uhrzeit, Datum und Zeitzone ohne Passwortabfrage zu verwalten.
+%wheel ALL=(ALL) NOPASSWD: /usr/bin/timedatectl, /usr/bin/date, /usr/bin/hwclock

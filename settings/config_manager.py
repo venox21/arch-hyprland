@@ -312,20 +312,22 @@ class ConfigManager:
 
     def _run_timedate_cmd(self, args: list[str]) -> tuple[bool, str]:
         """Führt einen timedatectl-Befehl aus und fängt Berechtigungsfehler sauber ab."""
-        cmd = ["timedatectl"] + args
+        cmd = ["timedatectl", "--no-ask-password"] + args
         try:
-            # 1. Direkter Aufruf (funktioniert sofort mit der neuen Polkit-Regel)
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            # 1. Direkter Aufruf (funktioniert sofort mit Polkit-Regel)
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=3)
             if res.returncode == 0:
                 return True, ""
 
-            # 2. Falls polkit agent oder sudo ohne Passwort verfügbar ist
-            res_sudo = subprocess.run(["sudo", "-n"] + cmd, capture_output=True, text=True, timeout=5)
+            # 2. Falls sudoers drop-in / sudo ohne Passwort aktiv ist
+            res_sudo = subprocess.run(["sudo", "-n", "timedatectl", "--no-ask-password"] + args,
+                                      capture_output=True, text=True, timeout=3)
             if res_sudo.returncode == 0:
                 return True, ""
 
             # 3. pkexec versuchen
-            res_pk = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True, timeout=8)
+            res_pk = subprocess.run(["pkexec", "timedatectl", "--no-ask-password"] + args,
+                                    capture_output=True, text=True, timeout=5)
             if res_pk.returncode == 0:
                 return True, ""
 
@@ -333,7 +335,7 @@ class ConfigManager:
             if "Interactive authentication required" in raw_err or "Not authorized" in raw_err:
                 return False, (
                     "Berechtigung erforderlich: Bitte führe im Terminal einmal './update.sh' aus, "
-                    "um die Polkit-Berechtigung für deine Benutzergruppe freizuschalten."
+                    "um die Berechtigung für deine Benutzergruppe freizuschalten."
                 )
             if "Automatic time synchronization is enabled" in raw_err:
                 return False, (
@@ -341,7 +343,9 @@ class ConfigManager:
                     "Bitte zuerst den Schalter 'Automatische Uhrzeit (NTP)' ausschalten."
                 )
             return False, raw_err or "Fehler beim Ausführen von timedatectl."
-        except (OSError, subprocess.TimeoutExpired) as e:
+        except subprocess.TimeoutExpired:
+            return False, "Zeitüberschreitung: timedatectl reagiert nicht."
+        except OSError as e:
             return False, str(e)
 
     def set_ntp(self, enabled: bool) -> tuple[bool, str]:
@@ -354,9 +358,22 @@ class ConfigManager:
 
     def set_timezone(self, tz: str) -> tuple[bool, str]:
         """Setzt die Systemzeitzone."""
+        current = self.get_timedate_info().get("timezone", "")
+        if current == tz:
+            return True, f"Zeitzone ist bereits {tz}"
+
         ok, err = self._run_timedate_cmd(["set-timezone", tz])
         if ok:
             return True, f"Zeitzone auf {tz} gesetzt"
+
+        # Fallback: symlink /etc/localtime
+        zone_file = Path(f"/usr/share/zoneinfo/{tz}")
+        if zone_file.exists():
+            res = subprocess.run(["sudo", "-n", "ln", "-sf", str(zone_file), "/etc/localtime"],
+                                 capture_output=True, text=True, timeout=3)
+            if res.returncode == 0:
+                return True, f"Zeitzone auf {tz} gesetzt"
+
         return False, err
 
     def set_system_time(self, time_str: str) -> tuple[bool, str]:
@@ -374,6 +391,15 @@ class ConfigManager:
         ok, err = self._run_timedate_cmd(["set-time", time_str])
         if ok:
             return True, f"Uhrzeit auf {time_str} gesetzt"
+
+        # Fallback mit date -s
+        res = subprocess.run(["sudo", "-n", "date", "-s", time_str],
+                             capture_output=True, text=True, timeout=3)
+        if res.returncode == 0:
+            subprocess.run(["sudo", "-n", "hwclock", "--systohc"],
+                           capture_output=True, text=True, timeout=3)
+            return True, f"Uhrzeit auf {time_str} gesetzt"
+
         return False, err
 
     def set_rtc_mode(self, local_tz: bool) -> tuple[bool, str]:

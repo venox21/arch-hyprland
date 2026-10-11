@@ -99,14 +99,19 @@ if command -v gsettings &>/dev/null; then
     fi
 fi
 
-# Polkit-Regel für Systemzeit (erlaubt Ändern von Uhrzeit & Zeitzone in den GUI-Einstellungen)
-if [[ -f "${REPO_DIR}/assets/polkit/10-tokyo-timedate.rules" ]]; then
-    if sudo -n true 2>/dev/null || sudo -v 2>/dev/null; then
+# Polkit & Sudoers-Regeln für Systemzeit (erlaubt Ändern von Uhrzeit & Zeitzone in den GUI-Einstellungen)
+if sudo -n true 2>/dev/null || sudo -v 2>/dev/null; then
+    if [[ -f "${REPO_DIR}/assets/polkit/10-tokyo-timedate.rules" ]]; then
         sudo mkdir -p /etc/polkit-1/rules.d
         sudo cp -f "${REPO_DIR}/assets/polkit/10-tokyo-timedate.rules" /etc/polkit-1/rules.d/10-tokyo-timedate.rules 2>/dev/null || true
         sudo chmod 644 /etc/polkit-1/rules.d/10-tokyo-timedate.rules 2>/dev/null || true
-        echo -e "  ${GREEN}✓${NC} Polkit-Berechtigung für Uhrzeit & Zeitzone eingerichtet"
     fi
+    if [[ -f "${REPO_DIR}/assets/sudoers/10-tokyo-timedate" ]]; then
+        sudo mkdir -p /etc/sudoers.d
+        sudo cp -f "${REPO_DIR}/assets/sudoers/10-tokyo-timedate" /etc/sudoers.d/10-tokyo-timedate 2>/dev/null || true
+        sudo chmod 0440 /etc/sudoers.d/10-tokyo-timedate 2>/dev/null || true
+    fi
+    echo -e "  ${GREEN}✓${NC} Berechtigungen für Uhrzeit & Zeitzone eingerichtet"
 fi
 
 echo -e "${BLUE}[4/5] Optionale Pakete prüfen...${NC}"

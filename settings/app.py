@@ -788,12 +788,17 @@ class SettingsWindow(Adw.ApplicationWindow):
                 break
         tz_row.set_selected(selected_idx)
 
+        active_tz = [curr_tz]
+
         def on_tz_changed(r, _):
             idx = r.get_selected()
             if idx < len(tz_options):
                 chosen_tz = tz_options[idx][1]
+                if chosen_tz == active_tz[0]:
+                    return
                 ok, msg = self.config.set_timezone(chosen_tz)
                 if ok:
+                    active_tz[0] = chosen_tz
                     fresh = self.config.get_timedate_info()
                     status_row.set_subtitle(f"{fresh.get('local_time', '')} ({fresh.get('timezone', '')})")
                 else:
