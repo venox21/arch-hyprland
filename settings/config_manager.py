@@ -310,64 +310,79 @@ class ConfigManager:
             pass
         return info
 
+    def _run_timedate_cmd(self, args: list[str]) -> tuple[bool, str]:
+        """Führt einen timedatectl-Befehl aus und fängt Berechtigungsfehler sauber ab."""
+        cmd = ["timedatectl"] + args
+        try:
+            # 1. Direkter Aufruf (funktioniert sofort mit der neuen Polkit-Regel)
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            if res.returncode == 0:
+                return True, ""
+
+            # 2. Falls polkit agent oder sudo ohne Passwort verfügbar ist
+            res_sudo = subprocess.run(["sudo", "-n"] + cmd, capture_output=True, text=True, timeout=5)
+            if res_sudo.returncode == 0:
+                return True, ""
+
+            # 3. pkexec versuchen
+            res_pk = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True, timeout=8)
+            if res_pk.returncode == 0:
+                return True, ""
+
+            raw_err = (res.stderr or res_sudo.stderr or res_pk.stderr or "").strip()
+            if "Interactive authentication required" in raw_err or "Not authorized" in raw_err:
+                return False, (
+                    "Berechtigung erforderlich: Bitte führe im Terminal einmal './update.sh' aus, "
+                    "um die Polkit-Berechtigung für deine Benutzergruppe freizuschalten."
+                )
+            if "Automatic time synchronization is enabled" in raw_err:
+                return False, (
+                    "Automatische Zeitsynchronisation (NTP) ist noch aktiv. "
+                    "Bitte zuerst den Schalter 'Automatische Uhrzeit (NTP)' ausschalten."
+                )
+            return False, raw_err or "Fehler beim Ausführen von timedatectl."
+        except (OSError, subprocess.TimeoutExpired) as e:
+            return False, str(e)
+
     def set_ntp(self, enabled: bool) -> tuple[bool, str]:
         """Aktiviert oder deaktiviert NTP (automatische Zeitsynchronisation)."""
         val = "true" if enabled else "false"
-        cmd = ["timedatectl", "set-ntp", val]
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-            if res.returncode == 0:
-                return True, f"NTP {'aktiviert' if enabled else 'deaktiviert'}"
-            res_pk = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True, timeout=10)
-            if res_pk.returncode == 0:
-                return True, f"NTP {'aktiviert' if enabled else 'deaktiviert'}"
-            return False, res.stderr or res_pk.stderr or "Berechtigung verweigert"
-        except (OSError, subprocess.TimeoutExpired) as e:
-            return False, str(e)
+        ok, err = self._run_timedate_cmd(["set-ntp", val])
+        if ok:
+            return True, f"NTP {'aktiviert' if enabled else 'deaktiviert'}"
+        return False, err
 
     def set_timezone(self, tz: str) -> tuple[bool, str]:
         """Setzt die Systemzeitzone."""
-        cmd = ["timedatectl", "set-timezone", tz]
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-            if res.returncode == 0:
-                return True, f"Zeitzone auf {tz} gesetzt"
-            res_pk = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True, timeout=10)
-            if res_pk.returncode == 0:
-                return True, f"Zeitzone auf {tz} gesetzt"
-            return False, res.stderr or res_pk.stderr or "Berechtigung verweigert"
-        except (OSError, subprocess.TimeoutExpired) as e:
-            return False, str(e)
+        ok, err = self._run_timedate_cmd(["set-timezone", tz])
+        if ok:
+            return True, f"Zeitzone auf {tz} gesetzt"
+        return False, err
 
     def set_system_time(self, time_str: str) -> tuple[bool, str]:
         """Setzt die Systemzeit manuell (deaktiviert zuvor NTP)."""
-        try:
-            subprocess.run(["timedatectl", "set-ntp", "false"], capture_output=True, timeout=3)
-            cmd = ["timedatectl", "set-time", time_str]
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-            if res.returncode == 0:
-                return True, f"Uhrzeit auf {time_str} gesetzt"
-            res_pk = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True, timeout=10)
-            if res_pk.returncode == 0:
-                return True, f"Uhrzeit auf {time_str} gesetzt"
-            return False, res.stderr or res_pk.stderr or "Fehler beim Setzen der Uhrzeit"
-        except (OSError, subprocess.TimeoutExpired) as e:
-            return False, str(e)
+        time_str = time_str.strip()
+        if re.match(r'^\d{1,2}:\d{2}$', time_str):
+            time_str = f"{time_str}:00"
+        elif re.match(r'^\d{1,2}:\d{2}:\d{2}$', time_str):
+            parts = time_str.split(":")
+            time_str = f"{int(parts[0]):02d}:{int(parts[1]):02d}:{int(parts[2]):02d}"
+
+        # Vor manuellem Setzen NTP ausschalten
+        self.set_ntp(False)
+
+        ok, err = self._run_timedate_cmd(["set-time", time_str])
+        if ok:
+            return True, f"Uhrzeit auf {time_str} gesetzt"
+        return False, err
 
     def set_rtc_mode(self, local_tz: bool) -> tuple[bool, str]:
-        """Konfiguriert Hardware-Uhr (RTC). local_tz=True verhindert Zeitversatz bei Windows Dual-Boot."""
+        """Konfiguriert Hardware-Uhr (RTC)."""
         val = "1" if local_tz else "0"
-        cmd = ["timedatectl", "set-local-rtc", val, "--adjust-system-clock"]
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-            if res.returncode == 0:
-                return True, "RTC-Modus aktualisiert"
-            res_pk = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True, timeout=10)
-            if res_pk.returncode == 0:
-                return True, "RTC-Modus aktualisiert"
-            return False, res.stderr or "Berechtigung verweigert"
-        except (OSError, subprocess.TimeoutExpired) as e:
-            return False, str(e)
+        ok, err = self._run_timedate_cmd(["set-local-rtc", val, "--adjust-system-clock"])
+        if ok:
+            return True, "RTC-Modus aktualisiert"
+        return False, err
 
     # ── Eingabegeräte (Maus, Touchpad, Tastaturlayout) ───────
 

@@ -1,0 +1,8 @@
+// Tokyo Night Hyprland – Polkit-Regel für Systemzeit & Zeitzone
+// Erlaubt Mitgliedern der Administratorgruppe 'wheel' das Ändern von Uhrzeit,
+// Zeitzone, NTP und RTC ohne Passwortabfrage in der Einstellungs-App.
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.timedate1.") === 0 && subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});

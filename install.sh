@@ -516,6 +516,14 @@ sudo systemctl enable --now NetworkManager.service 2>/dev/null || true
 sudo systemctl enable --now bluetooth.service 2>/dev/null || true
 success "NetworkManager und Bluetooth aktiviert"
 
+# Polkit-Regel für Uhrzeit & Zeitzone
+if [[ -f "${SCRIPT_DIR}/assets/polkit/10-tokyo-timedate.rules" ]]; then
+    sudo mkdir -p /etc/polkit-1/rules.d
+    sudo cp -f "${SCRIPT_DIR}/assets/polkit/10-tokyo-timedate.rules" /etc/polkit-1/rules.d/10-tokyo-timedate.rules 2>/dev/null || true
+    sudo chmod 644 /etc/polkit-1/rules.d/10-tokyo-timedate.rules 2>/dev/null || true
+    success "Polkit-Berechtigung für Uhrzeit & Zeitzone eingerichtet"
+fi
+
 # Zsh als Standard-Shell setzen
 if [[ "$(basename "${SHELL}")" != "zsh" ]]; then
     ZSH_PATH="$(command -v zsh)"
