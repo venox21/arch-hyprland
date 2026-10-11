@@ -1,103 +1,221 @@
 /* ╔══════════════════════════════════════════════════════════════╗
- * ║  Waybar – Bottom Dock (Tokyo Night Floating Dock CSS)       ║
+ * ║  Waybar – Bottom Dock Style                                 ║
  * ╚══════════════════════════════════════════════════════════════╝ */
 
 * {
-    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
-    font-size: 13px;
-    min-height: 0;
-    border: none;
-    border-radius: 0;
+	font-family: "JetBrainsMono Nerd Font";
+	font-weight: bold;
+	min-height: 0;	
+	/* set font-size to 100% if font scaling is set to 1.00 using nwg-look */
+	font-size: 97%;
+	font-feature-settings: '"zero", "ss01", "ss02", "ss03", "ss04", "ss05", "cv31"';
 }
-
+	
 window#waybar {
-    background: rgba(26, 27, 38, 0.92);
-    border: 1px solid rgba(122, 162, 247, 0.3);
-    border-radius: 18px;
-    color: #c0caf5;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+	background: transparent;
+	border-radius: 1px;
+	color: whitesmoke;
+}
+	
+window#waybar.hidden {
+	opacity: 0.5;
 }
 
-window#waybar.hidden {
-    opacity: 0.2;
+window#waybar.empty,
+window#waybar.empty #window {
+	padding: 0px;
+	border: 0px;
+	background-color: transparent;
 }
 
 tooltip {
-    background: #1a1b26;
-    border: 1px solid #33467c;
-    border-radius: 10px;
-    color: #c0caf5;
+	background: #1a1b26;
+	border: 1px solid #33467c;
+	border-radius: 8px;
+	color: #c0caf5;
 }
 
 tooltip label {
-    color: #c0caf5;
-    padding: 6px 10px;
+	color: #c0caf5;
+	padding: 4px 8px;
 }
 
-#workspaces,
-#window,
-#clock,
-#network,
-#pulseaudio,
-#battery,
-#tray,
-#custom-swaync,
-#custom-settings,
-#custom-power {
-    padding: 0 10px;
-    margin: 4px 2px;
-    border-radius: 10px;
-    background: transparent;
-    color: #c0caf5;
-    transition: all 0.2s ease;
-}
-
+#taskbar button,	   
 #workspaces button {
-    padding: 0 8px;
-    margin: 2px 2px;
-    border-radius: 8px;
-    color: #a9b1d6;
-    background: transparent;
-    font-size: 12px;
+	color: #6E6A86;
+	box-shadow: none;
+	text-shadow: none;
+	padding: 0px;
+	border-radius: 9px;
+	padding-left: 4px;
+	padding-right: 4px;
+	animation: gradient_f 20s ease-in infinite;
+	transition: all 0.5s cubic-bezier(.55,-0.68,.48,1.682);
 }
-
-#workspaces button:hover {
-    background: rgba(122, 162, 247, 0.2);
-    color: #c0caf5;
-}
-
+   
 #workspaces button.active {
-    background: #7aa2f7;
-    color: #1a1b26;
-    font-weight: bold;
+	color: whitesmoke;
+	border-radius: 15px 15px 15px 15px;
+	padding-left: 8px;
+	padding-right: 8px;
+	animation: gradient_f 20s ease-in infinite;
+	transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
+}
+  
+#workspaces button.focused {
+	color: #d8dee9;
+}
+   
+#workspaces button.urgent {
+	color: #11111b;
+	border-radius: 10px;
+}
+	   
+#workspaces button:hover {
+	color: whitesmoke;
+	border-radius: 15px;
+	padding-left: 2px;
+	padding-right: 2px;
+	animation: gradient_f 20s ease-in infinite;
+	transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
+}
+	
+#backlight,
+#battery,
+#bluetooth,
+#clock,
+#cpu,
+#disk,
+#idle_inhibitor,
+#keyboard-state,
+#memory,
+#mode,
+#mpris,
+#network,
+#power-profiles-daemon,
+#pulseaudio,
+#taskbar,
+#temperature,
+#tray,
+#window,
+#wireplumber,
+#workspaces,
+#custom-backlight,
+#custom-nightlight,
+#custom-browser,
+#custom-cava_mviz,
+#custom-cycle_wall,
+#custom-dot_update,
+#custom-file_manager,
+#custom-keybinds,
+#custom-keyboard,
+#custom-light_dark,
+#custom-lock,
+#custom-hint,
+#custom-hypridle,
+#custom-menu,
+#custom-playerctl,
+#custom-power_vertical,
+#custom-power,
+#custom-quit,
+#custom-reboot,
+#custom-settings,
+#custom-spotify,
+#custom-swaync,
+#custom-tty,
+#custom-updater,
+#custom-hyprpicker,
+#custom-weather,
+#custom-weather.clearNight,
+#custom-weather.cloudyFoggyDay,
+#custom-weather.cloudyFoggyNight,
+#custom-weather.default,
+#custom-weather.rainyDay,
+#custom-weather.rainyNight,
+#custom-weather.severe,
+#custom-weather.showyIcyDay,
+#custom-weather.snowyIcyNight,
+#custom-weather.sunnyDay {
+	padding-top: 4px;
+	padding-bottom: 4px;
+	padding-right: 6px;
+	padding-left: 6px;
+}
+	 
+#temperature.critical {
+	background-color: #ff0000;
+}
+   
+@keyframes blink {
+	to {
+		color: #000000;
+	}
 }
 
-#window {
-    color: #a9b1d6;
-    font-style: italic;
-    font-size: 12px;
+@keyframes gradient_f {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
 }
 
-#clock {
-    color: #7aa2f7;
-    font-weight: bold;
-    background: rgba(41, 46, 66, 0.7);
-    border-radius: 10px;
-    padding: 0 14px;
+/*-----Indicators----*/
+#custom-hypridle.notactive,
+#idle_inhibitor.activated {
+	color: #39FF14;
+	border-bottom: 8px solid rgba(0, 0, 0, 0.2);
 }
 
-#network { color: #7aa2f7; }
-#pulseaudio { color: #e0af68; }
-#battery { color: #9ece6a; }
-#custom-swaync { color: #7aa2f7; font-size: 15px; }
-#custom-settings { color: #7aa2f7; font-size: 15px; }
-#custom-power { color: #f7768e; font-size: 15px; margin-right: 4px; }
+#taskbar button:hover {
+	padding-left: 3px;
+	padding-right: 3px;
+	animation: gradient_f 20s ease-in infinite;
+	transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
+}
+   
+#taskbar button.active {
+	background-color: #7f849c;
+	padding-left: 12px;
+	padding-right: 12px;
+	animation: gradient_f 20s ease-in infinite;
+	transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
+}
+	   
+#battery.critical:not(.charging) {
+	color: #f53c3c;
+	animation-name: blink;
+	animation-duration: 3.0s;
+	animation-timing-function: steps(12);
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+}
 
-#network:hover,
-#pulseaudio:hover,
-#battery:hover,
-#custom-swaync:hover,
-#custom-settings:hover,
-#custom-power:hover {
-    background: rgba(122, 162, 247, 0.15);
+#backlight-slider slider,
+#pulseaudio-slider slider {
+	min-width: 0px;
+	min-height: 0px;
+	opacity: 0;
+	background-image: none;
+	border: none;
+	box-shadow: none;
+}
+
+#backlight-slider trough,
+#pulseaudio-slider trough {
+	min-width: 80px;  
+	min-height: 10px; 
+	border-radius: 5px;
+	background-color: black;
+}
+
+#backlight-slider highlight,
+#pulseaudio-slider highlight {
+	min-height: 10px; 
+	border-radius: 5px;
+	background-color: wheat;
 }
