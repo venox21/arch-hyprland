@@ -52,7 +52,7 @@ echo ""
 echo -e "${BLUE}── Benötigte Pakete ──${NC}"
 
 REQUIRED=(
-    hyprland waybar rofi-wayland kitty mako hyprlock hyprpaper
+    hyprland waybar rofi-wayland kitty hyprlock hyprpaper
     thunar zsh starship grim slurp wl-clipboard cliphist
     pipewire wireplumber pamixer sddm jq
     python python-gobject gtk4 libadwaita
@@ -68,6 +68,15 @@ for pkg in "${REQUIRED[@]}"; do
         fail "${pkg} nicht installiert"
     fi
 done
+
+if pacman -Qi swaync &>/dev/null; then
+    pass "swaync (Benachrichtigungen & Kontrollzentrum)"
+elif pacman -Qi mako &>/dev/null; then
+    pass "mako (Benachrichtigungen Fallback)"
+else
+    MISSING+=("swaync")
+    fail "Weder swaync noch mako installiert"
+fi
 
 # ── Hyprland-Version ──────────────────────────────────────────
 echo ""

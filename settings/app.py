@@ -35,7 +35,7 @@ try:
     import gi  # pyrefly: ignore[missing-import]
     gi.require_version("Gtk", "4.0")
     gi.require_version("Adw", "1")
-    from gi.repository import Gtk, Adw, Gio, GLib  # pyrefly: ignore[missing-import]
+    from gi.repository import Gtk, Adw, Gio, GLib, Gdk  # pyrefly: ignore[missing-import]
 except ImportError:
     class _MockBase:
         def __init__(self, *args, **kwargs):
@@ -64,11 +64,23 @@ except ImportError:
         Label = _MockBase
         Image = _MockBase
         FlowBox = _MockBase
+        class IconTheme:
+            @staticmethod
+            def get_for_display(display):
+                return _MockGtk.IconTheme()
+            def has_icon(self, name):
+                return False
+    class _MockGdk:
+        class Display:
+            @staticmethod
+            def get_default():
+                return None
     class _MockGio:
         class ApplicationFlags:
             FLAGS_NONE = 0
     Adw = _MockAdw()
     Gtk = _MockGtk()
+    Gdk = _MockGdk()
     Gio = _MockGio()
     GLib = None
 
@@ -145,26 +157,104 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         self.split_view.set_sidebar(sidebar_page)
 
-        # ── Seiten definieren ─────────────────────────────────
+        # Funktion zur dynamischen Ermittlung des besten verfügbaren Icons
+        def _get_best_icon(candidates):
+            if isinstance(candidates, str):
+                candidates = [candidates]
+            try:
+                display = Gdk.Display.get_default()
+                if display and hasattr(Gtk, "IconTheme"):
+                    theme = Gtk.IconTheme.get_for_display(display)
+                    for cand in candidates:
+                        if theme.has_icon(cand):
+                            return cand
+            except Exception:
+                pass
+            return candidates[0] if candidates else "dialog-information-symbolic"
+
+        # ── Seiten definieren (mit Fallback-Icons für alle GTK-Themes) ──
         self.pages = [
-            ("Allgemein",              "preferences-system-symbolic",       self._page_general),
-            ("Waybar",                 "view-app-grid-symbolic",            self._page_waybar),
-            ("Uhr und Datum",          "preferences-system-time-symbolic",  self._page_clock),
-            ("Systemleistung",         "utilities-system-monitor-symbolic", self._page_performance),
-            ("Netzwerk",               "network-wireless-symbolic",         self._page_network),
-            ("Audio",                  "audio-volume-high-symbolic",        self._page_audio),
-            ("Fenster und Animationen","preferences-desktop-display-symbolic", self._page_appearance),
-            ("Farben und Transparenz", "preferences-color-symbolic",        self._page_colors),
-            ("Hintergrundbilder",      "preferences-desktop-wallpaper-symbolic", self._page_wallpaper),
-            ("Tastenkürzel",           "input-keyboard-symbolic",           self._page_keybinds),
-            ("Autostart",              "media-playback-start-symbolic",     self._page_autostart),
-            ("Backup",                 "drive-harddisk-symbolic",           self._page_backup),
-            ("Diagnostik",             "dialog-information-symbolic",       self._page_diagnostics),
+            ("Allgemein", [
+                "preferences-system-symbolic",
+                "emblem-system-symbolic",
+                "applications-system-symbolic",
+                "org.gnome.Settings-symbolic",
+                "preferences-other-symbolic",
+            ], self._page_general),
+            ("Waybar", [
+                "view-app-grid-symbolic",
+                "view-grid-symbolic",
+                "open-menu-symbolic",
+                "view-list-symbolic",
+            ], self._page_waybar),
+            ("Uhr und Datum", [
+                "preferences-system-time-symbolic",
+                "alarm-symbolic",
+                "x-office-calendar-symbolic",
+                "appointment-soon-symbolic",
+            ], self._page_clock),
+            ("Systemleistung", [
+                "utilities-system-monitor-symbolic",
+                "speedometer-symbolic",
+                "applications-system-symbolic",
+                "dialog-information-symbolic",
+            ], self._page_performance),
+            ("Netzwerk", [
+                "network-wireless-symbolic",
+                "network-wireless-signal-excellent-symbolic",
+                "network-workgroup-symbolic",
+                "network-wired-symbolic",
+            ], self._page_network),
+            ("Audio", [
+                "audio-volume-high-symbolic",
+                "audio-speakers-symbolic",
+                "multimedia-volume-control-symbolic",
+            ], self._page_audio),
+            ("Fenster und Animationen", [
+                "preferences-desktop-display-symbolic",
+                "video-display-symbolic",
+                "display-symbolic",
+                "preferences-desktop-theme-symbolic",
+            ], self._page_appearance),
+            ("Farben und Transparenz", [
+                "preferences-color-symbolic",
+                "format-color-fill-symbolic",
+                "color-select-symbolic",
+                "applications-graphics-symbolic",
+            ], self._page_colors),
+            ("Hintergrundbilder", [
+                "preferences-desktop-wallpaper-symbolic",
+                "image-x-generic-symbolic",
+                "emblem-photos-symbolic",
+                "folder-pictures-symbolic",
+            ], self._page_wallpaper),
+            ("Tastenkürzel", [
+                "input-keyboard-symbolic",
+                "accessories-keyboard-shortcut-symbolic",
+                "preferences-desktop-keyboard-shortcuts-symbolic",
+                "keyboard-symbolic",
+            ], self._page_keybinds),
+            ("Autostart", [
+                "media-playback-start-symbolic",
+                "media-playback-start",
+                "system-run-symbolic",
+            ], self._page_autostart),
+            ("Backup", [
+                "drive-harddisk-symbolic",
+                "document-save-symbolic",
+                "system-software-update-symbolic",
+            ], self._page_backup),
+            ("Diagnostik", [
+                "dialog-information-symbolic",
+                "help-browser-symbolic",
+                "utilities-terminal-symbolic",
+            ], self._page_diagnostics),
         ]
 
-        for title, icon_name, _ in self.pages:
+        for title, icon_candidates, _ in self.pages:
             row = Adw.ActionRow(title=title)
-            row.set_icon_name(icon_name)
+            chosen_icon = _get_best_icon(icon_candidates)
+            row.set_icon_name(chosen_icon)
             row.set_activatable(True)
             self.nav_list.append(row)
 

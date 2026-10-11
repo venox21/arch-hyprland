@@ -94,7 +94,9 @@
     },
     "mpris": {
       "image-size": 68,
-      "show-album-art": "when-available"
+      "image-radius": 8,
+      "show-album-art": "never",
+      "autohide": true
     }
   }
 }

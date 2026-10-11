@@ -180,6 +180,23 @@ scale slider {
     padding: 4px;
 }
 
+.widget-mpris-album-art {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 8px;
+    box-shadow: none !important;
+}
+
+.widget-mpris-album-art image,
+.widget-mpris image {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 8px;
+    box-shadow: none !important;
+}
+
 .widget-mpris-title {
     color: @text-main;
     font-weight: bold;

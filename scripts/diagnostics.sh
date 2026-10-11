@@ -44,7 +44,7 @@ fi
 # ── Pakete ────────────────────────────────────────────────────
 section "Installierte Pakete"
 REQUIRED_PKGS=(
-    hyprland waybar rofi-wayland kitty mako hyprlock hyprpaper
+    hyprland waybar rofi-wayland kitty hyprlock hyprpaper
     thunar zsh starship grim slurp wl-clipboard cliphist
     pipewire wireplumber pamixer brightnessctl playerctl
     jq xdg-desktop-portal-hyprland polkit-gnome python-gobject
@@ -59,6 +59,30 @@ for pkg in "${REQUIRED_PKGS[@]}"; do
         check_fail "${pkg} nicht installiert"
     fi
 done
+
+# Benachrichtigungsdaemon (SwayNC bevorzugt)
+if pacman -Qi swaync &>/dev/null; then
+    VERSION="$(pacman -Qi swaync 2>/dev/null | grep "^Version" | awk '{print $3}')"
+    check_pass "swaync ${VERSION} (Kontrollzentrum)"
+elif pacman -Qi mako &>/dev/null; then
+    VERSION="$(pacman -Qi mako 2>/dev/null | grep "^Version" | awk '{print $3}')"
+    check_pass "mako ${VERSION} (Fallback)"
+else
+    check_fail "Weder swaync noch mako installiert"
+fi
+
+# Icon Theme & Bluetooth GUI
+if pacman -Qi papirus-icon-theme &>/dev/null; then
+    check_pass "papirus-icon-theme installiert"
+else
+    check_warn "papirus-icon-theme fehlt (empfohlen: sudo pacman -S papirus-icon-theme)"
+fi
+
+if pacman -Qi blueman &>/dev/null; then
+    check_pass "blueman installiert (Bluetooth-GUI)"
+else
+    check_warn "blueman fehlt (empfohlen: sudo pacman -S blueman)"
+fi
 
 # ── Hyprland ──────────────────────────────────────────────────
 section "Hyprland"

@@ -218,9 +218,10 @@ PACKAGES=(
     qt5-quickcontrols2
     qt5-graphicaleffects
 
-    # Schriftarten
+    # Schriftarten & Icon-Theme
     ttf-jetbrains-mono-nerd
     noto-fonts
+    papirus-icon-theme
 
     # Python GTK4 für Settings-App
     python

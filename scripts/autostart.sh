@@ -41,6 +41,7 @@ if [[ -n "${REPO_DIR}" && -d "${REPO_DIR}" ]]; then
     mkdir -p "${HOME}/.config/waybar" "${HOME}/.config/hypr" "${HOME}/.config/rofi" "${WP_DIR}" "${HOME}/.config/gtk-3.0" "${HOME}/.config/gtk-4.0" "${HOME}/.config/hypr/settings" "${HOME}/.config/swaync" "${HOME}/.config/hypr/scripts"
     [[ -d "${REPO_DIR}/config/waybar" ]] && cp -f "${REPO_DIR}/config/waybar/"* "${HOME}/.config/waybar/" 2>/dev/null || true
     [[ -d "${REPO_DIR}/config/swaync" ]] && cp -f "${REPO_DIR}/config/swaync/"* "${HOME}/.config/swaync/" 2>/dev/null || true
+    [[ -d "${REPO_DIR}/config/hypr" ]] && cp -f "${REPO_DIR}/config/hypr/"*.lua "${HOME}/.config/hypr/" 2>/dev/null || true
     [[ -f "${REPO_DIR}/config/hyprpaper/hyprpaper.conf" ]] && cp -f "${REPO_DIR}/config/hyprpaper/hyprpaper.conf" "${HOME}/.config/hypr/hyprpaper.conf" 2>/dev/null || true
     [[ -d "${REPO_DIR}/config/rofi" ]] && cp -f "${REPO_DIR}/config/rofi/"* "${HOME}/.config/rofi/" 2>/dev/null || true
     [[ -d "${REPO_DIR}/config/gtk-3.0" ]] && cp -f "${REPO_DIR}/config/gtk-3.0/"* "${HOME}/.config/gtk-3.0/" 2>/dev/null || true

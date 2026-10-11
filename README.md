@@ -57,6 +57,17 @@ Das Installationsskript:
 ./doctor.sh
 ```
 
+## Aktualisierung & Synchronisation
+
+Um Änderungen aus dem Git-Repository schnell zu übernehmen und alle Konfigurationsdateien automatisch zu aktualisieren:
+
+```bash
+git pull
+./update.sh
+```
+
+Das Skript `update.sh` synchronisiert alle Konfigurationen, setzt die Dateirechte, konfiguriert Themes/Icons und lädt SwayNC sowie Waybar neu.
+
 ## Deinstallation
 
 ```bash

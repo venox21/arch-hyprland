@@ -166,7 +166,7 @@ echo -e "${BLUE}── Hilfsskripte ──${NC}"
 SCRIPTS=(
     screenshot.sh power-menu.sh clipboard.sh wallpaper.sh
     waybar-restart.sh backup.sh diagnostics.sh settings.sh hotkeys.sh
-    control-center.sh
+    control-center.sh autostart.sh
 )
 
 for s in "${SCRIPTS[@]}"; do
@@ -229,7 +229,7 @@ done
 echo ""
 echo -e "${BLUE}── Installations-Skripte ──${NC}"
 
-for script in install.sh uninstall.sh restore-backup.sh doctor.sh; do
+for script in install.sh uninstall.sh restore-backup.sh doctor.sh update.sh; do
     FILE="${PROJECT_DIR}/${script}"
     if [[ -f "${FILE}" ]]; then
         pass "${script} existiert"
