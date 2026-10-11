@@ -235,6 +235,7 @@ PACKAGES=(
     nm-connection-editor
     bluez
     bluez-utils
+    blueman
     wlsunset
 )
 

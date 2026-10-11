@@ -16,6 +16,10 @@ hl.window_rule({
     match = { class = "blueman-manager" },
     float = true,
 })
+hl.window_rule({
+    match = { class = "floating_kitty" },
+    float = true,
+})
 
 hl.window_rule({
     match = { title = "Open File" },

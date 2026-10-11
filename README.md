@@ -105,8 +105,8 @@ Alle Tastenkürzel sind im Hotkey-Manager anzeig- und bearbeitbar.
 
 Das integrierte Tokyo Night Kontrollzentrum bietet schnellen Zugriff auf alle essenziellen Systemeinstellungen:
 - **Aufruf**: Klick auf das Glockensymbol in der Waybar oder per `SUPER + N` (DND-Schnellschalter: Rechtsklick oder `SUPER + SHIFT + N`)
-- **WLAN**: Drahtlosverbindung per Ein-/Ausschalter umschalten
-- **Bluetooth**: Bluetooth-Adapter aktivieren/deaktivieren
+- **WLAN**: Drahtlosnetzwerke scannen, auswählen und direkt verbinden (inkl. Passwortabfrage oder nm-connection-editor)
+- **Bluetooth**: Bluetooth-Geräte verbinden, koppeln und verwalten (via Blueman GUI oder Rofi)
 - **Audioausgabe**: Schneller Zugriff auf Lautstärkeregler und Mixer
 - **Nachtmodus**: Blaulichtfilter mit warmer Farbtemperatur (4000K)
 - **Theme**: Sofortiger Aufruf der Tokyo Night Einstellungs-App

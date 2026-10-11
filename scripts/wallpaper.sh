@@ -34,10 +34,13 @@ mkdir -p "${WALLPAPER_DIR}" "${THUMB_DIR}"
 
 # ── Rofi-Theme sicherstellen ──────────────────────────────────
 if [[ ! -f "${ROFI_THEME}" ]]; then
-    if [[ -f "${HOME}/arch-hyrland/config/rofi/wallpaper.rasi" ]]; then
-        mkdir -p "${HOME}/.config/rofi"
-        cp "${HOME}/arch-hyrland/config/rofi/wallpaper.rasi" "${ROFI_THEME}" 2>/dev/null || true
-    fi
+    for candidate in "${HOME}/tokyo-hypr-dots" "${HOME}/arch-hyprland" "${HOME}/arch-hyrland" "${HOME}/hyprland"; do
+        if [[ -f "${candidate}/config/rofi/wallpaper.rasi" ]]; then
+            mkdir -p "${HOME}/.config/rofi"
+            cp "${candidate}/config/rofi/wallpaper.rasi" "${ROFI_THEME}" 2>/dev/null || true
+            break
+        fi
+    done
 fi
 
 ROFI_OPTS=()
@@ -49,8 +52,13 @@ fi
 
 # ── Starter-Wallpapers kopieren falls Verzeichnis leer ist ─────
 wp_count=$(find "${WALLPAPER_DIR}" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -name 'current.jpg' 2>/dev/null | wc -l)
-if [[ "${wp_count}" -eq 0 && -d "${HOME}/arch-hyrland/assets/wallpapers" ]]; then
-    cp -f "${HOME}/arch-hyrland/assets/wallpapers/"* "${WALLPAPER_DIR}/" 2>/dev/null || true
+if [[ "${wp_count}" -eq 0 ]]; then
+    for candidate in "${HOME}/tokyo-hypr-dots" "${HOME}/arch-hyprland" "${HOME}/arch-hyrland" "${HOME}/hyprland"; do
+        if [[ -d "${candidate}/assets/wallpapers" ]]; then
+            cp -f "${candidate}/assets/wallpapers/"* "${WALLPAPER_DIR}/" 2>/dev/null || true
+            break
+        fi
+    done
 fi
 
 # ── Benachrichtigungs-Helfer ──────────────────────────────────

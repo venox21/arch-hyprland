@@ -127,6 +127,7 @@
         "format-alt": "  {ifname}: {ipaddr}/{cidr}",
         "tooltip-format": "Interface: {ifname}\nIP: {ipaddr}/{cidr}\nGateway: {gwaddr}\nUp: {bandwidthUpBits}\nDown: {bandwidthDownBits}\nSignal: {signalStrength}%\nSSID: {essid}",
         "interval": 5,
+        "on-click": "$HOME/.config/hypr/scripts/control-center.sh --wifi-menu",
         "on-click-right": "nm-connection-editor"
     },
 
@@ -201,7 +202,7 @@
         "return-type": "json",
         "exec-if": "which swaync-client",
         "exec": "swaync-client -swb",
-        "on-click": "swaync-client -t -sw",
+        "on-click": "$HOME/.config/hypr/scripts/control-center.sh --toggle",
         "on-click-right": "swaync-client -d -sw",
         "escape": true
     },

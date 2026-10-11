@@ -32,7 +32,12 @@ fi
 
 if [[ ! -f "${APP}" ]]; then
     # Fallback: Im Repository-Pfad suchen
-    APP="${HOME}/arch-hyrland/settings/app.py"
+    for candidate in "${HOME}/tokyo-hypr-dots" "${HOME}/arch-hyprland" "${HOME}/arch-hyrland" "${HOME}/hyprland"; do
+        if [[ -f "${candidate}/settings/app.py" ]]; then
+            APP="${candidate}/settings/app.py"
+            break
+        fi
+    done
 fi
 
 if [[ ! -f "${APP}" ]]; then

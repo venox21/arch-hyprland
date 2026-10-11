@@ -30,7 +30,12 @@ if [[ ! -f "${APP}" ]]; then
 fi
 
 if [[ ! -f "${APP}" ]]; then
-    APP="${HOME}/arch-hyrland/settings/hotkey_manager.py"
+    for candidate in "${HOME}/tokyo-hypr-dots" "${HOME}/arch-hyprland" "${HOME}/arch-hyrland" "${HOME}/hyprland"; do
+        if [[ -f "${candidate}/settings/hotkey_manager.py" ]]; then
+            APP="${candidate}/settings/hotkey_manager.py"
+            break
+        fi
+    done
 fi
 
 if [[ ! -f "${APP}" ]]; then

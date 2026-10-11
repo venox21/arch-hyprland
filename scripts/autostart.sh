@@ -27,10 +27,17 @@ fi
 
 WP_DIR="${HOME}/.config/hypr/wallpapers"
 CURRENT_WP="${WP_DIR}/current.jpg"
-REPO_DIR="${HOME}/arch-hyrland"
+# Repo-Verzeichnis dynamisch ermitteln
+REPO_DIR=""
+for candidate in "${HOME}/tokyo-hypr-dots" "${HOME}/arch-hyprland" "${HOME}/arch-hyrland" "${HOME}/hyprland" "$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")"; do
+    if [[ -d "${candidate}/config/swaync" ]]; then
+        REPO_DIR="${candidate}"
+        break
+    fi
+done
 
 # ── 2. Konfigurationen automatisch synchronisieren ────────────
-if [[ -d "${REPO_DIR}" ]]; then
+if [[ -n "${REPO_DIR}" && -d "${REPO_DIR}" ]]; then
     mkdir -p "${HOME}/.config/waybar" "${HOME}/.config/hypr" "${HOME}/.config/rofi" "${WP_DIR}" "${HOME}/.config/gtk-3.0" "${HOME}/.config/gtk-4.0" "${HOME}/.config/hypr/settings" "${HOME}/.config/swaync" "${HOME}/.config/hypr/scripts"
     [[ -d "${REPO_DIR}/config/waybar" ]] && cp -f "${REPO_DIR}/config/waybar/"* "${HOME}/.config/waybar/" 2>/dev/null || true
     [[ -d "${REPO_DIR}/config/swaync" ]] && cp -f "${REPO_DIR}/config/swaync/"* "${HOME}/.config/swaync/" 2>/dev/null || true
@@ -42,6 +49,13 @@ if [[ -d "${REPO_DIR}" ]]; then
     [[ -d "${REPO_DIR}/scripts" ]] && cp -f "${REPO_DIR}/scripts/"*.sh "${HOME}/.config/hypr/scripts/" 2>/dev/null || true
     chmod +x "${HOME}/.config/hypr/scripts/"*.sh 2>/dev/null || true
     [[ -d "${REPO_DIR}/assets/wallpapers" ]] && cp -n "${REPO_DIR}/assets/wallpapers/"* "${WP_DIR}/" 2>/dev/null || true
+
+    # Desktop-PC Schutz: Falls kein Backlight vorhanden ist, Widget entfernen um SwayNC-Absturz zu verhindern
+    if [[ ! -d /sys/class/backlight || -z "$(ls -A /sys/class/backlight 2>/dev/null)" ]]; then
+        if command -v jq &>/dev/null && [[ -f "${HOME}/.config/swaync/config.json" ]]; then
+            jq '.widgets |= map(select(. != "backlight"))' "${HOME}/.config/swaync/config.json" > "${HOME}/.config/swaync/config.json.tmp" 2>/dev/null && mv "${HOME}/.config/swaync/config.json.tmp" "${HOME}/.config/swaync/config.json" 2>/dev/null || true
+        fi
+    fi
 fi
 
 # ── 3. Wallpaper-Datei sicherstellen ──────────────────────────
@@ -106,24 +120,31 @@ if command -v swaync &>/dev/null; then
     pkill -9 -x mako 2>/dev/null || true
     pkill -9 -x dunst 2>/dev/null || true
     pkill -x swaync 2>/dev/null || true
-    sleep 0.5  # Warten bis DBus-Name freigegeben wird
+    sleep 0.3  # Warten bis DBus-Name freigegeben wird
 
     # WAYLAND_DISPLAY sicherstellen (kritisch für GTK-Apps)
     if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
-        wp_sock="$(find "${XDG_RUNTIME_DIR}" -maxdepth 1 -name 'wayland-*' ! -name '*.lock' 2>/dev/null | head -n 1 || true)"
+        wp_sock="$(find "${XDG_RUNTIME_DIR:-/run/user/$UID}" -maxdepth 1 -name 'wayland-*' ! -name '*.lock' 2>/dev/null | head -n 1 || true)"
         if [[ -n "${wp_sock}" ]]; then
             export WAYLAND_DISPLAY="$(basename "${wp_sock}")"
         fi
     fi
 
-    # SwayNC starten (mit Retry)
+    # SwayNC starten
     swaync > "${HOME}/.cache/swaync.log" 2>&1 &
-    sleep 0.8
+    
+    # Bis zu 3 Sekunden warten bis SwayNC bereit ist
+    retry_count=0
+    while ! pgrep -x swaync &>/dev/null && [[ ${retry_count} -lt 15 ]]; do
+        sleep 0.2
+        retry_count=$((retry_count + 1))
+    done
+
     if pgrep -x swaync &>/dev/null; then
         echo "[INFO] SwayNC Kontrollzentrum erfolgreich gestartet!"
     else
         echo "[WARNUNG] SwayNC erster Versuch fehlgeschlagen, Retry..."
-        sleep 1
+        sleep 0.5
         swaync > "${HOME}/.cache/swaync.log" 2>&1 &
         sleep 0.8
         if pgrep -x swaync &>/dev/null; then
@@ -131,11 +152,6 @@ if command -v swaync &>/dev/null; then
         else
             echo "[FEHLER] SwayNC konnte nicht gestartet werden. Fehler-Log:"
             tail -n 20 "${HOME}/.cache/swaync.log" 2>/dev/null || true
-            # Fallback: Mako verwenden
-            if command -v mako &>/dev/null; then
-                mako &
-                echo "[INFO] Fallback auf Mako Benachrichtigungen"
-            fi
         fi
     fi
 elif command -v mako &>/dev/null; then

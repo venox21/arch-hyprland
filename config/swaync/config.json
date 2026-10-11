@@ -45,14 +45,14 @@
           "label": "WLAN",
           "type": "toggle",
           "active": true,
-          "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --wifi-toggle'",
+          "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --wifi-menu'",
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --wifi-status'"
         },
         {
           "label": "Bluetooth",
           "type": "toggle",
           "active": false,
-          "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --bluetooth-toggle'",
+          "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --bluetooth-menu'",
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --bluetooth-status'"
         },
         {
