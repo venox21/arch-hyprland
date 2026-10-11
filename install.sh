@@ -329,6 +329,11 @@ info "Installiere SwayNC-Konfiguration..."
 mkdir -p "${CONFIG_DIR}/swaync"
 install_config "${SCRIPT_DIR}/config/swaync/config.json" "${CONFIG_DIR}/swaync/config.json"
 install_config "${SCRIPT_DIR}/config/swaync/style.css" "${CONFIG_DIR}/swaync/style.css"
+if [[ ! -d /sys/class/backlight || -z "$(ls -A /sys/class/backlight 2>/dev/null)" ]]; then
+    if command -v jq &>/dev/null && [[ -f "${CONFIG_DIR}/swaync/config.json" ]]; then
+        jq '.widgets |= map(select(. != "backlight"))' "${CONFIG_DIR}/swaync/config.json" > "${CONFIG_DIR}/swaync/config.json.tmp" 2>/dev/null && mv "${CONFIG_DIR}/swaync/config.json.tmp" "${CONFIG_DIR}/swaync/config.json" 2>/dev/null || true
+    fi
+fi
 
 # Mako
 info "Installiere Mako-Konfiguration..."
