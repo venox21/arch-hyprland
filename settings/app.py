@@ -60,8 +60,16 @@ except ImportError:
         def set_margin_end(self, *a, **kw): pass
         def set_margin_top(self, *a, **kw): pass
         def set_margin_bottom(self, *a, **kw): pass
+        def set_placeholder_text(self, *a, **kw): pass
+        def set_visible(self, *a, **kw): pass
+        def set_halign(self, *a, **kw): pass
+        def set_valign(self, *a, **kw): pass
+        def set_pixel_size(self, *a, **kw): pass
+        def get_row_at_index(self, *a, **kw): return self
         @classmethod
         def new_with_range(cls, *a, **kw): return cls()
+        @classmethod
+        def new_from_icon_name(cls, *a, **kw): return cls()
     class _MockAdw:
         Application = _MockBase
         ApplicationWindow = _MockBase
@@ -87,6 +95,7 @@ except ImportError:
         Label = _MockBase
         Image = _MockBase
         FlowBox = _MockBase
+        SearchEntry = _MockBase
         StringList = type("StringList", (), {"new": staticmethod(lambda items: _MockBase())})
         class IconTheme:
             @staticmethod
@@ -145,7 +154,7 @@ class SettingsWindow(Adw.ApplicationWindow):
             pass
 
         self.set_title("Tokyo Night – Einstellungen")
-        self.set_default_size(900, 650)
+        self.set_default_size(960, 680)
         self.set_resizable(True)
 
         # WM_CLASS für Fensterregeln setzen
@@ -167,6 +176,19 @@ class SettingsWindow(Adw.ApplicationWindow):
             subtitle="Tokyo Night"
         ))
         sidebar_box.append(sidebar_header)
+
+        # Schnelle Suche in den Einstellungen
+        search_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        search_box.set_margin_start(10)
+        search_box.set_margin_end(10)
+        search_box.set_margin_top(8)
+        search_box.set_margin_bottom(6)
+
+        self.search_entry = Gtk.SearchEntry()
+        self.search_entry.set_placeholder_text("Einstellungen durchsuchen...")
+        self.search_entry.connect("search-changed", self._on_search_changed)
+        search_box.append(self.search_entry)
+        sidebar_box.append(search_box)
 
         # Navigations-Liste
         self.nav_list = Gtk.ListBox()
@@ -302,7 +324,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         self._apply_css()
 
     def _apply_css(self):
-        """Tokyo Night CSS anwenden."""
+        """Tokyo Night Modern & Clean Glassmorphism CSS anwenden."""
         css = b"""
         @define-color accent_color #7aa2f7;
         @define-color accent_bg_color #7aa2f7;
@@ -316,9 +338,9 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         @define-color headerbar_bg_color #16161e;
         @define-color headerbar_fg_color #c0caf5;
-        @define-color headerbar_border_color rgba(51, 70, 124, 0.45);
+        @define-color headerbar_border_color rgba(122, 162, 247, 0.12);
 
-        @define-color card_bg_color #24283b;
+        @define-color card_bg_color #1f2335;
         @define-color card_fg_color #c0caf5;
         @define-color card_border_color rgba(122, 162, 247, 0.16);
 
@@ -356,9 +378,9 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         headerbar {
             background-color: #16161e;
-            border-bottom: 1px solid rgba(51, 70, 124, 0.45);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             box-shadow: none;
-            padding: 6px 12px;
+            padding: 8px 14px;
         }
 
         headerbar windowhandle {
@@ -368,47 +390,100 @@ class SettingsWindow(Adw.ApplicationWindow):
         headerbar .title {
             color: #7aa2f7;
             font-weight: 700;
+            font-size: 14px;
+            letter-spacing: -0.2px;
         }
 
         headerbar .subtitle {
-            color: #a9b1d6;
+            color: #787c99;
             font-size: 11px;
+            font-weight: 500;
         }
 
-        /* Sidebar Navigation */
+        /* Sidebar Navigation & Suche */
         .navigation-sidebar {
             background-color: #16161e;
-            border-right: 1px solid rgba(41, 46, 66, 0.85);
-            padding: 10px 8px;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 8px 6px;
         }
 
         .navigation-sidebar row {
             padding: 9px 12px;
-            margin: 3px 6px;
-            border-radius: 9px;
+            margin: 2px 4px;
+            border-radius: 10px;
             color: #a9b1d6;
             background-color: transparent;
-            transition: all 120ms ease;
+            transition: all 140ms cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
         }
 
         .navigation-sidebar row:hover {
-            background-color: rgba(122, 162, 247, 0.12);
+            background-color: rgba(122, 162, 247, 0.09);
             color: #c0caf5;
         }
 
         .navigation-sidebar row:selected {
-            background-color: rgba(122, 162, 247, 0.22);
+            background: linear-gradient(90deg, rgba(122, 162, 247, 0.22) 0%, rgba(122, 162, 247, 0.08) 100%);
             color: #7aa2f7;
-            font-weight: bold;
-            border-left: 3px solid #7aa2f7;
+            font-weight: 700;
+            border: 1px solid rgba(122, 162, 247, 0.35);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .navigation-sidebar row image {
-            margin-right: 6px;
+            margin-right: 8px;
             color: #7aa2f7;
         }
 
-        /* Content-Bereich & Cards */
+        /* SearchEntry in Sidebar */
+        searchentry {
+            background-color: #13141c;
+            color: #c0caf5;
+            border: 1px solid rgba(122, 162, 247, 0.20);
+            border-radius: 10px;
+            padding: 6px 10px;
+            transition: all 140ms ease;
+        }
+
+        searchentry:focus-within {
+            border-color: #7aa2f7;
+            box-shadow: 0 0 0 2px rgba(122, 162, 247, 0.25);
+            background-color: #16161e;
+        }
+
+        /* Hero Banner Dashboard */
+        .hero-banner {
+            background: linear-gradient(135deg, rgba(122, 162, 247, 0.16) 0%, rgba(187, 154, 247, 0.10) 100%);
+            border: 1px solid rgba(122, 162, 247, 0.25);
+            border-radius: 14px;
+            padding: 18px 22px;
+            margin-bottom: 6px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .hero-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #7aa2f7;
+            letter-spacing: -0.3px;
+        }
+
+        .hero-subtitle {
+            font-size: 12px;
+            color: #a9b1d6;
+        }
+
+        .hero-badge {
+            background-color: rgba(158, 206, 106, 0.18);
+            color: #9ece6a;
+            border: 1px solid rgba(158, 206, 106, 0.35);
+            border-radius: 9999px;
+            padding: 3px 10px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        /* Content-Bereich & Modern Cards */
         scrolledwindow, viewport {
             background-color: #1a1b26;
         }
@@ -420,24 +495,38 @@ class SettingsWindow(Adw.ApplicationWindow):
         preferencesgroup > box > label {
             color: #7aa2f7;
             font-weight: 700;
-            font-size: 13px;
-            letter-spacing: 0.3px;
-            margin-bottom: 6px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 4px;
+            margin-start: 4px;
+        }
+
+        preferencesgroup > box > label.subtitle,
+        preferencesgroup > box > label:not(:first-child) {
+            color: #787c99;
+            font-size: 12px;
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: normal;
+            margin-bottom: 8px;
+            margin-start: 4px;
         }
 
         .card, preferencesgroup list {
-            background-color: #24283b;
+            background-color: #1f2335;
             border: 1px solid rgba(122, 162, 247, 0.16);
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
             color: #c0caf5;
         }
 
         preferencesgroup list > row {
-            padding: 12px 16px;
-            border-bottom: 1px solid rgba(41, 46, 66, 0.6);
+            padding: 12px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
             color: #c0caf5;
             background-color: transparent;
+            transition: background-color 120ms ease;
         }
 
         preferencesgroup list > row:last-child {
@@ -455,112 +544,124 @@ class SettingsWindow(Adw.ApplicationWindow):
         }
 
         row label.subtitle {
-            color: #9aa5ce;
+            color: #787c99;
             font-size: 11px;
             margin-top: 2px;
         }
 
         /* Buttons */
         button {
-            background-color: #292e42;
+            background-color: #24283b;
             color: #c0caf5;
-            border: 1px solid #33467c;
-            border-radius: 8px;
+            border: 1px solid rgba(122, 162, 247, 0.25);
+            border-radius: 10px;
             padding: 7px 16px;
             font-weight: 600;
             font-size: 12px;
-            transition: all 120ms ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 140ms ease;
         }
 
         button:hover {
-            background-color: #33467c;
+            background-color: #2e344e;
             color: #ffffff;
             border-color: #7aa2f7;
-            box-shadow: 0 0 8px rgba(122, 162, 247, 0.25);
+            box-shadow: 0 4px 14px rgba(122, 162, 247, 0.25);
         }
 
         button:active {
-            background-color: #414868;
+            background-color: #3b4261;
         }
 
         button.suggested-action {
-            background-color: #7aa2f7;
+            background: linear-gradient(135deg, #7aa2f7 0%, #638bee 100%);
             color: #1a1b26;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             font-weight: 700;
+            box-shadow: 0 4px 14px rgba(122, 162, 247, 0.35);
         }
 
         button.suggested-action:hover {
-            background-color: #89b4fa;
+            background: linear-gradient(135deg, #89b4fa 0%, #7aa2f7 100%);
             color: #16161e;
-            box-shadow: 0 0 12px rgba(122, 162, 247, 0.4);
+            box-shadow: 0 6px 18px rgba(122, 162, 247, 0.5);
         }
 
         button.destructive-action {
-            background-color: #f7768e;
+            background: linear-gradient(135deg, #f7768e 0%, #e0607a 100%);
             color: #1a1b26;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             font-weight: 700;
+            box-shadow: 0 4px 14px rgba(247, 118, 142, 0.35);
         }
 
         button.destructive-action:hover {
-            background-color: #ff8b9e;
-            box-shadow: 0 0 12px rgba(247, 118, 142, 0.4);
+            background: linear-gradient(135deg, #ff8b9e 0%, #f7768e 100%);
+            box-shadow: 0 6px 18px rgba(247, 118, 142, 0.5);
         }
 
         /* Switches */
         switch {
-            background-color: #1f2335;
-            border: 1px solid #33467c;
-            border-radius: 14px;
+            background-color: #16161e;
+            border: 1px solid rgba(122, 162, 247, 0.25);
+            border-radius: 9999px;
             min-width: 44px;
             min-height: 24px;
+            padding: 2px;
+            transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         switch:checked {
-            background-color: #7aa2f7;
-            border-color: #7aa2f7;
+            background: linear-gradient(135deg, #7aa2f7, #638bee);
+            border-color: transparent;
+            box-shadow: 0 0 10px rgba(122, 162, 247, 0.4);
         }
 
         switch slider {
             background-color: #c0caf5;
-            border-radius: 12px;
+            border-radius: 9999px;
             min-width: 18px;
             min-height: 18px;
-            margin: 2px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin: 1px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+            transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         switch:checked slider {
-            background-color: #1a1b26;
+            background-color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
         }
 
-        /* Eingabefelder */
+        /* Eingabefelder & Spinbuttons */
         entry, spinbutton {
-            background-color: #1f2335;
+            background-color: #16161e;
             color: #c0caf5;
-            border: 1px solid #33467c;
-            border-radius: 8px;
+            border: 1px solid rgba(122, 162, 247, 0.22);
+            border-radius: 10px;
             padding: 7px 12px;
+            transition: all 140ms ease;
         }
 
         entry:focus, spinbutton:focus {
             border-color: #7aa2f7;
-            box-shadow: 0 0 0 1px #7aa2f7;
+            box-shadow: 0 0 0 2px rgba(122, 162, 247, 0.25);
+            background-color: #13141c;
         }
 
-        /* Dropdowns */
+        /* Dropdowns & Popovers */
         popover, popover.background, popover contents {
             background-color: #1f2335;
-            border: 1px solid #33467c;
-            border-radius: 10px;
+            border: 1px solid rgba(122, 162, 247, 0.25);
+            border-radius: 12px;
             color: #c0caf5;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
         }
 
         popover listview row {
             padding: 8px 12px;
             color: #c0caf5;
+            border-radius: 8px;
+            margin: 2px 4px;
         }
 
         popover listview row:hover {
@@ -570,6 +671,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         popover listview row:selected {
             background-color: rgba(122, 162, 247, 0.25);
             color: #7aa2f7;
+            font-weight: 600;
         }
 
         /* Scrollbars */
@@ -582,10 +684,11 @@ class SettingsWindow(Adw.ApplicationWindow):
             border-radius: 6px;
             min-width: 6px;
             min-height: 6px;
+            transition: background-color 150ms ease;
         }
 
         scrollbar slider:hover {
-            background-color: rgba(122, 162, 247, 0.5);
+            background-color: rgba(122, 162, 247, 0.55);
         }
 
         /* Status */
@@ -600,6 +703,14 @@ class SettingsWindow(Adw.ApplicationWindow):
             provider,
             Gtk.STYLE_PROVIDER_PRIORITY_USER,
         )
+
+    def _on_search_changed(self, entry):
+        """Filtert die Einstellungs-Kategorien live während des Tippens."""
+        query = entry.get_text().strip().lower()
+        for idx, (title, _, _) in enumerate(self.pages):
+            row = self.nav_list.get_row_at_index(idx)
+            if row:
+                row.set_visible(not query or query in title.lower())
 
     def _on_nav_selected(self, listbox, row):
         """Navigationsauswahl verarbeiten."""
@@ -646,48 +757,84 @@ class SettingsWindow(Adw.ApplicationWindow):
     # ══════════════════════════════════════════════════════════
 
     def _page_general(self) -> Gtk.Widget:
-        """Allgemeine Informationen."""
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        """Allgemeine Informationen und Desktop-Dashboard."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         box.set_margin_top(16)
         box.set_margin_bottom(16)
 
-        # Systeminformationen
-        group = Adw.PreferencesGroup(title="System", description="Allgemeine Informationen")
+        # ── Hero Banner ──────────────────────────────────────────
+        hero_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        hero_box.add_css_class("hero-banner")
 
-        version_row = Adw.ActionRow(title="Hyprland-Version")
-        version_row.set_subtitle(self.config.get_hyprland_version())
+        hero_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        title_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        title_lbl = Gtk.Label(label="Tokyo Night Hyprland")
+        title_lbl.add_css_class("hero-title")
+        badge_lbl = Gtk.Label(label="Aktiv")
+        badge_lbl.add_css_class("hero-badge")
+        title_box.append(title_lbl)
+        title_box.append(badge_lbl)
+
+        hypr_ver = self.config.get_hyprland_version()
+        sub_lbl = Gtk.Label(label=f"Hyprland {hypr_ver} • Modern Wayland mit Frosted Glass & Dynamic Blur")
+        sub_lbl.add_css_class("hero-subtitle")
+        sub_lbl.set_halign(Gtk.Align.START)
+
+        hero_text.append(title_box)
+        hero_text.append(sub_lbl)
+        hero_box.append(hero_text)
+        box.append(hero_box)
+
+        # ── Systeminformationen ──────────────────────────────────
+        group = Adw.PreferencesGroup(title="System & Hardware", description="Wichtige Desktop- und Hyprland-Metriken")
+
+        version_row = Adw.ActionRow(title="Hyprland-Version", subtitle="Wayland Compositor")
+        version_badge = Gtk.Label(label=hypr_ver)
+        version_badge.add_css_class("hero-badge")
+        version_row.add_suffix(version_badge)
         group.add(version_row)
 
         monitors = self.config.get_monitors()
-        mon_row = Adw.ActionRow(title="Monitore")
-        mon_row.set_subtitle(f"{len(monitors)} erkannt" if monitors else "Keine Daten (Hyprland läuft nicht?)")
+        mon_count = len(monitors) if monitors else 0
+        mon_row = Adw.ActionRow(title="Monitore", subtitle=f"{mon_count} Display(s) aktiv erkannt" if mon_count else "Keine Daten (Hyprland läuft nicht?)")
+        mon_btn = Gtk.Button(label="Konfigurieren", valign=Gtk.Align.CENTER)
+        mon_btn.connect("clicked", lambda _: self._select_page_by_title("Monitore"))
+        mon_row.add_suffix(mon_btn)
         group.add(mon_row)
 
-        box.append(group)
-
-        # Aktionen
-        actions = Adw.PreferencesGroup(title="Aktionen")
-
-        reload_row = Adw.ActionRow(title="Konfiguration neu laden", subtitle="Hyprland und Waybar")
-        reload_btn = Gtk.Button(label="Neu laden", valign=Gtk.Align.CENTER)
-        reload_btn.add_css_class("suggested-action")
-        reload_btn.connect("clicked", lambda _: (self.config.reload_hyprland(), self.config.restart_waybar()))
-        reload_row.add_suffix(reload_btn)
-        reload_row.set_activatable_widget(reload_btn)
-        actions.add(reload_row)
-
-        # Schnellauswahl für Leisten-Stil
         active_layout_id = self.config.get_active_waybar_layout()
         active_meta = self.config.get_waybar_layouts().get(active_layout_id, {})
         wb_style_row = Adw.ActionRow(
-            title="Leisten-Stil & Layout",
-            subtitle=f"Aktuell: {active_meta.get('name', 'Classic')} – {active_meta.get('description', '')}",
+            title="Aktiver Leisten-Stil (Waybar)",
+            subtitle=f"{active_meta.get('name', 'Classic')} – {active_meta.get('preview', '')}",
         )
-        wb_btn = Gtk.Button(label="Stil ändern...", valign=Gtk.Align.CENTER)
-        wb_btn.add_css_class("suggested-action")
+        wb_btn = Gtk.Button(label="Stil wechseln", valign=Gtk.Align.CENTER)
         wb_btn.connect("clicked", lambda _: self._select_page_by_title("Leisten-Stil"))
         wb_style_row.add_suffix(wb_btn)
-        actions.add(wb_style_row)
+        group.add(wb_style_row)
+
+        box.append(group)
+
+        # ── Schnell-Aktionen ─────────────────────────────────────
+        actions = Adw.PreferencesGroup(title="Schnell-Aktionen", description="Häufig genutzte Desktop-Befehle")
+
+        rofi_row = Adw.ActionRow(
+            title="App-Suche öffnen (Rofi)",
+            subtitle="Transparentes Schnellstartmenü für alle installierten Anwendungen (SUPER + D)",
+        )
+        rofi_btn = Gtk.Button(label="Launcher starten", valign=Gtk.Align.CENTER)
+        rofi_btn.add_css_class("suggested-action")
+        rofi_btn.connect("clicked", lambda _: os.system("rofi -show drun -theme ~/.config/rofi/config.rasi &"))
+        rofi_row.add_suffix(rofi_btn)
+        actions.add(rofi_row)
+
+        reload_row = Adw.ActionRow(title="Konfiguration neu laden", subtitle="Startet Waybar neu und aktualisiert Hyprland sofort")
+        reload_btn = Gtk.Button(label="Neu laden", valign=Gtk.Align.CENTER)
+        reload_btn.add_css_class("suggested-action")
+        reload_btn.connect("clicked", lambda _: (self.config.reload_hyprland(), self.config.restart_waybar(), self._show_info("Neu geladen", "Hyprland und Waybar wurden erfolgreich aktualisiert!")))
+        reload_row.add_suffix(reload_btn)
+        reload_row.set_activatable_widget(reload_btn)
+        actions.add(reload_row)
 
         box.append(actions)
         return box
@@ -1423,6 +1570,36 @@ class SettingsWindow(Adw.ApplicationWindow):
         wb_group.add(wb_transp)
 
         box.append(wb_group)
+
+        # ── 3. App-Suche Transparenz (Rofi) ───────────────────
+        rofi_group = Adw.PreferencesGroup(
+            title="App-Suche Transparenz (Rofi)",
+            description="Steuert die Durchsichtigkeit und den Frosted-Glass-Effekt des App-Launchers (SUPER + D)",
+        )
+        rofi_transp = Adw.SpinRow.new_with_range(20, 100, 5)
+        rofi_transp.set_title("App-Suche Deckkraft (%)")
+        rofi_transp.set_subtitle("Geringerer Wert = transparenter mit Unschärfe-Hintergrund")
+        rofi_transp.set_value(int(app.get("rofi_opacity", 0.72) * 100))
+
+        def on_rofi_opacity_changed(r, _):
+            val = r.get_value() / 100.0
+            self._update_setting("appearance", "rofi_opacity", val)
+            self.config.apply_rofi_opacity(val)
+
+        rofi_transp.connect("notify::value", on_rofi_opacity_changed)
+        rofi_group.add(rofi_transp)
+
+        test_row = Adw.ActionRow(
+            title="App-Suche Vorschau",
+            subtitle="Öffnet den Rofi-Launcher sofort, um die Transparenz live zu begutachten",
+        )
+        test_btn = Gtk.Button(label="Launcher testen", valign=Gtk.Align.CENTER)
+        test_btn.add_css_class("suggested-action")
+        test_btn.connect("clicked", lambda _: os.system("rofi -show drun -theme ~/.config/rofi/config.rasi &"))
+        test_row.add_suffix(test_btn)
+        rofi_group.add(test_row)
+
+        box.append(rofi_group)
         return box
 
     def _page_wallpaper(self) -> Gtk.Widget:

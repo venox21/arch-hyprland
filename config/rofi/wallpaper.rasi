@@ -10,20 +10,20 @@ configuration {
     steal-focus:         true;
 }
 
-/* ── Globale Farben (Tokyo Night) ────────────────────────────── */
+/* ── Globale Farben (Tokyo Night Glassmorphism) ──────────────── */
 * {
-    bg:           #1a1b26;
-    bg-alt:       #24283b;
-    bg-selected:  #33467c;
+    bg:           rgba(26, 27, 38, 0.78);
+    bg-alt:       rgba(36, 40, 59, 0.60);
+    bg-selected:  rgba(122, 162, 247, 0.25);
     fg:           #c0caf5;
-    fg-alt:       #a9b1d6;
+    fg-alt:       #787c99;
     blue:         #7aa2f7;
     cyan:         #7dcfff;
     magenta:      #bb9af7;
     red:          #f7768e;
     green:        #9ece6a;
     teal:         #73daca;
-    border:       #7aa2f7;
+    border:       rgba(122, 162, 247, 0.45);
 
     border-radius: 10px;
     margin:        0px;
@@ -35,10 +35,10 @@ configuration {
 window {
     width:            860px;
     background-color: @bg;
-    border:           2px;
+    border:           1px;
     border-color:     @border;
-    border-radius:    14px;
-    padding:          12px;
+    border-radius:    16px;
+    padding:          14px;
 }
 
 /* ── Hauptcontainer ───────────────────────────────────────────── */

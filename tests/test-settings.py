@@ -148,6 +148,21 @@ class TestConfigManager(unittest.TestCase):
         self.assertEqual(app["rounding"], 8)
         self.assertTrue(app["blur_enabled"])
         self.assertTrue(app["animations_enabled"])
+        self.assertIn("rofi_opacity", app)
+
+    def test_rofi_opacity(self):
+        """Rofi-Transparenz anwenden testen."""
+        rofi_dir = Path(self.temp_dir) / "rofi"
+        rofi_dir.mkdir(parents=True, exist_ok=True)
+        self.cm.config_dir = Path(self.temp_dir)
+        config_rasi = rofi_dir / "config.rasi"
+        config_rasi.write_text("*\n{\n    bg: #1a1b26;\n    bg-alt: #24283b;\n}\n", encoding="utf-8")
+
+        self.assertTrue(self.cm.apply_rofi_opacity(0.70))
+        content = config_rasi.read_text(encoding="utf-8")
+        self.assertIn("rgba(26, 27, 38, 0.70)", content)
+        settings = self.cm.load_settings()
+        self.assertEqual(settings["appearance"]["rofi_opacity"], 0.70)
 
     def test_wallpapers_management(self):
         """Wallpaper auflisten und aktivieren testen."""

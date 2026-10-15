@@ -68,7 +68,20 @@ hl.window_rule({
 hl.window_rule({
     match = { class = "tokyo-settings" },
     float = true,
-    size = "900 650",
+    size = "960 680",
+    center = true,
+    opacity = "0.97 0.93",
+})
+
+-- Rofi Fensterregeln (Fallback)
+hl.window_rule({
+    match = { class = "rofi" },
+    float = true,
+    center = true,
+})
+hl.window_rule({
+    match = { class = "Rofi" },
+    float = true,
     center = true,
 })
 

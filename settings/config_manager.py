@@ -725,6 +725,44 @@ return M
             print(f"Fehler beim Setzen des Farbschemas: {e}")
             return False
 
+    def apply_rofi_opacity(self, opacity: float) -> bool:
+        """Passt die Transparenz der Rofi-App-Suche an."""
+        opacity = max(0.2, min(1.0, float(opacity)))
+        self.update_setting("appearance", "rofi_opacity", opacity)
+
+        # Mögliche Pfade zur config.rasi
+        candidates = [
+            self.config_dir / "rofi" / "config.rasi",
+            Path(__file__).resolve().parent.parent / "config" / "rofi" / "config.rasi",
+        ]
+
+        bg_alt_op = max(0.15, opacity - 0.17)
+        modified = False
+
+        for conf in candidates:
+            if conf.exists():
+                try:
+                    text = conf.read_text(encoding="utf-8")
+                    # bg ersetzen
+                    text = re.sub(
+                        r"(bg:\s*)(rgba\([^)]+\)|#[0-9a-fA-F]{6,8})",
+                        f"\\g<1>rgba(26, 27, 38, {opacity:.2f})",
+                        text,
+                    )
+                    # bg-alt ersetzen
+                    text = re.sub(
+                        r"(bg-alt:\s*)(rgba\([^)]+\)|#[0-9a-fA-F]{6,8})",
+                        f"\\g<1>rgba(36, 40, 59, {bg_alt_op:.2f})",
+                        text,
+                    )
+                    self._backup_file(conf)
+                    conf.write_text(text, encoding="utf-8")
+                    modified = True
+                except OSError as e:
+                    print(f"Fehler beim Aktualisieren von {conf}: {e}")
+
+        return modified or True
+
     # ── Hilfsfunktionen ───────────────────────────────────────
 
     def _backup_file(self, path: Path):
@@ -801,6 +839,7 @@ return M
                 "active_opacity": 1.0,
                 "inactive_opacity": 0.92,
                 "animations_enabled": True,
+                "rofi_opacity": 0.72,
             },
             "input": {
                 "kb_layout": "de",

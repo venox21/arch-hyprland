@@ -1,64 +1,68 @@
 /* ╔══════════════════════════════════════════════════════════════╗
- * ║  Rofi – Tokyo Night Theme                                   ║
+ * ║  Rofi – Tokyo Night Transparent & Modern Theme              ║
+ * ║  Frosted Glass & Glassmorphism für Hyprland                 ║
  * ╚══════════════════════════════════════════════════════════════╝ */
 
 configuration {
     modi:                "drun,run,filebrowser,window";
     show-icons:          true;
     icon-theme:          "Papirus-Dark";
-    display-drun:        " Apps";
-    display-run:         " Ausführen";
-    display-filebrowser: " Dateien";
-    display-window:      " Fenster";
+    display-drun:        "  Apps";
+    display-run:         "  Ausführen";
+    display-filebrowser: "  Dateien";
+    display-window:      "  Fenster";
     drun-display-format: "{name}";
     font:                "JetBrainsMono Nerd Font 11";
     click-to-exit:       true;
     steal-focus:         true;
 }
 
-/* ── Globale Farben ───────────────────────────────────────────── */
+/* ── Globale Farben (Tokyo Night Glassmorphism) ──────────────── */
 * {
-    bg:           #1a1b26;
-    bg-alt:       #24283b;
-    bg-selected:  #33467c;
+    bg:           rgba(26, 27, 38, 0.70);
+    bg-alt:       rgba(36, 40, 59, 0.53);
+    bg-selected:  rgba(122, 162, 247, 0.22);
     fg:           #c0caf5;
-    fg-alt:       #a9b1d6;
+    fg-alt:       #787c99;
     blue:         #7aa2f7;
+    cyan:         #7dcfff;
     magenta:      #bb9af7;
     red:          #f7768e;
     green:        #9ece6a;
     teal:         #73daca;
-    border:       #7aa2f7;
+    border:       rgba(122, 162, 247, 0.45);
 
-    border-radius: 8px;
+    border-radius: 10px;
     margin:        0px;
     padding:       0px;
     spacing:       0px;
 }
 
-/* ── Fenster ──────────────────────────────────────────────────── */
+/* ── Fenster (Transparenter Frosted-Glass Rahmen) ─────────────── */
 window {
-    width:            520px;
+    width:            580px;
     background-color: @bg;
-    border:           2px;
+    border:           1px;
     border-color:     @border;
-    border-radius:    12px;
-    padding:          4px;
+    border-radius:    16px;
+    padding:          14px;
 }
 
 /* ── Hauptcontainer ───────────────────────────────────────────── */
 mainbox {
     background-color: transparent;
+    spacing:          10px;
     children:         [ inputbar, message, listview ];
 }
 
-/* ── Eingabefeld ──────────────────────────────────────────────── */
+/* ── Eingabefeld (Transparente schwebende Leiste) ─────────────── */
 inputbar {
     background-color: @bg-alt;
-    border-radius:    8px;
+    border:           1px;
+    border-color:     rgba(122, 162, 247, 0.25);
+    border-radius:    12px;
     padding:          10px 14px;
-    margin:           6px;
-    spacing:          10px;
+    spacing:          12px;
     children:         [ prompt, entry ];
 }
 
@@ -69,23 +73,25 @@ prompt {
 }
 
 entry {
-    background-color: transparent;
-    text-color:       @fg;
-    placeholder:      "Suchen...";
+    background-color:  transparent;
+    text-color:        @fg;
+    placeholder:       "Apps suchen...";
     placeholder-color: @fg-alt;
 }
 
 /* ── Nachrichtenbereich ───────────────────────────────────────── */
 message {
     background-color: transparent;
-    margin:           4px 6px;
+    padding:          2px 0px;
 }
 
 textbox {
     background-color: @bg-alt;
     text-color:       @fg-alt;
-    padding:          8px;
-    border-radius:    6px;
+    padding:          10px 14px;
+    border-radius:    10px;
+    border:           1px;
+    border-color:     rgba(122, 162, 247, 0.15);
 }
 
 /* ── Liste ────────────────────────────────────────────────────── */
@@ -93,19 +99,20 @@ listview {
     background-color: transparent;
     lines:            8;
     columns:          1;
-    fixed-height:     true;
-    margin:           4px 6px;
+    fixed-height:     false;
     spacing:          4px;
     scrollbar:        false;
 }
 
-/* ── Listenelemente ───────────────────────────────────────────── */
+/* ── Listenelemente (Sleek Hover & Active Glow) ───────────────── */
 element {
     background-color: transparent;
     text-color:       @fg;
-    padding:          8px 12px;
-    border-radius:    8px;
-    spacing:          10px;
+    padding:          9px 12px;
+    border-radius:    10px;
+    spacing:          12px;
+    border:           1px;
+    border-color:     transparent;
 }
 
 element normal.normal {
@@ -114,37 +121,44 @@ element normal.normal {
 }
 
 element normal.urgent {
-    background-color: @red;
-    text-color:       @bg;
+    background-color: rgba(247, 118, 142, 0.25);
+    text-color:       @red;
+    border-color:     @red;
 }
 
 element normal.active {
-    background-color: @bg-selected;
+    background-color: rgba(115, 218, 202, 0.15);
     text-color:       @teal;
+    border-color:     @teal;
 }
 
 element selected.normal {
     background-color: @bg-selected;
-    text-color:       @blue;
+    text-color:       #ffffff;
+    border-color:     rgba(122, 162, 247, 0.50);
 }
 
 element selected.urgent {
-    background-color: @red;
-    text-color:       @bg;
+    background-color: rgba(247, 118, 142, 0.40);
+    text-color:       #ffffff;
+    border-color:     @red;
 }
 
 element selected.active {
-    background-color: @blue;
-    text-color:       @bg;
+    background-color: rgba(122, 162, 247, 0.35);
+    text-color:       #ffffff;
+    border-color:     @blue;
 }
 
 element-icon {
     background-color: transparent;
-    size:             24px;
+    size:             26px;
+    vertical-align:   0.5;
 }
 
 element-text {
     background-color: transparent;
     text-color:       inherit;
-    highlight:        bold underline;
+    vertical-align:   0.5;
+    highlight:        bold #7aa2f7;
 }
