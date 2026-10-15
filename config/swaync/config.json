@@ -6,12 +6,12 @@
   "control-center-layer": "top",
   "layer-shell": true,
   "cssPriority": "user",
-  "control-center-margin-top": 8,
-  "control-center-margin-bottom": 8,
-  "control-center-margin-right": 8,
+  "control-center-margin-top": 10,
+  "control-center-margin-bottom": 10,
+  "control-center-margin-right": 10,
   "control-center-margin-left": 0,
-  "control-center-width": 380,
-  "control-center-height": 620,
+  "control-center-width": 390,
+  "control-center-height": 640,
   "fit-to-screen": false,
   "notification-window-width": 360,
   "keyboard-shortcuts": true,
@@ -42,38 +42,38 @@
       "buttons-per-row": 2,
       "actions": [
         {
-          "label": "WLAN",
+          "label": "󰤨  WLAN",
           "type": "toggle",
           "active": true,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --wifi-menu'",
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --wifi-status'"
         },
         {
-          "label": "Bluetooth",
+          "label": "󰂯  Bluetooth",
           "type": "toggle",
           "active": false,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --bluetooth-menu'",
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --bluetooth-status'"
         },
         {
-          "label": "Audio",
+          "label": "󰕾  Audio",
           "type": "normal",
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --audio-toggle'"
         },
         {
-          "label": "Nachtmodus",
+          "label": "󰖔  Nachtlicht",
           "type": "toggle",
           "active": false,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --nightmode-toggle'",
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --nightmode-status'"
         },
         {
-          "label": "Theme",
+          "label": "󰔎  Farbschema",
           "type": "normal",
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --theme-toggle'"
         },
         {
-          "label": "Sparmodus",
+          "label": "󱈑  Sparmodus",
           "type": "toggle",
           "active": false,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --powersave-toggle'",
@@ -93,9 +93,9 @@
       "label": "󰃟"
     },
     "mpris": {
-      "image-size": 68,
-      "image-radius": 8,
-      "show-album-art": "never",
+      "image-size": 72,
+      "image-radius": 10,
+      "show-album-art": "when-available",
       "autohide": true
     }
   }

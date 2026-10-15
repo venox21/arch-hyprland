@@ -1,13 +1,15 @@
 /* ╔══════════════════════════════════════════════════════════════╗
- * ║  SwayNC – Tokyo Night Kontrollzentrum CSS                    ║
+ * ║  SwayNC – Tokyo Night Frosted Glass Kontrollzentrum CSS     ║
+ * ║  Glassmorphism & Per-App Audio Mixer                        ║
  * ╚══════════════════════════════════════════════════════════════╝ */
 
-@define-color bg-dark #1a1b26;
-@define-color bg-surface #24283b;
-@define-color bg-surface-hover #2f354f;
+@define-color bg-dark rgba(26, 27, 38, 0.78);
+@define-color bg-surface rgba(36, 40, 59, 0.55);
+@define-color bg-surface-hover rgba(47, 53, 79, 0.75);
 @define-color text-main #c0caf5;
-@define-color text-muted #a9b1d6;
-@define-color border-color rgba(51, 70, 124, 0.55);
+@define-color text-muted #787c99;
+@define-color border-color rgba(122, 162, 247, 0.20);
+@define-color border-hover rgba(122, 162, 247, 0.45);
 @define-color accent-blue #7aa2f7;
 @define-color accent-cyan #7dcfff;
 @define-color accent-magenta #bb9af7;
@@ -17,69 +19,83 @@
 @define-color accent-green #9ece6a;
 
 * {
-    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-family: "JetBrainsMono Nerd Font", "Inter", sans-serif;
     font-size: 13px;
 }
 
-/* ── Hauptfenster des Kontrollzentrums ────────────────────────── */
+/* ── Hauptfenster des Kontrollzentrums (Frosted Glass) ────────── */
 .control-center {
-    background: rgba(26, 27, 38, 0.94);
+    background: @bg-dark;
     border: 1px solid @border-color;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    border-radius: 16px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     color: @text-main;
-    padding: 14px;
+    padding: 16px;
 }
 
 /* ── Titel & Alle löschen Button ─────────────────────────────── */
 .widget-title {
     color: @accent-cyan;
     font-size: 15px;
-    font-weight: bold;
-    margin-bottom: 8px;
+    font-weight: 800;
+    margin-bottom: 10px;
     padding: 0 4px;
+    letter-spacing: -0.2px;
 }
 
 .widget-title > button {
-    background: rgba(36, 40, 59, 0.8);
+    background: rgba(247, 118, 142, 0.12);
     border: 1px solid rgba(247, 118, 142, 0.35);
-    border-radius: 6px;
+    border-radius: 8px;
     color: @accent-red;
-    font-size: 12px;
+    font-size: 11px;
+    font-weight: 600;
     padding: 4px 10px;
     transition: all 0.2s ease;
 }
 
 .widget-title > button:hover {
-    background: rgba(247, 118, 142, 0.2);
+    background: rgba(247, 118, 142, 0.28);
     border-color: @accent-red;
-    color: #ff9e64;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(247, 118, 142, 0.35);
 }
 
 /* ── DND (Nicht stören) ───────────────────────────────────────── */
 .widget-dnd {
-    background: rgba(36, 40, 59, 0.6);
+    background: @bg-surface;
     border: 1px solid @border-color;
-    border-radius: 8px;
+    border-radius: 12px;
     margin: 6px 0;
-    padding: 8px 12px;
+    padding: 10px 14px;
     color: @text-main;
+    font-weight: 600;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .widget-dnd > switch {
-    background: rgba(26, 27, 38, 0.8);
+    background: rgba(22, 22, 30, 0.75);
     border: 1px solid @border-color;
-    border-radius: 12px;
+    border-radius: 9999px;
+    min-width: 44px;
+    min-height: 24px;
+    padding: 2px;
+    transition: all 0.2s ease;
 }
 
 .widget-dnd > switch:checked {
-    background: @accent-red;
-    border-color: @accent-red;
+    background: linear-gradient(135deg, @accent-red, #ff8b9e);
+    border-color: transparent;
+    box-shadow: 0 0 10px rgba(247, 118, 142, 0.45);
 }
 
 .widget-dnd > switch slider {
-    background: @text-main;
-    border-radius: 10px;
+    background: #ffffff;
+    border-radius: 9999px;
+    min-width: 18px;
+    min-height: 18px;
+    margin: 1px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 /* ── Quick-Settings Grid (WLAN, BT, Audio, Nachtmodus, etc.) ─── */
@@ -89,91 +105,195 @@
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button {
-    background: rgba(36, 40, 59, 0.85);
+    background: @bg-surface;
     border: 1px solid @border-color;
-    border-radius: 8px;
+    border-radius: 12px;
     color: @text-main;
-    font-size: 13px;
-    font-weight: 500;
-    min-height: 42px;
-    min-width: 105px;
+    font-size: 12px;
+    font-weight: 600;
+    min-height: 44px;
+    min-width: 110px;
     padding: 8px 12px;
     margin: 3px;
-    transition: all 0.2s ease;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button:hover {
     background: @bg-surface-hover;
     border-color: @accent-blue;
-    color: @accent-cyan;
-    box-shadow: 0 2px 8px rgba(122, 162, 247, 0.2);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(122, 162, 247, 0.28);
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button.active,
 .widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
-    background: @accent-blue;
-    border-color: @accent-blue;
+    background: linear-gradient(135deg, @accent-blue 0%, #638bee 100%);
+    border-color: transparent;
     color: #1a1b26;
-    font-weight: bold;
-    box-shadow: 0 0 12px rgba(122, 162, 247, 0.45);
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(122, 162, 247, 0.45);
 }
 
-/* ── Volume & Backlight Sliders ──────────────────────────────── */
+/* ── Volume & Backlight Sliders (Pill Styling) ────────────────── */
 .widget-volume,
 .widget-backlight {
-    background: rgba(36, 40, 59, 0.6);
+    background: @bg-surface;
     border: 1px solid @border-color;
-    border-radius: 8px;
+    border-radius: 12px;
     margin: 6px 0;
-    padding: 8px 12px;
+    padding: 10px 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .widget-volume label {
     color: @accent-blue;
-    font-size: 15px;
-    margin-right: 8px;
+    font-size: 16px;
+    margin-right: 10px;
 }
 
 .widget-backlight label {
     color: @accent-yellow;
-    font-size: 15px;
-    margin-right: 8px;
+    font-size: 16px;
+    margin-right: 10px;
 }
 
 scale trough {
-    background: rgba(26, 27, 38, 0.8);
-    border: 1px solid rgba(51, 70, 124, 0.3);
-    border-radius: 6px;
-    min-height: 8px;
+    background: rgba(22, 22, 30, 0.80);
+    border: 1px solid rgba(122, 162, 247, 0.22);
+    border-radius: 9999px;
+    min-height: 10px;
 }
 
 scale highlight {
-    border-radius: 6px;
+    border-radius: 9999px;
+    min-height: 10px;
 }
 
 .widget-volume scale highlight {
-    background: @accent-blue;
+    background: linear-gradient(90deg, @accent-blue, @accent-magenta);
 }
 
 .widget-backlight scale highlight {
-    background: @accent-yellow;
+    background: linear-gradient(90deg, @accent-yellow, @accent-orange);
 }
 
 scale slider {
-    background: @text-main;
-    border-radius: 50%;
-    min-height: 14px;
-    min-width: 14px;
-    margin: -3px;
+    background: #ffffff;
+    border-radius: 9999px;
+    min-height: 18px;
+    min-width: 18px;
+    margin: -4px 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+    transition: all 0.15s ease;
 }
 
-/* ── MPRIS (Media Player) ────────────────────────────────────── */
-.widget-mpris {
-    background: rgba(36, 40, 59, 0.7);
-    border: 1px solid @border-color;
+scale slider:hover {
+    box-shadow: 0 0 10px rgba(122, 162, 247, 0.6);
+}
+
+/* ── Per-App Lautstärkeregler (Einzellaustärke Mixer) ────────── */
+.widget-volume > box > button {
+    background: rgba(122, 162, 247, 0.12);
+    border: 1px solid rgba(122, 162, 247, 0.25);
     border-radius: 8px;
+    color: @accent-blue;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    margin-left: 6px;
+    transition: all 0.15s ease;
+}
+
+.widget-volume > box > button:hover {
+    background: rgba(122, 162, 247, 0.25);
+    color: #ffffff;
+    border-color: @accent-blue;
+}
+
+/* Container für einzelne Audio-Streams */
+.per-app {
+    background: rgba(22, 22, 30, 0.65);
+    border: 1px solid rgba(122, 162, 247, 0.16);
+    border-radius: 10px;
+    margin-top: 8px;
+    padding: 8px 10px;
+}
+
+.per-app-stream {
+    padding: 6px 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.per-app-stream:last-child {
+    border-bottom: none;
+}
+
+.per-app-stream label {
+    font-size: 12px;
+    font-weight: 600;
+    color: @text-main;
+    margin-right: 6px;
+}
+
+.per-app-stream image {
+    margin-right: 8px;
+    border-radius: 4px;
+}
+
+.per-app-stream button {
+    background: rgba(36, 40, 59, 0.6);
+    border: 1px solid rgba(122, 162, 247, 0.2);
+    border-radius: 6px;
+    padding: 2px 6px;
+    color: @accent-blue;
+    font-size: 11px;
+    transition: all 0.15s ease;
+}
+
+.per-app-stream button:hover {
+    background: rgba(247, 118, 142, 0.25);
+    color: @accent-red;
+    border-color: @accent-red;
+}
+
+/* Fein abgestimmte Schieberegler für Einzellaustärke */
+.per-app-stream scale trough {
+    background: rgba(18, 19, 26, 0.85);
+    border: 1px solid rgba(122, 162, 247, 0.15);
+    border-radius: 9999px;
+    min-height: 6px;
+}
+
+.per-app-stream scale highlight {
+    background: linear-gradient(90deg, @accent-blue, @accent-cyan);
+    border-radius: 9999px;
+    min-height: 6px;
+}
+
+.per-app-stream scale slider {
+    background: #c0caf5;
+    border-radius: 9999px;
+    min-height: 12px;
+    min-width: 12px;
+    margin: -3px 0;
+}
+
+.per-app-empty {
+    color: @text-muted;
+    font-size: 11px;
+    font-style: italic;
+    padding: 6px 4px;
+}
+
+/* ── MPRIS (Media Player mit Album-Art) ───────────────────────── */
+.widget-mpris {
+    background: @bg-surface;
+    border: 1px solid @border-color;
+    border-radius: 12px;
     margin: 6px 0;
-    padding: 10px;
+    padding: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .widget-mpris-player {
@@ -181,25 +301,13 @@ scale slider {
 }
 
 .widget-mpris-album-art {
-    background: transparent !important;
-    background-color: transparent !important;
-    border: none !important;
-    border-radius: 8px;
-    box-shadow: none !important;
-}
-
-.widget-mpris-album-art image,
-.widget-mpris image {
-    background: transparent !important;
-    background-color: transparent !important;
-    border: none !important;
-    border-radius: 8px;
-    box-shadow: none !important;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 .widget-mpris-title {
     color: @text-main;
-    font-weight: bold;
+    font-weight: 700;
     font-size: 13px;
 }
 
@@ -212,8 +320,9 @@ scale slider {
     background: transparent;
     border: none;
     color: @accent-blue;
-    font-size: 16px;
+    font-size: 18px;
     padding: 4px 8px;
+    transition: all 0.15s ease;
 }
 
 .widget-mpris > box > button:hover {
@@ -228,18 +337,20 @@ scale slider {
 }
 
 .notification-row .notification-background {
-    background: rgba(36, 40, 59, 0.9);
+    background: rgba(36, 40, 59, 0.85);
     border: 1px solid @border-color;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
     color: @text-main;
-    margin: 4px 0;
-    padding: 10px 12px;
+    margin: 6px 0;
+    padding: 12px 14px;
+    transition: all 0.15s ease;
 }
 
 .notification-row .notification-background:hover {
     background: rgba(47, 53, 79, 0.95);
     border-color: @accent-blue;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 .notification-row.low .notification-background {
@@ -252,7 +363,8 @@ scale slider {
 
 .notification-row.critical .notification-background {
     border-left: 3px solid @accent-red;
-    background: rgba(45, 25, 35, 0.95);
+    background: rgba(45, 25, 35, 0.90);
+    box-shadow: 0 0 16px rgba(247, 118, 142, 0.3);
 }
 
 .notification-content {
@@ -262,7 +374,7 @@ scale slider {
 .summary {
     color: @accent-cyan;
     font-size: 13px;
-    font-weight: bold;
+    font-weight: 700;
 }
 
 .body {
@@ -278,9 +390,10 @@ scale slider {
 .close-button {
     background: transparent;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     color: @text-muted;
     padding: 2px 6px;
+    transition: all 0.15s ease;
 }
 
 .close-button:hover {
