@@ -878,6 +878,10 @@ class SettingsWindow(Adw.ApplicationWindow):
         layout_group.add(desc_row)
         box.append(layout_group)
 
+        # ── Transparenz (Regler + Prozentfeld) ────────────────
+        transp_group, refresh_transparency = self._build_waybar_transparency_group()
+        box.append(transp_group)
+
         # ── 2. Feinabstimmung ─────────────────────────────────
         group = Adw.PreferencesGroup(
             title="Feinabstimmung",
@@ -934,6 +938,7 @@ class SettingsWindow(Adw.ApplicationWindow):
                     desc_row.set_subtitle(meta.get("description", ""))
                     pos_row.set_selected(0 if meta["position"] == "top" else 1)
                     height_row.set_value(meta["height"])
+                    refresh_transparency(chosen_id)
                     self._show_info("Waybar-Layout", msg)
                 else:
                     self._show_info("Fehler", msg)
@@ -1560,15 +1565,8 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         box.append(group)
 
-        # Waybar-Transparenz
-        wb_group = Adw.PreferencesGroup(title="Waybar-Transparenz")
-        wb_transp = Adw.SpinRow.new_with_range(50, 100, 5)
-        wb_transp.set_title("Waybar-Transparenz (%)")
-        wb_transp.set_value(int(self.settings.get("waybar", {}).get("transparency", 0.85) * 100))
-        wb_transp.connect("notify::value", lambda r, _: self._update_waybar_setting(
-            "transparency", r.get_value() / 100.0))
-        wb_group.add(wb_transp)
-
+        # Waybar-Transparenz (Regler + Prozentfeld, wirkt live)
+        wb_group, _ = self._build_waybar_transparency_group()
         box.append(wb_group)
 
         # ── 3. App-Suche Transparenz (Rofi) ───────────────────
@@ -1897,6 +1895,80 @@ class SettingsWindow(Adw.ApplicationWindow):
     def _update_waybar_setting(self, key: str, value):
         """Waybar-Einstellung aktualisieren."""
         self._update_setting("waybar", key, value)
+
+    def _build_waybar_transparency_group(self):
+        """Baut die Transparenz-Gruppe (Regler + Prozentfeld) für die Waybar.
+
+        Gibt (Gruppe, refresh) zurück. refresh(layout_id) gleicht den Regler
+        nach einem Layout-Wechsel an das neue Layout an.
+        """
+        group = Adw.PreferencesGroup(
+            title="Waybar-Transparenz",
+            description="Gilt für den Leistenhintergrund des aktiven Layouts "
+                        "(Unschärfe liefert Hyprland)",
+        )
+        row = Adw.ActionRow(
+            title="Transparenz (%)",
+            subtitle="0 % = deckend, 100 % = komplett durchsichtig",
+        )
+
+        def transparency_for(layout_id: str) -> float:
+            return round((1.0 - self.config.get_waybar_opacity(layout_id)) * 100.0)
+
+        def has_bar_background(layout_id: str) -> bool:
+            meta = self.config.get_waybar_layouts().get(layout_id, {})
+            return bool(meta.get("bar_background", True))
+
+        current = [self.config.get_active_waybar_layout()]
+        # Gemeinsame Adjustment: Slider und Zahlenfeld bleiben automatisch synchron
+        adj = Gtk.Adjustment(
+            value=transparency_for(current[0]),
+            lower=0, upper=100, step_increment=1, page_increment=10,
+        )
+        scale = Gtk.Scale(orientation=Gtk.Orientation.HORIZONTAL, adjustment=adj)
+        scale.set_draw_value(False)
+        scale.set_size_request(240, -1)
+        scale.set_valign(Gtk.Align.CENTER)
+        for mark in (0, 25, 50, 75, 100):
+            scale.add_mark(mark, Gtk.PositionType.BOTTOM, None)
+        spin = Gtk.SpinButton(adjustment=adj, digits=0)
+        spin.set_valign(Gtk.Align.CENTER)
+        row.add_suffix(scale)
+        row.add_suffix(spin)
+        group.add(row)
+
+        state = {"timer": 0, "silent": False}
+
+        def commit():
+            state["timer"] = 0
+            opacity = 1.0 - adj.get_value() / 100.0
+            self.config.apply_waybar_opacity(opacity, current[0])
+            return False  # Timer nur einmal auslösen
+
+        def on_changed(_adj):
+            if state["silent"]:
+                return
+            # Entprellen: erst anwenden, wenn der Regler kurz still steht
+            if state["timer"]:
+                GLib.source_remove(state["timer"])
+            state["timer"] = GLib.timeout_add(250, commit)
+
+        adj.connect("value-changed", on_changed)
+
+        def refresh(layout_id: str):
+            current[0] = layout_id
+            state["silent"] = True
+            adj.set_value(transparency_for(layout_id))
+            state["silent"] = False
+            usable = has_bar_background(layout_id)
+            row.set_sensitive(usable)
+            row.set_subtitle(
+                "0 % = deckend, 100 % = komplett durchsichtig" if usable
+                else "Dieses Layout hat keinen Leistenhintergrund – Regler ohne Wirkung"
+            )
+
+        refresh(current[0])
+        return group, refresh
 
     def _apply_waybar_settings(self, _button=None):
         """Waybar-Einstellungen anwenden und Waybar neu starten."""

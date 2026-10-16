@@ -135,11 +135,12 @@ hl.layer_rule({
     ignore_alpha = 0.0,
 })
 
--- Waybar-Blur
+-- Waybar-Blur (niedriger ignore_alpha, damit auch sehr transparente Leisten
+-- unscharf bleiben – Transparenz ist in den Einstellungen regelbar)
 hl.layer_rule({
     match = { namespace = "waybar" },
     blur = true,
-    ignore_alpha = 0.3,
+    ignore_alpha = 0.01,
 })
 
 -- SwayNC Kontrollzentrum & Benachrichtigungen Blur

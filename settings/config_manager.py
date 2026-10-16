@@ -122,6 +122,9 @@ class ConfigManager:
 
     # ── Waybar Layout-Verwaltung ──────────────────────────────
 
+    # default_opacity: Deckkraft (Alpha) des Leistenhintergrunds im Auslieferungszustand
+    # bar_background:   False, wenn das Layout keinen eigenen Leistenhintergrund hat
+    #                   (Pills/Dock) – der Transparenz-Regler wirkt dort nicht.
     WAYBAR_LAYOUTS: dict[str, dict] = {
         "classic": {
             "id": "classic",
@@ -130,6 +133,18 @@ class ConfigManager:
             "preview": "󰂚   ⏻ | 36px Oben",
             "height": 36,
             "position": "top",
+            "default_opacity": 0.85,
+            "bar_background": True,
+        },
+        "crystal": {
+            "id": "crystal",
+            "name": "Crystal Clear",
+            "description": "Klare Glas-Leiste mit Unschärfe, hellem Rand und stufenlos regelbarer Transparenz",
+            "preview": "󰋩 Glas-Look | 36px Oben",
+            "height": 36,
+            "position": "top",
+            "default_opacity": 0.22,
+            "bar_background": True,
         },
         "pills": {
             "id": "pills",
@@ -138,6 +153,8 @@ class ConfigManager:
             "preview": "󱅫 Island-Look | 38px Schwebend",
             "height": 38,
             "position": "top",
+            "default_opacity": 0.0,
+            "bar_background": False,
         },
         "compact": {
             "id": "compact",
@@ -146,6 +163,8 @@ class ConfigManager:
             "preview": "󰘔 Randlos Edge-to-Edge | 28px Oben",
             "height": 28,
             "position": "top",
+            "default_opacity": 1.0,
+            "bar_background": True,
         },
         "minimal": {
             "id": "minimal",
@@ -154,6 +173,8 @@ class ConfigManager:
             "preview": "󰍹 Aufgeräumt ohne CPU/RAM | 32px Schwebend",
             "height": 32,
             "position": "top",
+            "default_opacity": 0.82,
+            "bar_background": True,
         },
         "dock": {
             "id": "dock",
@@ -162,8 +183,102 @@ class ConfigManager:
             "preview": "󰞌 Dock am unteren Rand | 40px Unten",
             "height": 40,
             "position": "bottom",
+            "default_opacity": 0.0,
+            "bar_background": False,
         },
     }
+
+    # Untergrenze der Deckkraft: Bei 0 würde Hyprland die Leiste nicht mehr
+    # unscharf zeichnen (Layer-Regel ignore_alpha), daher bleibt ein Rest übrig.
+    WAYBAR_MIN_OPACITY = 0.02
+
+    # Erster window#waybar-Block mit einer background-Angabe (rgba/hex/transparent)
+    _BAR_BG_RE = re.compile(
+        r"(window#waybar\s*\{[^}]*?\bbackground(?:-color)?\s*:\s*)"
+        r"(rgba?\([^)]*\)|#[0-9a-fA-F]{3,8}|transparent)(\s*;)",
+        re.DOTALL,
+    )
+
+    @staticmethod
+    def _css_color_to_rgb(token: str) -> tuple[int, int, int]:
+        """Liest die RGB-Anteile aus einem CSS-Farbwert (rgb(a) oder #hex)."""
+        token = token.strip()
+        if token.startswith("#"):
+            h = token[1:]
+            if len(h) in (3, 4):
+                h = "".join(ch * 2 for ch in h)
+            return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+        nums = re.findall(r"[\d.]+", token)
+        return int(float(nums[0])), int(float(nums[1])), int(float(nums[2]))
+
+    @classmethod
+    def set_css_bar_opacity(cls, css: str, opacity: float) -> tuple[str, bool]:
+        """Setzt den Alpha-Wert des Leistenhintergrunds (window#waybar) in einer CSS.
+
+        Gibt (neue_css, geändert) zurück. Hat die Leiste keinen eigenen
+        Hintergrund (transparent), bleibt die CSS unverändert.
+        """
+        opacity = max(cls.WAYBAR_MIN_OPACITY, min(1.0, float(opacity)))
+        match = cls._BAR_BG_RE.search(css)
+        if not match or match.group(2) == "transparent":
+            return css, False
+
+        r, g, b = cls._css_color_to_rgb(match.group(2))
+        new_value = f"rgba({r}, {g}, {b}, {opacity:.2f})"
+        new_css = css[:match.start(2)] + new_value + css[match.end(2):]
+        return new_css, True
+
+    def get_waybar_opacity(self, layout_id: Optional[str] = None) -> float:
+        """Gespeicherte Deckkraft (0.0–1.0) des Leistenhintergrunds für ein Layout."""
+        layout_id = layout_id or self.get_active_waybar_layout()
+        meta = self.WAYBAR_LAYOUTS.get(layout_id, {})
+        default = meta.get("default_opacity", 0.85)
+        stored = self.load_settings().get("waybar", {}).get("opacity_by_layout", {})
+        try:
+            value = float(stored.get(layout_id, default))
+        except (TypeError, ValueError):
+            value = default
+        return max(0.0, min(1.0, value))
+
+    def apply_waybar_opacity(self, opacity: float, layout_id: Optional[str] = None,
+                             reload: bool = True) -> bool:
+        """Speichert die Deckkraft für das Layout und schreibt sie in die aktive style.css.
+
+        Transparenz in Prozent = (1 - opacity) * 100.
+        """
+        layout_id = layout_id or self.get_active_waybar_layout()
+        opacity = max(0.0, min(1.0, float(opacity)))
+
+        settings = self.load_settings()
+        wb = settings.setdefault("waybar", {})
+        wb.setdefault("opacity_by_layout", {})[layout_id] = round(opacity, 2)
+        self.save_settings(settings)
+
+        css_file = self.waybar_dir / "style.css"
+        if not css_file.exists():
+            return False
+        try:
+            css = css_file.read_text(encoding="utf-8")
+            new_css, changed = self.set_css_bar_opacity(css, opacity)
+            if changed and new_css != css:
+                css_file.write_text(new_css, encoding="utf-8")
+                if reload:
+                    self.reload_waybar_style()
+            return changed
+        except OSError as e:
+            print(f"Fehler beim Setzen der Waybar-Transparenz: {e}")
+            return False
+
+    def reload_waybar_style(self) -> bool:
+        """Lädt Waybar-CSS ohne Neustart neu (SIGUSR2), sonst Neustart."""
+        try:
+            result = subprocess.run(["pkill", "-SIGUSR2", "-x", "waybar"],
+                                    capture_output=True, timeout=3)
+            if result.returncode == 0:
+                return True
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        return self.restart_waybar()
 
     def get_waybar_layouts(self) -> dict:
         """Gibt alle verfügbaren Waybar-Layouts zurück."""
@@ -205,6 +320,11 @@ class ConfigManager:
             settings["waybar"]["height"] = meta["height"]
             settings["waybar"]["position"] = meta["position"]
             self.save_settings(settings)
+
+            # Gespeicherte Transparenz dieses Layouts auf die frisch kopierte CSS anwenden
+            if meta.get("bar_background", True):
+                self.apply_waybar_opacity(self.get_waybar_opacity(layout_id),
+                                          layout_id, reload=False)
 
             self.restart_waybar()
             return True, f"Waybar-Layout '{meta['name']}' erfolgreich aktiviert!"
@@ -814,7 +934,7 @@ return M
                 "margin_sides": 8,
                 "show_tray": True,
                 "font_size": 13,
-                "transparency": 0.85,
+                "opacity_by_layout": {},
                 "compact_mode": False,
             },
             "audio": {

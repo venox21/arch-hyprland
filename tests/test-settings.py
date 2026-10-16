@@ -263,6 +263,72 @@ class TestConfigManager(unittest.TestCase):
             self.assertTrue(ok)
             self.assertEqual(self.cm.get_active_waybar_layout(), "compact")
 
+    def test_crystal_layout_exists(self):
+        """Das Crystal-Layout ist registriert und seine Dateien existieren."""
+        self.assertIn("crystal", self.cm.get_waybar_layouts())
+        layout_dir = (Path(__file__).resolve().parent.parent
+                      / "config" / "waybar" / "layouts" / "crystal")
+        self.assertTrue((layout_dir / "config.jsonc").exists())
+        self.assertTrue((layout_dir / "style.css").exists())
+
+    def test_css_bar_opacity_rgba(self):
+        """Alpha einer rgba-Hintergrundfarbe wird ersetzt, Farbe bleibt."""
+        css = "window#waybar {\n    background: rgba(36, 40, 59, 0.85);\n    color: #fff;\n}\n"
+        new, changed = ConfigManager.set_css_bar_opacity(css, 0.30)
+        self.assertTrue(changed)
+        self.assertIn("background: rgba(36, 40, 59, 0.30);", new)
+
+    def test_css_bar_opacity_hex(self):
+        """Hex-Hintergrund wird in rgba mit passendem Alpha umgewandelt."""
+        css = "window#waybar {\n    background: #16161e;\n}\n"
+        new, changed = ConfigManager.set_css_bar_opacity(css, 0.5)
+        self.assertTrue(changed)
+        self.assertIn("rgba(22, 22, 30, 0.50)", new)
+
+    def test_css_bar_opacity_transparent_and_hidden(self):
+        """Transparente Leisten und .hidden-Blöcke bleiben unangetastet."""
+        css = "window#waybar {\n    background: transparent;\n}\nwindow#waybar.hidden {\n    opacity: 0.2;\n}\n"
+        new, changed = ConfigManager.set_css_bar_opacity(css, 0.5)
+        self.assertFalse(changed)
+        self.assertEqual(new, css)
+
+    def test_css_bar_opacity_floor(self):
+        """Volle Transparenz lässt einen Rest-Alpha, damit der Blur bleibt."""
+        css = "window#waybar {\n    background: rgba(1, 2, 3, 0.9);\n}\n"
+        new, _ = ConfigManager.set_css_bar_opacity(css, 0.0)
+        self.assertIn("rgba(1, 2, 3, 0.02)", new)
+
+    def test_apply_waybar_opacity_per_layout(self):
+        """Transparenz wird je Layout gespeichert und beim Wechsel wieder angewendet."""
+        self.cm.waybar_dir = Path(self.temp_dir) / "waybar"
+        with patch.object(self.cm, "restart_waybar", return_value=True), \
+             patch.object(self.cm, "reload_waybar_style", return_value=True):
+            ok, _ = self.cm.apply_waybar_layout("crystal")
+            self.assertTrue(ok)
+            # Standardwert des Layouts liegt in der CSS
+            css = (self.cm.waybar_dir / "style.css").read_text(encoding="utf-8")
+            self.assertIn("rgba(26, 27, 38, 0.22)", css)
+
+            self.assertTrue(self.cm.apply_waybar_opacity(0.4))
+            self.assertAlmostEqual(self.cm.get_waybar_opacity("crystal"), 0.4)
+            css = (self.cm.waybar_dir / "style.css").read_text(encoding="utf-8")
+            self.assertIn("rgba(26, 27, 38, 0.40)", css)
+
+            # Zu Classic wechseln: eigener Standard, Crystal-Wert bleibt erhalten
+            self.cm.apply_waybar_layout("classic")
+            self.assertAlmostEqual(self.cm.get_waybar_opacity("classic"), 0.85)
+            self.cm.apply_waybar_layout("crystal")
+            css = (self.cm.waybar_dir / "style.css").read_text(encoding="utf-8")
+            self.assertIn("rgba(26, 27, 38, 0.40)", css)
+
+    def test_all_layout_css_regex(self):
+        """Alle Layouts mit Leistenhintergrund sind per Regler steuerbar."""
+        base = Path(__file__).resolve().parent.parent / "config" / "waybar" / "layouts"
+        for lid, meta in self.cm.get_waybar_layouts().items():
+            css = (base / lid / "style.css").read_text(encoding="utf-8")
+            _, changed = ConfigManager.set_css_bar_opacity(css, 0.5)
+            self.assertEqual(changed, meta["bar_background"], lid)
+
 
 
 class TestKeybindParser(unittest.TestCase):

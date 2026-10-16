@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 
+## [Unveröffentlicht]
+
+### Hinzugefügt
+- **Waybar-Layout „Crystal Clear“** (`config/waybar/layouts/crystal/`): Glas-Optik mit hellem Rand, Glanz und Text-Schatten; `classic` bleibt unverändert wählbar.
+- **Waybar-Transparenz-Regler** (Einstellungen → Leisten-Stil und Aussehen): Slider plus Prozentfeld (0 % = deckend, 100 % = durchsichtig), wirkt live per CSS-Reload und wird pro Layout gespeichert.
+
+### Geändert
+- Waybar-Layerregel: `ignore_alpha` von 0.3 auf 0.01, damit auch sehr transparente Leisten unscharf bleiben.
+- Die bisherige, wirkungslose Einstellung `waybar.transparency` wurde durch `waybar.opacity_by_layout` ersetzt.
+
 ## [1.2.0] – 2026-10-11
 
 ### Hinzugefügt
