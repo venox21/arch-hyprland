@@ -231,6 +231,7 @@ PACKAGES=(
 
     # System-Tools
     fastfetch
+    htop
     jq
     networkmanager
     nm-connection-editor

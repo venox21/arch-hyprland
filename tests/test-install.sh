@@ -54,7 +54,7 @@ echo -e "${BLUE}── Benötigte Pakete ──${NC}"
 REQUIRED=(
     hyprland waybar rofi-wayland kitty hyprlock hyprpaper
     thunar zsh starship grim slurp wl-clipboard cliphist
-    pipewire wireplumber pamixer sddm jq
+    pipewire wireplumber pamixer sddm jq htop
     python python-gobject gtk4 libadwaita
     ttf-jetbrains-mono-nerd noto-fonts
 )
