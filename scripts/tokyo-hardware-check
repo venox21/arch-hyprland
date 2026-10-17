@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  Tokyo Night – Hardware-Check CLI Starter & Wrapper          ║
+# ╚══════════════════════════════════════════════════════════════╝
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP=""
+
+for candidate in \
+    "${SCRIPT_DIR}/hardware-check.sh" \
+    "${HOME}/.config/hypr/scripts/hardware-check.sh" \
+    "${HOME}/arch-hyprland/scripts/hardware-check.sh" \
+    "${HOME}/arch-hyrland/scripts/hardware-check.sh" \
+    "${HOME}/tokyo-hypr-dots/scripts/hardware-check.sh" \
+    "${HOME}/Desktop/hyprland/tokyo-hypr-dots/scripts/hardware-check.sh"; do
+    if [[ -f "${candidate}" ]]; then
+        APP="${candidate}"
+        break
+    fi
+done
+
+if [[ -z "${APP}" || ! -f "${APP}" ]]; then
+    echo "Fehler: scripts/hardware-check.sh nicht gefunden!" >&2
+    if command -v notify-send &>/dev/null; then
+        notify-send -u critical -i dialog-error "Hardware Check" "Skript hardware-check.sh nicht gefunden. Bitte ./update.sh ausführen."
+    fi
+    exit 1
+fi
+
+if [ -t 0 ] && [ -t 1 ]; then
+    exec bash "${APP}" "$@"
+fi
+
+if command -v kitty &>/dev/null; then
+    exec kitty --class tokyo-hardware-check --title "Hardware & Treiber Check" bash "${APP}" "$@"
+else
+    exec bash "${APP}" "$@"
+fi

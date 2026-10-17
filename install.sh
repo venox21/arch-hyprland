@@ -396,9 +396,12 @@ if [[ -d "${SCRIPT_DIR}/screenshot" ]]; then
     success "Tokyo Shot installiert"
 fi
 
-# Tokyo Shot CLI verlinken
+# CLI Starter verlinken
 mkdir -p "${HOME}/.local/bin"
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2>/dev/null || true
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-app-installer" "${HOME}/.local/bin/tokyo-app-installer" 2>/dev/null || true
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cleaner" "${HOME}/.local/bin/tokyo-cleaner" 2>/dev/null || true
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-hardware-check" "${HOME}/.local/bin/tokyo-hardware-check" 2>/dev/null || true
 
 # Desktop-Dateien für App-Launcher (Rofi drun)
 mkdir -p "${HOME}/.local/share/applications"

@@ -172,7 +172,7 @@ SCRIPTS=(
     screenshot.sh tokyo-shot power-menu.sh clipboard.sh wallpaper.sh
     waybar-restart.sh backup.sh diagnostics.sh settings.sh hotkeys.sh
     control-center.sh autostart.sh app-installer.sh gamemode.sh clean-system.sh
-    hardware-check.sh
+    hardware-check.sh tokyo-app-installer tokyo-cleaner tokyo-hardware-check
 )
 
 for s in "${SCRIPTS[@]}"; do

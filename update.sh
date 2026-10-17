@@ -102,6 +102,9 @@ chmod +x "${CONFIG_DIR}/hypr/scripts/"* 2>/dev/null || true
 chmod +x "${REPO_DIR}/"*.sh "${REPO_DIR}/scripts/"* 2>/dev/null || true
 mkdir -p "${HOME}/.local/bin"
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2>/dev/null || true
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-app-installer" "${HOME}/.local/bin/tokyo-app-installer" 2>/dev/null || true
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cleaner" "${HOME}/.local/bin/tokyo-cleaner" 2>/dev/null || true
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-hardware-check" "${HOME}/.local/bin/tokyo-hardware-check" 2>/dev/null || true
 if [[ -d "${REPO_DIR}/assets/desktop" ]]; then
     mkdir -p "${HOME}/.local/share/applications"
     cp -f "${REPO_DIR}/assets/desktop/"*.desktop "${HOME}/.local/share/applications/" 2>/dev/null || true
