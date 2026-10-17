@@ -346,6 +346,27 @@ class TestConfigManager(unittest.TestCase):
         self.assertIn('position = "2560x0"', content)
         self.assertIn('mirror   = "DP-1"', content)
 
+    def test_version_and_update(self):
+        """Versionsabfrage und Update-Check prüfen."""
+        self.cm.hypr_dir = Path(self.temp_dir)
+        # Standard ohne Datei: Mindestens '1.0'
+        ver = self.cm.get_version()
+        self.assertTrue(ver.replace(".", "").isdigit())
+
+        # Wenn Version-Datei existiert
+        (self.cm.hypr_dir / "VERSION").write_text("1.3\n", encoding="utf-8")
+        self.assertEqual(self.cm.get_version(), "1.3")
+
+        # Repo-Pfad Ermittlung testen
+        repo = self.cm.get_repo_path()
+        self.assertIsNotNone(repo)
+
+        # Update-Check Mock-Test
+        res = self.cm.check_for_updates()
+        self.assertIn("current_version", res)
+        self.assertIn("update_available", res)
+        self.assertIn("message", res)
+
     def test_theme_palettes(self):
         """Tokyo Night Akzent-Paletten prüfen und anwenden."""
         self.cm.hypr_dir = Path(self.temp_dir)

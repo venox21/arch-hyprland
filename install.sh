@@ -421,12 +421,13 @@ if command -v gsettings &>/dev/null; then
     gsettings set org.gnome.desktop.interface font-name 'JetBrainsMono Nerd Font 10' 2>/dev/null || true
 fi
 
-# Settings-App installieren
-info "Installiere Einstellungs-App..."
+# Settings-App & Version installieren
+info "Installiere Einstellungs-App & Versionsdaten..."
 if [[ -d "${SCRIPT_DIR}/settings" ]]; then
     mkdir -p "${CONFIG_DIR}/hypr/settings"
     cp -a "${SCRIPT_DIR}/settings/"* "${CONFIG_DIR}/hypr/settings/" 2>/dev/null || true
-    success "Einstellungs-App installiert"
+    [[ -f "${SCRIPT_DIR}/VERSION" ]] && cp -f "${SCRIPT_DIR}/VERSION" "${CONFIG_DIR}/hypr/VERSION" 2>/dev/null || true
+    success "Einstellungs-App & Version v$(cat "${SCRIPT_DIR}/VERSION" 2>/dev/null || echo "1.0") installiert"
 fi
 
 # ══════════════════════════════════════════════════════════════

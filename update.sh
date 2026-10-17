@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Falls das Skript mit 'sh' (oder dash) aufgerufen wurde, sofort mit 'bash' neu starten:
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec bash "$0" "$@"
+fi
+
 # ╔══════════════════════════════════════════════════════════════╗
 # ║  Tokyo Night Hyprland – Schnelles Update- & Sync-Skript      ║
 # ║  Synchronisiert alle Dotfiles, Skripte und Einstellungen     ║
@@ -17,7 +22,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Repo-Verzeichnis ermitteln
 REPO_DIR="${SCRIPT_DIR}"
 if [[ ! -f "${REPO_DIR}/config/swaync/config.json" ]]; then
-    for candidate in "${HOME}/arch-hyrland" "${HOME}/tokyo-hypr-dots" "${HOME}/arch-hyprland" "${HOME}/hyprland"; do
+    for candidate in \
+        "${SCRIPT_DIR}" \
+        "${HOME}/Desktop/hyprland/tokyo-hypr-dots" \
+        "${HOME}/Desktop/hyprland" \
+        "${HOME}/arch-hyprland" \
+        "${HOME}/tokyo-hypr-dots" \
+        "${HOME}/arch-hyrland" \
+        "${HOME}/hyprland"; do
         if [[ -f "${candidate}/config/swaync/config.json" ]]; then
             REPO_DIR="${candidate}"
             break
@@ -98,6 +110,28 @@ fi
 # Wallpapers
 [[ -d "${REPO_DIR}/assets/wallpapers" ]] && cp -n "${REPO_DIR}/assets/wallpapers/"* "${CONFIG_DIR}/hypr/wallpapers/" 2>/dev/null || true
 
+# ── Versionsverwaltung: Version um 0.1 erhöhen ──
+VERSION_FILE="${REPO_DIR}/VERSION"
+INSTALLED_VER_FILE="${CONFIG_DIR}/hypr/VERSION"
+
+CURRENT_VER="1.0"
+if [[ -f "${INSTALLED_VER_FILE}" ]]; then
+    CURRENT_VER="$(tr -d '[:space:]' < "${INSTALLED_VER_FILE}" 2>/dev/null || echo "1.0")"
+elif [[ -f "${VERSION_FILE}" ]]; then
+    CURRENT_VER="$(tr -d '[:space:]' < "${VERSION_FILE}" 2>/dev/null || echo "1.0")"
+fi
+
+if ! [[ "${CURRENT_VER}" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    CURRENT_VER="1.0"
+fi
+
+NEW_VER="$(awk "BEGIN {printf \"%.1f\", ${CURRENT_VER} + 0.1}" 2>/dev/null || python3 -c "print(f'{float(\"${CURRENT_VER}\") + 0.1:.1f}')" 2>/dev/null || echo "1.1")"
+
+echo "${NEW_VER}" > "${INSTALLED_VER_FILE}"
+if [[ -d "${REPO_DIR}" && -w "${REPO_DIR}" ]]; then
+    echo "${NEW_VER}" > "${VERSION_FILE}" 2>/dev/null || true
+fi
+
 # Desktop-PC Schutz: Falls kein Backlight vorhanden ist, Widget entfernen
 if [[ ! -d /sys/class/backlight || -z "$(ls -A /sys/class/backlight 2>/dev/null)" ]]; then
     if command -v jq &>/dev/null && [[ -f "${CONFIG_DIR}/swaync/config.json" ]]; then
@@ -105,7 +139,7 @@ if [[ ! -d /sys/class/backlight || -z "$(ls -A /sys/class/backlight 2>/dev/null)
     fi
 fi
 
-echo -e "  ${GREEN}✓${NC} Alle Konfigurationsdateien erfolgreich kopiert"
+echo -e "  ${GREEN}✓${NC} Alle Konfigurationsdateien erfolgreich kopiert (Version: ${BOLD}v${NEW_VER}${NC})"
 
 echo -e "${BLUE}[3/5] Design & Icons konfigurieren...${NC}"
 if command -v gsettings &>/dev/null; then
@@ -173,5 +207,8 @@ if pgrep -x waybar &>/dev/null; then
 fi
 
 echo ""
-echo -e "${GREEN}${BOLD}Update abgeschlossen! Alle Fehlerbehebungen sind aktiv.${NC}"
+echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}${BOLD}║  Update auf Version ${NEW_VER} erfolgreich abgeschlossen!    ║${NC}"
+echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${NC}"
+echo -e "  Alle Konfigurationen und Dienste sind aktiv."
 echo ""

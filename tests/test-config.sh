@@ -153,6 +153,7 @@ OTHER_FILES=(
     "assets/desktop/tokyo-app-installer.desktop"
     "assets/desktop/tokyo-cleaner.desktop"
     "assets/desktop/tokyo-hardware-check.desktop"
+    "VERSION"
 )
 
 for f in "${OTHER_FILES[@]}"; do

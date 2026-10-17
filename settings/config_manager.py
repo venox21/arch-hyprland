@@ -1627,3 +1627,150 @@ return M
                 "variant": "classic",
             },
         }
+
+    # ── Versions- & Update-Verwaltung ─────────────────────────
+
+    def get_repo_path(self) -> Optional[Path]:
+        """Ermittelt den Pfad zum Git-Repository der Dotfiles."""
+        candidates = [
+            Path(__file__).resolve().parent.parent,
+            Path.home() / "Desktop" / "hyprland" / "tokyo-hypr-dots",
+            Path.home() / "Desktop" / "hyprland",
+            Path.home() / "arch-hyprland",
+            Path.home() / "tokyo-hypr-dots",
+            Path.home() / "hyprland",
+        ]
+        for p in candidates:
+            if (p / ".git").is_dir() or (p / "update.sh").is_file():
+                return p
+        return None
+
+    def get_version(self) -> str:
+        """Gibt die aktuelle Version der Tokyo Night Dotfiles zurück (z. B. '1.0')."""
+        # 1. Installierte Version in ~/.config/hypr/VERSION
+        installed = self.hypr_dir / "VERSION"
+        if installed.is_file():
+            try:
+                ver = installed.read_text(encoding="utf-8").strip()
+                if ver:
+                    return ver
+            except OSError:
+                pass
+
+        # 2. Im Repo suchen
+        repo = self.get_repo_path()
+        if repo:
+            repo_ver = repo / "VERSION"
+            if repo_ver.is_file():
+                try:
+                    ver = repo_ver.read_text(encoding="utf-8").strip()
+                    if ver:
+                        return ver
+                except OSError:
+                    pass
+
+        return "1.0"
+
+    def check_for_updates(self) -> dict:
+        """Prüft online via git fetch, ob neue Updates auf GitHub verfügbar sind."""
+        repo = self.get_repo_path()
+        current_ver = self.get_version()
+        now_str = datetime.now().strftime("%d.%m.%Y, %H:%M:%S")
+
+        if not repo or not (repo / ".git").is_dir():
+            return {
+                "success": False,
+                "current_version": current_ver,
+                "update_available": False,
+                "commits_behind": 0,
+                "remote_branch": "origin/main",
+                "last_checked": now_str,
+                "message": "Git-Repository nicht gefunden (manuelle Installation).",
+                "changelog": [],
+            }
+
+        try:
+            # 1. Fetch remote changes mit kurzem Timeout (8 Sekunden)
+            fetch_res = subprocess.run(
+                ["git", "fetch", "origin", "main"],
+                cwd=str(repo),
+                capture_output=True,
+                text=True,
+                timeout=8,
+            )
+            if fetch_res.returncode != 0:
+                subprocess.run(
+                    ["git", "fetch"],
+                    cwd=str(repo),
+                    capture_output=True,
+                    text=True,
+                    timeout=8,
+                )
+
+            # 2. Prüfe wie viele Commits lokal hinter origin/main liegen
+            rev_res = subprocess.run(
+                ["git", "rev-list", "HEAD..origin/main", "--count"],
+                cwd=str(repo),
+                capture_output=True,
+                text=True,
+                timeout=4,
+            )
+            count = 0
+            if rev_res.returncode == 0:
+                try:
+                    count = int(rev_res.stdout.strip())
+                except ValueError:
+                    count = 0
+
+            changelog = []
+            if count > 0:
+                log_res = subprocess.run(
+                    ["git", "log", "HEAD..origin/main", "--oneline", "-n", "5"],
+                    cwd=str(repo),
+                    capture_output=True,
+                    text=True,
+                    timeout=4,
+                )
+                if log_res.returncode == 0 and log_res.stdout.strip():
+                    changelog = [line.strip() for line in log_res.stdout.strip().splitlines() if line.strip()]
+
+            update_available = count > 0
+            if update_available:
+                msg = f"{count} neue Aktualisierung(en) auf GitHub verfügbar!"
+            else:
+                msg = "Tokyo Night Hyprland ist auf dem neuesten Stand."
+
+            return {
+                "success": True,
+                "current_version": current_ver,
+                "update_available": update_available,
+                "commits_behind": count,
+                "remote_branch": "origin/main",
+                "last_checked": now_str,
+                "message": msg,
+                "changelog": changelog,
+            }
+
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "current_version": current_ver,
+                "update_available": False,
+                "commits_behind": 0,
+                "remote_branch": "origin/main",
+                "last_checked": now_str,
+                "message": "Zeitüberschreitung beim Prüfen (Prüfe deine Internetverbindung).",
+                "changelog": [],
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "current_version": current_ver,
+                "update_available": False,
+                "commits_behind": 0,
+                "remote_branch": "origin/main",
+                "last_checked": now_str,
+                "message": f"Prüfung fehlgeschlagen: {e}",
+                "changelog": [],
+            }
+

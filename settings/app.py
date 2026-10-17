@@ -10,6 +10,7 @@
 import sys
 import os
 import glob
+import threading
 from pathlib import Path
 
 # Wayland-Umgebung automatisch ermitteln (SSH / TTY Support)
@@ -335,6 +336,12 @@ class SettingsWindow(Adw.ApplicationWindow):
                 "help-browser-symbolic",
                 "utilities-terminal-symbolic",
             ], self._page_diagnostics),
+            ("Version & Update", [
+                "system-software-update-symbolic",
+                "software-update-available-symbolic",
+                "system-software-install-symbolic",
+                "emblem-system-symbolic",
+            ], self._page_version_update),
         ]
 
         for title, icon_candidates, _ in self.pages:
@@ -822,6 +829,21 @@ class SettingsWindow(Adw.ApplicationWindow):
         version_badge.add_css_class("hero-badge")
         version_row.add_suffix(version_badge)
         group.add(version_row)
+
+        tokyo_ver = self.config.get_version()
+        dots_row = Adw.ActionRow(
+            title=f"Tokyo Night Version: v{tokyo_ver}",
+            subtitle="Versionsstand der Konfiguration & Skripte (erhöht sich bei jedem Update um 0.1)"
+        )
+        dots_badge = Gtk.Label(label=f"v{tokyo_ver}")
+        dots_badge.add_css_class("hero-badge")
+        dots_row.add_suffix(dots_badge)
+
+        update_check_btn = Gtk.Button(label="Updates prüfen", valign=Gtk.Align.CENTER)
+        update_check_btn.connect("clicked", lambda _: self._select_page_by_title("Version & Update"))
+        dots_row.add_suffix(update_check_btn)
+        dots_row.set_activatable_widget(update_check_btn)
+        group.add(dots_row)
 
         hw_link_row = Adw.ActionRow(title="Hardware & Treiber", subtitle="CPU, GPU, NVIDIA/Mesa-Status und Akku prüfen")
         hw_link_btn = Gtk.Button(label="Öffnen", valign=Gtk.Align.CENTER)
@@ -2601,6 +2623,181 @@ class SettingsWindow(Adw.ApplicationWindow):
         group.add(clean_row)
 
         box.append(group)
+        return box
+
+    def _page_version_update(self) -> Gtk.Widget:
+        """Seite für Version, Update-Prüfung und System-Synchronisation."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        box.set_margin_top(16)
+        box.set_margin_bottom(16)
+
+        cur_ver = self.config.get_version()
+
+        # ── Hero Banner ──
+        hero_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        hero_box.add_css_class("hero-banner")
+
+        hero_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        title_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        title_lbl = Gtk.Label(label=f"Tokyo Night Hyprland v{cur_ver}")
+        title_lbl.add_css_class("hero-title")
+
+        status_badge = Gtk.Label(label=f"v{cur_ver}")
+        status_badge.add_css_class("hero-badge")
+        title_box.append(title_lbl)
+        title_box.append(status_badge)
+
+        sub_lbl = Gtk.Label(label="Automatische Update-Prüfung via GitHub & One-Click System-Synchronisation")
+        sub_lbl.add_css_class("hero-subtitle")
+        sub_lbl.set_halign(Gtk.Align.START)
+
+        hero_text.append(title_box)
+        hero_text.append(sub_lbl)
+        hero_box.append(hero_text)
+        box.append(hero_box)
+
+        # ── Update-Status Karte ──
+        status_group = Adw.PreferencesGroup(
+            title="Versions- & Update-Status",
+            description="Überprüfe den aktuellen Stand mit dem offiziellen GitHub-Repository",
+        )
+
+        ver_row = Adw.ActionRow(
+            title=f"Installierte Version: v{cur_ver}",
+            subtitle="Startet bei 1.0 und erhöht sich nach jedem erfolgreichen Update automatisch um 0.1",
+        )
+        ver_badge = Gtk.Label(label=f"v{cur_ver}")
+        ver_badge.add_css_class("hero-badge")
+        ver_row.add_suffix(ver_badge)
+        status_group.add(ver_row)
+
+        repo_row = Adw.ActionRow(
+            title="GitHub Repository",
+            subtitle="https://github.com/venox21/arch-hyprland (origin/main)",
+        )
+        repo_badge = Gtk.Label(label="origin/main")
+        repo_badge.add_css_class("hero-badge")
+        repo_row.add_suffix(repo_badge)
+        status_group.add(repo_row)
+
+        check_row = Adw.ActionRow(
+            title="Update-Prüfung",
+            subtitle="Klicke auf 'Auf Updates prüfen', um nach neuen Versionen zu suchen",
+        )
+        spinner = Gtk.Spinner()
+        spinner.set_spinning(False)
+        spinner.set_visible(False)
+        spinner.set_valign(Gtk.Align.CENTER)
+        spinner.set_margin_end(8)
+        check_row.add_suffix(spinner)
+
+        check_badge = Gtk.Label(label="Bereit zur Prüfung")
+        check_badge.add_css_class("hero-badge")
+        check_row.add_suffix(check_badge)
+        status_group.add(check_row)
+
+        # Changelog-Container (anfänglich unsichtbar)
+        changelog_row = Adw.ActionRow(
+            title="Verfügbare Aktualisierungen auf GitHub",
+            subtitle="Neue Änderungen in origin/main",
+        )
+        changelog_row.set_visible(False)
+        status_group.add(changelog_row)
+
+        box.append(status_group)
+
+        # ── Aktionen Gruppe ──
+        actions_group = Adw.PreferencesGroup(
+            title="Update-Aktionen",
+            description="Prüfe online auf Neuerungen oder führe das System-Update aus",
+        )
+
+        check_action = Adw.ActionRow(
+            title="Auf Updates prüfen",
+            subtitle="Vergleicht lokale Commits mit GitHub origin/main",
+        )
+        check_btn = Gtk.Button(label="Jetzt prüfen", valign=Gtk.Align.CENTER)
+        check_action.add_suffix(check_btn)
+        check_action.set_activatable_widget(check_btn)
+        actions_group.add(check_action)
+
+        update_action = Adw.ActionRow(
+            title="System aktualisieren & synchronisieren",
+            subtitle="Führt update.sh im Terminal aus und erhöht die Versionsnummer um 0.1",
+        )
+        update_btn = Gtk.Button(label="Update ausführen", valign=Gtk.Align.CENTER)
+        update_btn.add_css_class("suggested-action")
+        update_action.add_suffix(update_btn)
+        update_action.set_activatable_widget(update_btn)
+        actions_group.add(update_action)
+
+        box.append(actions_group)
+
+        # Callback für Update-Prüfung im Hintergrund-Thread
+        def on_check_clicked(_):
+            check_btn.set_sensitive(False)
+            spinner.set_visible(True)
+            spinner.set_spinning(True)
+            check_row.set_subtitle("Verbindung zu GitHub wird geprüft...")
+            check_badge.set_label("Prüfe...")
+
+            def worker():
+                res = self.config.check_for_updates()
+
+                def update_ui():
+                    spinner.set_spinning(False)
+                    spinner.set_visible(False)
+                    check_btn.set_sensitive(True)
+
+                    msg = res.get("message", "")
+                    last_checked = res.get("last_checked", "")
+                    check_row.set_subtitle(f"{msg} (Geprüft: {last_checked})")
+
+                    if res.get("update_available"):
+                        check_badge.set_label("Update verfügbar!")
+                        check_badge.remove_css_class("hero-badge")
+                        check_badge.add_css_class("status-warn")
+                        status_badge.set_label("Update verfügbar")
+                        status_badge.remove_css_class("hero-badge")
+                        status_badge.add_css_class("status-warn")
+
+                        changes = res.get("changelog", [])
+                        if changes:
+                            changelog_row.set_subtitle("\n".join(f"• {c}" for c in changes[:5]))
+                            changelog_row.set_visible(True)
+
+                        update_btn.add_css_class("suggested-action")
+                    elif res.get("success"):
+                        check_badge.set_label("Aktuell")
+                        check_badge.remove_css_class("hero-badge")
+                        check_badge.add_css_class("status-ok")
+                        changelog_row.set_visible(False)
+                    else:
+                        check_badge.set_label("Offline / Fehler")
+                        check_badge.remove_css_class("hero-badge")
+                        check_badge.add_css_class("status-error")
+                    return False
+
+                GLib.idle_add(update_ui)
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        check_btn.connect("clicked", on_check_clicked)
+
+        # Update ausführen Callback
+        def on_update_clicked(_):
+            repo = self.config.get_repo_path()
+            repo_str = str(repo) if repo else "${HOME}/Desktop/hyprland/tokyo-hypr-dots"
+            os.system(
+                "kitty --class tokyo-update --title 'Tokyo Night – System-Update' bash -c '"
+                f"for d in \"{repo_str}\" ~/.config/hypr/scripts/../../.. ~/Desktop/hyprland/tokyo-hypr-dots ~/arch-hyprland ~/tokyo-hypr-dots; do "
+                "if [[ -f \"$d/update.sh\" ]]; then cd \"$d\" && bash ./update.sh; echo; read -p \"Drücke Enter zum Schließen...\"; exit 0; fi; done; "
+                "if [[ -f ~/.config/hypr/scripts/update.sh ]]; then bash ~/.config/hypr/scripts/update.sh; echo; read -p \"Drücke Enter...\"; exit 0; fi; "
+                "echo \"update.sh nicht gefunden.\"; echo; read -p \"Drücke Enter zum Schließen...\"' &"
+            )
+
+        update_btn.connect("clicked", on_update_clicked)
+
         return box
 
     # ══════════════════════════════════════════════════════════
