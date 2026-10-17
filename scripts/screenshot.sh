@@ -6,11 +6,19 @@
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TOKYO_SHOT="${SCRIPT_DIR}/tokyo-shot"
 
 # Wenn tokyo-shot existiert, übergebe den Befehl
-if [[ -x "${TOKYO_SHOT}" ]] || [[ -f "${TOKYO_SHOT}" ]]; then
-    exec bash "${TOKYO_SHOT}" "$@"
+for candidate in \
+    "${SCRIPT_DIR}/tokyo-shot" \
+    "${HOME}/.local/bin/tokyo-shot" \
+    "${HOME}/.config/hypr/scripts/tokyo-shot"; do
+    if [[ -f "${candidate}" ]]; then
+        exec bash "${candidate}" "$@"
+    fi
+done
+
+if command -v tokyo-shot &>/dev/null; then
+    exec tokyo-shot "$@"
 fi
 
 # Fallback: Direkt über grim + slurp
@@ -28,6 +36,21 @@ notify() {
 }
 
 case "${1:-full}" in
+    gui)
+        # Wenn tokyo-shot GUI nicht direkt im Pfad liegt, suche in gängigen Pfaden
+        for app_py in \
+            "${SCRIPT_DIR}/../screenshot/app.py" \
+            "${HOME}/.config/hypr/screenshot/app.py" \
+            "${HOME}/Desktop/hyprland/tokyo-hypr-dots/screenshot/app.py" \
+            "${HOME}/arch-hyprland/screenshot/app.py" \
+            "${HOME}/tokyo-hypr-dots/screenshot/app.py"; do
+            if [[ -f "${app_py}" ]]; then
+                exec python3 "${app_py}" --gui
+            fi
+        done
+        notify "Tokyo Shot GUI konnte nicht gefunden werden."
+        exit 1
+        ;;
     full)
         grim "${FILENAME}"
         wl-copy < "${FILENAME}" 2>/dev/null || true

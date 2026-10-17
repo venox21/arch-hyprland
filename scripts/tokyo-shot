@@ -28,6 +28,8 @@ APP=""
 for candidate in \
     "${SCRIPT_DIR}/../screenshot/app.py" \
     "${HOME}/.config/hypr/screenshot/app.py" \
+    "${HOME}/Desktop/hyprland/tokyo-hypr-dots/screenshot/app.py" \
+    "${HOME}/Desktop/hyprland/screenshot/app.py" \
     "${HOME}/arch-hyprland/screenshot/app.py" \
     "${HOME}/tokyo-hypr-dots/screenshot/app.py"; do
     if [[ -f "${candidate}" ]]; then
@@ -38,6 +40,9 @@ done
 
 if [[ -z "${APP}" || ! -f "${APP}" ]]; then
     echo "Fehler: Tokyo Shot (app.py) nicht gefunden!" >&2
+    if command -v notify-send &>/dev/null; then
+        notify-send -u critical -i dialog-error "Tokyo Shot" "screenshot/app.py nicht gefunden. Bitte führe ./update.sh aus."
+    fi
     exit 1
 fi
 

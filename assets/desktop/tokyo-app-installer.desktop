@@ -2,7 +2,7 @@
 Name=App Installer
 GenericName=Arch Linux & AUR App Installer
 Comment=Beliebte Programme interaktiv via yay & pacman installieren
-Exec=kitty --class tokyo-app-installer --title "App Installer" -e bash -c "if [[ -x \"${HOME}/.config/hypr/scripts/app-installer.sh\" ]]; then \"${HOME}/.config/hypr/scripts/app-installer.sh\"; elif [[ -x \"${HOME}/arch-hyprland/install-apps.sh\" ]]; then \"${HOME}/arch-hyprland/install-apps.sh\"; else echo 'App-Installer Skript nicht gefunden.'; fi; echo ''; read -r -p 'Drücke Enter zum Schließen...' _dummy"
+Exec=kitty --class tokyo-app-installer --title "App Installer" -e bash -c "for s in \"${HOME}/.config/hypr/scripts/app-installer.sh\" \"$(dirname \"$(readlink -f \"$0\" 2>/dev/null || echo \"$HOME\")\")/../scripts/app-installer.sh\" \"${HOME}/Desktop/hyprland/tokyo-hypr-dots/scripts/app-installer.sh\" \"${HOME}/arch-hyprland/scripts/app-installer.sh\" \"${HOME}/tokyo-hypr-dots/scripts/app-installer.sh\"; do if [[ -f \"${s}\" ]]; then bash \"${s}\"; exit 0; fi; done; echo 'App-Installer Skript nicht gefunden.'; echo ''; read -r -p 'Drücke Enter zum Schließen...' _dummy"
 Icon=system-software-install
 Terminal=false
 Type=Application

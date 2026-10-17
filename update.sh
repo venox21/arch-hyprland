@@ -133,17 +133,16 @@ if sudo -n true 2>/dev/null || sudo -v 2>/dev/null; then
     echo -e "  ${GREEN}✓${NC} Berechtigungen für Uhrzeit & Zeitzone eingerichtet"
 fi
 
-echo -e "${BLUE}[4/5] Optionale Pakete prüfen...${NC}"
+echo -e "${BLUE}[4/5] Optionale Pakete & Abhängigkeiten prüfen...${NC}"
 MISSING_PKGS=()
-if ! pacman -Qi papirus-icon-theme &>/dev/null; then
-    MISSING_PKGS+=("papirus-icon-theme")
-fi
-if ! pacman -Qi blueman &>/dev/null; then
-    MISSING_PKGS+=("blueman")
-fi
+for pkg in papirus-icon-theme blueman python-gobject gtk4 libadwaita python-cairo gum; do
+    if ! pacman -Qi "${pkg}" &>/dev/null; then
+        MISSING_PKGS+=("${pkg}")
+    fi
+done
 
 if [[ ${#MISSING_PKGS[@]} -gt 0 ]]; then
-    echo -e "  ${YELLOW}Hinweis: Folgende Pakete verbessern die Benutzerfreundlichkeit:${NC} ${MISSING_PKGS[*]}"
+    echo -e "  ${YELLOW}Hinweis: Folgende Pakete fehlen für GUI-Tools & Installer:${NC} ${MISSING_PKGS[*]}"
     echo -e "  Installieren mit: ${BOLD}sudo pacman -S --needed ${MISSING_PKGS[*]}${NC}"
 fi
 

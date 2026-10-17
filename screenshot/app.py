@@ -219,10 +219,14 @@ if HAS_GTK:
                 c_btn.add_css_class("color-dot")
                 
                 # Punkt mit Farbe füllen
-                provider = Gtk.CssProvider()
-                css = f"button {{ background-color: {hex_val}; border-radius: 9999px; min-width: 20px; min-height: 20px; }}"
-                provider.load_from_data(css.encode())
-                c_btn.get_style_context().add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                try:
+                    provider = Gtk.CssProvider()
+                    css = f"button {{ background-color: {hex_val}; border-radius: 9999px; min-width: 20px; min-height: 20px; }}"
+                    provider.load_from_data(css.encode())
+                    if hasattr(c_btn, "get_style_context"):
+                        c_btn.get_style_context().add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                except Exception:
+                    pass
                 
                 c_btn.connect("clicked", self._on_color_selected, hex_val)
                 color_box.append(c_btn)
@@ -526,11 +530,16 @@ if HAS_GTK:
         def do_startup(self):
             Adw.Application.do_startup(self)
             # Custom CSS laden
-            provider = Gtk.CssProvider()
-            provider.load_from_data(APP_CSS.encode())
-            Gtk.StyleProvider.add_provider_for_display(
-                Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-            )
+            try:
+                provider = Gtk.CssProvider()
+                provider.load_from_data(APP_CSS.encode())
+                display = Gdk.Display.get_default()
+                if display:
+                    Gtk.StyleContext.add_provider_for_display(
+                        display, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                    )
+            except Exception as e:
+                print(f"Hinweis beim Laden des CSS: {e}", file=sys.stderr)
 
         def do_activate(self):
             # Falls direkt eine Datei editiert werden soll
@@ -788,6 +797,9 @@ def main():
         app = TokyoShotApp(start_mode=app_mode)
         app.run(sys.argv[:1])
     else:
+        err_msg = "Tokyo Shot GUI benötigt GTK4 und Libadwaita.\nBitte ausführen: sudo pacman -S python-gobject gtk4 libadwaita python-cairo"
+        print(f"Fehler: {err_msg}", file=sys.stderr)
+        shot_core.notify(err_msg, critical=True)
         # Fallback wenn kein GTK installiert ist
         if mode and mode != "gui":
             saved = shot_core.capture(mode, cfg, delay=args.delay)
@@ -795,7 +807,7 @@ def main():
                 shot_core.notify_saved(saved)
                 print(saved)
         else:
-            print("Tokyo Shot: GTK4 nicht gefunden. Starte im CLI-Modus. Verwende --area, --window oder --full.")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
