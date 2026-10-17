@@ -6,6 +6,7 @@
 ╚══════════════════════════════════════════════════════════════╝
 """
 
+import glob
 import json
 import os
 import re
@@ -933,6 +934,267 @@ class ConfigManager:
         if ok:
             return True, "RTC-Modus aktualisiert"
         return False, err
+
+    # ── Hardware- & Treiber-Informationen ─────────────────────
+
+    def get_hardware_info(self) -> dict:
+        """Ermittelt detaillierte Hardware- und Treiberinformationen."""
+        info = {
+            "cpu_model": "Unbekannt",
+            "cpu_vendor": "Unbekannt",
+            "cpu_cores": 0,
+            "microcode": "Nicht geprüft",
+            "gpus": [],
+            "gpu_driver": "Unbekannt",
+            "is_laptop": False,
+            "battery_status": "Kein Akku",
+            "ram_total": "Unbekannt",
+            "kernel": "Unbekannt",
+            "os_name": "Arch Linux",
+        }
+
+        # Kernel
+        try:
+            res = subprocess.run(["uname", "-r"], capture_output=True, text=True, timeout=2)
+            if res.returncode == 0:
+                info["kernel"] = res.stdout.strip()
+        except Exception:
+            pass
+
+        # CPU über /proc/cpuinfo oder lscpu
+        try:
+            if os.path.exists("/proc/cpuinfo"):
+                with open("/proc/cpuinfo", "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        if "model name" in line and info["cpu_model"] == "Unbekannt":
+                            info["cpu_model"] = line.split(":", 1)[1].strip()
+                        elif "vendor_id" in line and info["cpu_vendor"] == "Unbekannt":
+                            v = line.split(":", 1)[1].strip()
+                            info["cpu_vendor"] = "AMD" if "AuthenticAMD" in v else ("Intel" if "GenuineIntel" in v else v)
+                        elif "cpu cores" in line and info["cpu_cores"] == 0:
+                            try:
+                                info["cpu_cores"] = int(line.split(":", 1)[1].strip())
+                            except ValueError:
+                                pass
+        except Exception:
+            pass
+
+        if info["cpu_model"] == "Unbekannt":
+            try:
+                res = subprocess.run(["lscpu"], capture_output=True, text=True, timeout=2)
+                if res.returncode == 0:
+                    for line in res.stdout.splitlines():
+                        if "Model name:" in line and info["cpu_model"] == "Unbekannt":
+                            info["cpu_model"] = line.split(":", 1)[1].strip()
+                        elif "Vendor ID:" in line and info["cpu_vendor"] == "Unbekannt":
+                            v = line.split(":", 1)[1].strip()
+                            info["cpu_vendor"] = "AMD" if "AuthenticAMD" in v else ("Intel" if "GenuineIntel" in v else v)
+            except Exception:
+                pass
+
+        # Microcode-Paket prüfen
+        try:
+            if info["cpu_vendor"] == "AMD":
+                res = subprocess.run(["pacman", "-Qi", "amd-ucode"], capture_output=True, text=True, timeout=2)
+                info["microcode"] = "amd-ucode (Aktiv & aktuell)" if res.returncode == 0 else "amd-ucode (Nicht installiert)"
+            elif info["cpu_vendor"] == "Intel":
+                res = subprocess.run(["pacman", "-Qi", "intel-ucode"], capture_output=True, text=True, timeout=2)
+                info["microcode"] = "intel-ucode (Aktiv & aktuell)" if res.returncode == 0 else "intel-ucode (Nicht installiert)"
+            else:
+                info["microcode"] = "Kein Microcode erforderlich"
+        except Exception:
+            info["microcode"] = "Unbekannt"
+
+        # RAM ermitteln
+        try:
+            if os.path.exists("/proc/meminfo"):
+                with open("/proc/meminfo", "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        if line.startswith("MemTotal:"):
+                            kb = int(line.split()[1])
+                            gb = round(kb / (1024 * 1024), 1)
+                            info["ram_total"] = f"{gb} GB"
+                            break
+        except Exception:
+            pass
+
+        # GPU via lspci
+        try:
+            res = subprocess.run(["lspci", "-k"], capture_output=True, text=True, timeout=3)
+            if res.returncode == 0:
+                lines = res.stdout.splitlines()
+                for i, line in enumerate(lines):
+                    if re.search(r'(VGA compatible controller|3D controller):', line, re.IGNORECASE):
+                        gpu_name = re.sub(r'^[0-9a-f:.]+\s+(VGA compatible controller|3D controller):\s+', '', line, flags=re.IGNORECASE)
+                        driver = "Mesa / Open-Source"
+                        for j in range(i + 1, min(i + 4, len(lines))):
+                            if "Kernel driver in use:" in lines[j]:
+                                drv = lines[j].split(":", 1)[1].strip()
+                                driver = f"Treiber: {drv}"
+                                break
+                        info["gpus"].append(f"{gpu_name} ({driver})")
+        except Exception:
+            pass
+
+        if not info["gpus"]:
+            info["gpus"].append("Keine dedizierte GPU gefunden (oder lspci fehlt)")
+
+        # Laptop & Akku
+        try:
+            bat_paths = glob.glob("/sys/class/power_supply/BAT*") + glob.glob("/sys/class/power_supply/CMB*")
+            if bat_paths:
+                info["is_laptop"] = True
+                bat_dir = bat_paths[0]
+                cap_file = os.path.join(bat_dir, "capacity")
+                stat_file = os.path.join(bat_dir, "status")
+                capacity = "Unbekannt"
+                status = ""
+                if os.path.exists(cap_file):
+                    with open(cap_file, "r") as f:
+                        capacity = f"{f.read().strip()}%"
+                if os.path.exists(stat_file):
+                    with open(stat_file, "r") as f:
+                        status = f.read().strip()
+                status_map = {
+                    "Charging": "Wird geladen",
+                    "Discharging": "Im Akkubetrieb",
+                    "Full": "Vollständig geladen",
+                    "Not charging": "Netzbetrieb (Nicht ladend)"
+                }
+                status_de = status_map.get(status, status)
+                info["battery_status"] = f"{capacity} ({status_de})" if status_de else capacity
+            else:
+                info["is_laptop"] = False
+                info["battery_status"] = "Desktop-PC (Kein Akku)"
+        except Exception:
+            pass
+
+        return info
+
+    # ── Netzwerk- & Bluetooth-Steuerung ──────────────────────
+
+    def get_network_status(self) -> dict:
+        """Ermittelt den aktuellen Netzwerk- und WLAN-Status."""
+        status = {
+            "wifi_enabled": False,
+            "connected": False,
+            "connection_name": "Keine Verbindung",
+            "connection_type": "Keine",
+            "ip_address": "Nicht verbunden",
+            "nm_available": False,
+        }
+        try:
+            res = subprocess.run(["nmcli", "--version"], capture_output=True, text=True, timeout=2)
+            if res.returncode == 0:
+                status["nm_available"] = True
+        except Exception:
+            return status
+
+        # WLAN Radio Status
+        try:
+            res = subprocess.run(["nmcli", "radio", "wifi"], capture_output=True, text=True, timeout=2)
+            if res.returncode == 0:
+                status["wifi_enabled"] = ("enabled" in res.stdout.lower())
+        except Exception:
+            pass
+
+        # Aktive Verbindungen ermitteln
+        try:
+            res = subprocess.run(["nmcli", "-t", "-f", "NAME,TYPE,DEVICE", "connection", "show", "--active"],
+                                 capture_output=True, text=True, timeout=2)
+            if res.returncode == 0 and res.stdout.strip():
+                for line in res.stdout.strip().splitlines():
+                    parts = line.split(":")
+                    if len(parts) >= 2:
+                        name, conn_type = parts[0], parts[1]
+                        if "wireless" in conn_type or "802-11-wireless" in conn_type:
+                            status["connected"] = True
+                            status["connection_name"] = name
+                            status["connection_type"] = "WLAN"
+                            break
+                        elif "ethernet" in conn_type or "802-3-ethernet" in conn_type:
+                            status["connected"] = True
+                            status["connection_name"] = name
+                            status["connection_type"] = "LAN (Ethernet)"
+                            break
+                        elif not status["connected"]:
+                            status["connected"] = True
+                            status["connection_name"] = name
+                            status["connection_type"] = conn_type
+        except Exception:
+            pass
+
+        # IP-Adresse ermitteln
+        try:
+            res = subprocess.run(["ip", "-brief", "address"], capture_output=True, text=True, timeout=2)
+            if res.returncode == 0:
+                for line in res.stdout.splitlines():
+                    parts = line.split()
+                    if len(parts) >= 3 and parts[1].upper() == "UP" and not parts[0].startswith("lo"):
+                        ip = parts[2].split("/")[0]
+                        status["ip_address"] = f"{ip} ({parts[0]})"
+                        break
+        except Exception:
+            pass
+
+        return status
+
+    def set_wifi_enabled(self, enabled: bool) -> tuple[bool, str]:
+        """Schaltet WLAN über nmcli an oder aus."""
+        val = "on" if enabled else "off"
+        try:
+            res = subprocess.run(["nmcli", "radio", "wifi", val], capture_output=True, text=True, timeout=3)
+            if res.returncode == 0:
+                return True, f"WLAN wurde {'aktiviert' if enabled else 'deaktiviert'}."
+            return False, res.stderr.strip() or "Fehler beim Umschalten des WLANs."
+        except Exception as e:
+            return False, str(e)
+
+    def get_bluetooth_status(self) -> dict:
+        """Ermittelt den aktuellen Bluetooth-Status und gekoppelte Geräte."""
+        status = {
+            "available": False,
+            "powered": False,
+            "connected_devices": [],
+        }
+        try:
+            res = subprocess.run(["bluetoothctl", "show"], capture_output=True, text=True, timeout=2)
+            if res.returncode == 0:
+                status["available"] = True
+                status["powered"] = ("Powered: yes" in res.stdout)
+            else:
+                return status
+        except Exception:
+            return status
+
+        # Gekoppelte / verbundene Geräte
+        try:
+            res = subprocess.run(["bluetoothctl", "devices", "Connected"], capture_output=True, text=True, timeout=2)
+            if res.returncode == 0 and res.stdout.strip():
+                for line in res.stdout.strip().splitlines():
+                    parts = line.split(maxsplit=2)
+                    if len(parts) >= 3:
+                        status["connected_devices"].append(parts[2])
+        except Exception:
+            pass
+
+        return status
+
+    def set_bluetooth_enabled(self, enabled: bool) -> tuple[bool, str]:
+        """Schaltet Bluetooth über bluetoothctl an oder aus."""
+        val = "on" if enabled else "off"
+        try:
+            res = subprocess.run(["bluetoothctl", "power", val], capture_output=True, text=True, timeout=3)
+            if res.returncode == 0:
+                return True, f"Bluetooth wurde {'aktiviert' if enabled else 'deaktiviert'}."
+            # Fallback mit rfkill
+            rf_val = "unblock" if enabled else "block"
+            res2 = subprocess.run(["rfkill", rf_val, "bluetooth"], capture_output=True, text=True, timeout=3)
+            if res2.returncode == 0:
+                return True, f"Bluetooth wurde {'aktiviert' if enabled else 'deaktiviert'}."
+            return False, res.stderr.strip() or "Fehler beim Umschalten von Bluetooth."
+        except Exception as e:
+            return False, str(e)
 
     # ── Eingabegeräte (Maus, Touchpad, Tastaturlayout) ───────
 

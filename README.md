@@ -7,7 +7,7 @@ Ein vollständiges, minimalistisches Hyprland-Desktop-Setup im Tokyo-Night-Stil 
 - 🎨 **Tokyo Night Farbpalette** – einheitlich über alle Komponenten
 - 🖥 **Hyprland Lua-Konfiguration** – modular, sauber, erweiterbar
 - 📊 **Waybar** – mit Systemleistung, Uhr, Audio, Netzwerk und mehr
-- ⚙️ **Einstellungs-App** – GTK4/libadwaita GUI für alle Einstellungen
+- ⚙️ **Einstellungs-App** – GTK4/libadwaita GUI für alle Desktop-Einstellungen, Hardware- & Treiber-Zentrum sowie Netzwerk- & Bluetooth-Steuerung
 - ⌨️ **Hotkey-Manager** – Tastenkürzel anzeigen, suchen, bearbeiten
 - 🔒 **Hyprlock** – Sperrbildschirm mit Uhr und Passwort
 - 🖼 **Hyprpaper** – Hintergrundbilder mit Wechsel-Funktion

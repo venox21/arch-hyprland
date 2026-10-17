@@ -10,6 +10,7 @@
 import sys
 import os
 import glob
+from pathlib import Path
 
 # Wayland-Umgebung automatisch ermitteln (SSH / TTY Support)
 if "WAYLAND_DISPLAY" not in os.environ:
@@ -40,6 +41,10 @@ except ImportError:
     class _MockBase:
         def __init__(self, *args, **kwargs):
             pass
+        def __getattr__(self, name):
+            def _dummy(*args, **kwargs):
+                return self
+            return _dummy
         def set_selected(self, *a, **kw): pass
         def get_selected(self, *a, **kw): return 0
         def get_text(self, *a, **kw): return ""
@@ -71,10 +76,13 @@ except ImportError:
         def queue_draw(self, *a, **kw): pass
         def set_pixel_size(self, *a, **kw): pass
         def get_row_at_index(self, *a, **kw): return self
+        def get_index(self, *a, **kw): return 0
         @classmethod
         def new_with_range(cls, *a, **kw): return cls()
         @classmethod
         def new_from_icon_name(cls, *a, **kw): return cls()
+        @classmethod
+        def add_provider_for_display(cls, *a, **kw): pass
     class _MockAdw:
         Application = _MockBase
         ApplicationWindow = _MockBase
@@ -94,6 +102,14 @@ except ImportError:
         Button = _MockBase
         ListBox = _MockBase
         DrawingArea = _MockBase
+        CssProvider = _MockBase
+        StyleContext = _MockBase
+        Adjustment = _MockBase
+        Scale = _MockBase
+        SpinButton = _MockBase
+        PositionType = type("PositionType", (), {"BOTTOM": 0, "TOP": 1})
+        STYLE_PROVIDER_PRIORITY_APPLICATION = 600
+        STYLE_PROVIDER_PRIORITY_USER = 800
         SelectionMode = type("SelectionMode", (), {"SINGLE": 0})
         Orientation = type("Orientation", (), {"VERTICAL": 0, "HORIZONTAL": 1})
         Align = type("Align", (), {"CENTER": 0, "START": 1, "END": 2})
@@ -262,10 +278,11 @@ class SettingsWindow(Adw.ApplicationWindow):
                 "applications-system-symbolic",
                 "dialog-information-symbolic",
             ], self._page_performance),
-            ("Netzwerk", [
+            ("Netzwerk & Bluetooth", [
                 "network-wireless-symbolic",
                 "network-wireless-signal-excellent-symbolic",
                 "network-workgroup-symbolic",
+                "bluetooth-active-symbolic",
                 "network-wired-symbolic",
             ], self._page_network),
             ("Audio", [
@@ -307,6 +324,12 @@ class SettingsWindow(Adw.ApplicationWindow):
                 "document-save-symbolic",
                 "system-software-update-symbolic",
             ], self._page_backup),
+            ("Hardware & Treiber", [
+                "preferences-system-devices-symbolic",
+                "computer-symbolic",
+                "video-display-symbolic",
+                "applications-system-symbolic",
+            ], self._page_hardware),
             ("Diagnostik", [
                 "dialog-information-symbolic",
                 "help-browser-symbolic",
@@ -799,6 +822,18 @@ class SettingsWindow(Adw.ApplicationWindow):
         version_badge.add_css_class("hero-badge")
         version_row.add_suffix(version_badge)
         group.add(version_row)
+
+        hw_link_row = Adw.ActionRow(title="Hardware & Treiber", subtitle="CPU, GPU, NVIDIA/Mesa-Status und Akku prüfen")
+        hw_link_btn = Gtk.Button(label="Öffnen", valign=Gtk.Align.CENTER)
+        hw_link_btn.connect("clicked", lambda _: self._select_page_by_title("Hardware"))
+        hw_link_row.add_suffix(hw_link_btn)
+        group.add(hw_link_row)
+
+        net_link_row = Adw.ActionRow(title="Netzwerk & Bluetooth", subtitle="Live-Verbindungsstatus, WLAN-Schalter und Gerätekopplung")
+        net_link_btn = Gtk.Button(label="Öffnen", valign=Gtk.Align.CENTER)
+        net_link_btn.connect("clicked", lambda _: self._select_page_by_title("Netzwerk"))
+        net_link_row.add_suffix(net_link_btn)
+        group.add(net_link_row)
 
         monitors = self.config.get_monitors()
         mon_count = len(monitors) if monitors else 0
@@ -1803,25 +1838,129 @@ class SettingsWindow(Adw.ApplicationWindow):
         return box
 
     def _page_network(self) -> Gtk.Widget:
-        """Netzwerk-Einstellungen."""
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        """Netzwerk- und Bluetooth-Einstellungen mit Live-Steuerung."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         box.set_margin_top(16)
         box.set_margin_bottom(16)
 
-        net = self.settings.get("network", {})
-        group = Adw.PreferencesGroup(title="Netzwerk", description="Netzwerkanzeige in der Leiste")
+        net_status = self.config.get_network_status()
+        bt_status = self.config.get_bluetooth_status()
+
+        # ── 1. Netzwerkverbindung & WLAN ──────────────────────
+        conn_group = Adw.PreferencesGroup(
+            title="Netzwerk & WLAN",
+            description="Aktive Verbindung und Drahtlosnetzwerk-Steuerung"
+        )
+
+        conn_title = net_status.get("connection_name", "Keine Verbindung")
+        conn_sub = f"Typ: {net_status.get('connection_type', 'Unbekannt')} • IP: {net_status.get('ip_address', 'Nicht verbunden')}"
+        status_row = Adw.ActionRow(title=conn_title, subtitle=conn_sub)
+        status_badge = Gtk.Label(label="Verbunden" if net_status.get("connected") else "Getrennt")
+        status_badge.add_css_class("hero-badge")
+        status_row.add_suffix(status_badge)
+        conn_group.add(status_row)
+
+        wifi_switch = Adw.SwitchRow(
+            title="WLAN-Adapter (Wi-Fi)",
+            subtitle="Drahtlosnetzwerk über NetworkManager (nmcli radio wifi) aktivieren"
+        )
+        wifi_switch.set_active(net_status.get("wifi_enabled", False))
+        def on_wifi_toggled(r, _):
+            val = r.get_active()
+            ok, msg = self.config.set_wifi_enabled(val)
+            if not ok:
+                self._show_info("WLAN-Fehler", msg)
+        wifi_switch.connect("notify::active", on_wifi_toggled)
+        conn_group.add(wifi_switch)
+
+        nm_row = Adw.ActionRow(
+            title="Netzwerk-Manager öffnen",
+            subtitle="Drahtlosnetzwerke scannen, Passwörter verwalten und VPNs einrichten"
+        )
+        nm_btn = Gtk.Button(label="Verbindungen verwalten", valign=Gtk.Align.CENTER)
+        nm_btn.add_css_class("suggested-action")
+        nm_btn.connect("clicked", lambda _: os.system("nm-connection-editor 2>/dev/null || kitty --title 'Netzwerk (nmtui)' bash -c 'nmtui' &"))
+        nm_row.add_suffix(nm_btn)
+        nm_row.set_activatable_widget(nm_btn)
+        conn_group.add(nm_row)
+
+        box.append(conn_group)
+
+        # ── 2. Bluetooth-Verwaltung ───────────────────────────
+        bt_group = Adw.PreferencesGroup(
+            title="Bluetooth",
+            description="Drahtlose Geräte und Adaptersteuerung"
+        )
+
+        bt_avail = bt_status.get("available", False)
+        bt_powered = bt_status.get("powered", False)
+        connected_devs = bt_status.get("connected_devices", [])
+
+        bt_sub = "Keine Geräte verbunden"
+        if connected_devs:
+            bt_sub = f"Verbunden: {', '.join(connected_devs)}"
+        elif not bt_avail:
+            bt_sub = "Kein Bluetooth-Adapter oder bluetoothctl nicht gefunden"
+
+        bt_status_row = Adw.ActionRow(
+            title="Bluetooth-Adapter",
+            subtitle=bt_sub
+        )
+        bt_badge = Gtk.Label(label="Aktiv" if bt_powered else ("Inaktiv" if bt_avail else "Fehlt"))
+        bt_badge.add_css_class("hero-badge")
+        bt_status_row.add_suffix(bt_badge)
+        bt_group.add(bt_status_row)
+
+        bt_switch = Adw.SwitchRow(
+            title="Bluetooth aktivieren",
+            subtitle="Adapter über bluetoothctl / rfkill ein- oder ausschalten"
+        )
+        bt_switch.set_active(bt_powered)
+        bt_switch.set_sensitive(bt_avail)
+        def on_bt_toggled(r, _):
+            val = r.get_active()
+            ok, msg = self.config.set_bluetooth_enabled(val)
+            if not ok:
+                self._show_info("Bluetooth-Fehler", msg)
+        bt_switch.connect("notify::active", on_bt_toggled)
+        bt_group.add(bt_switch)
+
+        blueman_row = Adw.ActionRow(
+            title="Bluetooth-Geräte verwalten",
+            subtitle="Kopplung, Audio-Profile und Verbindungen mit Blueman oder Bluetoothctl"
+        )
+        blueman_btn = Gtk.Button(label="Geräte koppeln", valign=Gtk.Align.CENTER)
+        blueman_btn.add_css_class("suggested-action")
+        blueman_btn.connect("clicked", lambda _: os.system("blueman-manager 2>/dev/null || kitty --title 'Bluetooth Manager' bash -c 'bluetoothctl' &"))
+        blueman_row.add_suffix(blueman_btn)
+        blueman_row.set_activatable_widget(blueman_btn)
+        bt_group.add(blueman_row)
+
+        box.append(bt_group)
+
+        # ── 3. Waybar Leisten-Anzeige ─────────────────────────
+        waybar_group = Adw.PreferencesGroup(
+            title="Waybar-Leistenanzeige",
+            description="Netzwerkmetriken in der Statusleiste"
+        )
+        net_cfg = self.settings.get("network", {})
 
         speed_row = Adw.SwitchRow(title="Geschwindigkeit anzeigen")
-        speed_row.set_active(net.get("show_speed", True))
+        speed_row.set_active(net_cfg.get("show_speed", True))
         speed_row.connect("notify::active", lambda r, _: self._update_setting("network", "show_speed", r.get_active()))
-        group.add(speed_row)
+        waybar_group.add(speed_row)
 
         ip_row = Adw.SwitchRow(title="IP-Adresse anzeigen")
-        ip_row.set_active(net.get("show_ip", False))
+        ip_row.set_active(net_cfg.get("show_ip", False))
         ip_row.connect("notify::active", lambda r, _: self._update_setting("network", "show_ip", r.get_active()))
-        group.add(ip_row)
+        waybar_group.add(ip_row)
 
-        box.append(group)
+        apply_btn = Gtk.Button(label="Anwenden und Waybar neu starten")
+        apply_btn.add_css_class("suggested-action")
+        apply_btn.connect("clicked", self._apply_waybar_settings)
+        waybar_group.add(apply_btn)
+
+        box.append(waybar_group)
         return box
 
     def _page_audio(self) -> Gtk.Widget:
@@ -2286,22 +2425,179 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         return box
 
-    def _page_diagnostics(self) -> Gtk.Widget:
-        """Diagnostik und Updates."""
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+    def _page_hardware(self) -> Gtk.Widget:
+        """Hardware- und Treiber-Zentrum mit automatischer Erkennung und Aktionen."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         box.set_margin_top(16)
         box.set_margin_bottom(16)
 
-        group = Adw.PreferencesGroup(title="Diagnostik", description="Systemprüfung und Fehlersuche")
+        hw = self.config.get_hardware_info()
+
+        # ── 1. Prozessor & Microcode ──────────────────────────
+        cpu_group = Adw.PreferencesGroup(
+            title="Prozessor (CPU)",
+            description="Erkannte CPU-Architektur und Microcode-Treiber"
+        )
+
+        cpu_title = hw.get("cpu_model", "Unbekannt")
+        cores = hw.get("cpu_cores", 0)
+        core_str = f" • {cores} physische Kerne" if cores > 0 else ""
+        cpu_sub = f"Hersteller: {hw.get('cpu_vendor', 'Unbekannt')}{core_str}"
+        cpu_row = Adw.ActionRow(title=cpu_title, subtitle=cpu_sub)
+        cpu_badge = Gtk.Label(label=hw.get("cpu_vendor", "CPU"))
+        cpu_badge.add_css_class("hero-badge")
+        cpu_row.add_suffix(cpu_badge)
+        cpu_group.add(cpu_row)
+
+        ucode_row = Adw.ActionRow(
+            title="Microcode-Treiber",
+            subtitle=hw.get("microcode", "Nicht geprüft")
+        )
+        ucode_badge = Gtk.Label(
+            label="Optimal" if "Aktiv" in hw.get("microcode", "") else "Prüfen"
+        )
+        ucode_badge.add_css_class("hero-badge")
+        ucode_row.add_suffix(ucode_badge)
+        cpu_group.add(ucode_row)
+
+        box.append(cpu_group)
+
+        # ── 2. Grafikkarte & Hyprland-Treiber ─────────────────
+        gpu_group = Adw.PreferencesGroup(
+            title="Grafikkarte & Treiber (GPU)",
+            description="Erkannte PCI-Grafikchips und Wayland-Treiber"
+        )
+
+        for gpu in hw.get("gpus", []):
+            gpu_row = Adw.ActionRow(title=gpu)
+            gpu_group.add(gpu_row)
+
+        nvidia_conf = Path.home() / ".config" / "hypr" / "nvidia.conf"
+        has_nvidia_cfg = nvidia_conf.exists()
+        nv_row = Adw.ActionRow(
+            title="Hyprland NVIDIA Wayland-Konfiguration",
+            subtitle="Spezifische GBM/EGL-Wayland-Flags in ~/.config/hypr/nvidia.conf"
+                     if has_nvidia_cfg else "Keine spezifischen NVIDIA-Flags aktiv (Open-Source / Intel / AMD Modus)"
+        )
+        nv_badge = Gtk.Label(label="Aktiv" if has_nvidia_cfg else "Standard")
+        nv_badge.add_css_class("hero-badge")
+        nv_row.add_suffix(nv_badge)
+        gpu_group.add(nv_row)
+
+        box.append(gpu_group)
+
+        # ── 3. Systemtyp & Energie ────────────────────────────
+        sys_group = Adw.PreferencesGroup(
+            title="System & Energie",
+            description="Geräteklasse, Akku-Status und Linux-Kernel"
+        )
+
+        sys_type = "Laptop" if hw.get("is_laptop") else "Desktop-PC"
+        type_row = Adw.ActionRow(
+            title=f"Gerätetyp: {sys_type}",
+            subtitle=f"Akku: {hw.get('battery_status', 'Kein Akku')} • RAM: {hw.get('ram_total', 'Unbekannt')}"
+        )
+        sys_badge = Gtk.Label(label=sys_type)
+        sys_badge.add_css_class("hero-badge")
+        type_row.add_suffix(sys_badge)
+        sys_group.add(type_row)
+
+        kernel_row = Adw.ActionRow(
+            title=f"Linux Kernel {hw.get('kernel', 'Unbekannt')}",
+            subtitle="Arch Linux rolling release"
+        )
+        sys_group.add(kernel_row)
+
+        box.append(sys_group)
+
+        # ── 4. Aktionen & Wartungs-Tools ──────────────────────
+        actions_group = Adw.PreferencesGroup(
+            title="Hardware- & System-Aktionen",
+            description="Automatisierte Wartung, Treiberprüfung und Software"
+        )
+
+        hw_action = Adw.ActionRow(
+            title="Hardware- & Treiber-Check ausführen",
+            subtitle="Scannt CPU, GPU, NVIDIA-Treiber, Wayland-Variablen und Laptop-Akku"
+        )
+        hw_btn = Gtk.Button(label="Check starten", valign=Gtk.Align.CENTER)
+        hw_btn.add_css_class("suggested-action")
+        hw_btn.connect("clicked", lambda _: os.system(
+            "kitty --title 'Hardware- & Treiber-Check' bash -c '"
+            "if [[ -x ~/.config/hypr/scripts/hardware-check.sh ]]; then ~/.config/hypr/scripts/hardware-check.sh; "
+            "else bash \"$(dirname \"$0\")/../scripts/hardware-check.sh\"; fi; echo; read -p \"Drücke Enter zum Schließen...\"' &"
+        ))
+        hw_action.add_suffix(hw_btn)
+        hw_action.set_activatable_widget(hw_btn)
+        actions_group.add(hw_action)
+
+        clean_action = Adw.ActionRow(
+            title="System-Cleaner starten",
+            subtitle="Bereinigt Pacman- und AUR-Caches, verwaiste Pakete und System-Logs"
+        )
+        clean_btn = Gtk.Button(label="Bereinigen", valign=Gtk.Align.CENTER)
+        clean_btn.connect("clicked", lambda _: os.system(
+            "kitty --title 'System-Cleaner' bash -c '"
+            "if [[ -x ~/.config/hypr/scripts/clean-system.sh ]]; then ~/.config/hypr/scripts/clean-system.sh; "
+            "else bash \"$(dirname \"$0\")/../scripts/clean-system.sh\"; fi; echo; read -p \"Drücke Enter zum Schließen...\"' &"
+        ))
+        clean_action.add_suffix(clean_btn)
+        clean_action.set_activatable_widget(clean_btn)
+        actions_group.add(clean_action)
+
+        app_action = Adw.ActionRow(
+            title="TUI App-Installer öffnen",
+            subtitle="Installiert Chrome, VS Code, Spotify, Spicetify oder Steam"
+        )
+        app_btn = Gtk.Button(label="Installer starten", valign=Gtk.Align.CENTER)
+        app_btn.connect("clicked", lambda _: os.system(
+            "kitty --title 'App-Installer' bash -c '"
+            "if [[ -x ~/.config/hypr/scripts/app-installer.sh ]]; then ~/.config/hypr/scripts/app-installer.sh; "
+            "else bash \"$(dirname \"$0\")/../scripts/app-installer.sh\"; fi; echo; read -p \"Drücke Enter zum Schließen...\"' &"
+        ))
+        app_action.add_suffix(app_btn)
+        app_action.set_activatable_widget(app_btn)
+        actions_group.add(app_action)
+
+        box.append(actions_group)
+        return box
+
+    def _page_diagnostics(self) -> Gtk.Widget:
+        """Diagnostik und Wartung."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        box.set_margin_top(16)
+        box.set_margin_bottom(16)
+
+        group = Adw.PreferencesGroup(title="Diagnostik & Prüfungen", description="Systemprüfung, Treiberstatus und Fehlersuche")
+
+        # Hardware-Check ausführen
+        hw_row = Adw.ActionRow(title="Hardware- & Treiber-Check", subtitle="Automatische Prüfung für CPU-Microcode, GPU (Nvidia/Mesa) und Laptop-Akku")
+        hw_btn = Gtk.Button(label="Starten", valign=Gtk.Align.CENTER)
+        hw_btn.add_css_class("suggested-action")
+        hw_btn.connect("clicked", lambda _: os.system(
+            "kitty --title 'Hardware- & Treiber-Check' bash -c '"
+            "if [[ -x ~/.config/hypr/scripts/hardware-check.sh ]]; then ~/.config/hypr/scripts/hardware-check.sh; "
+            "else bash \"$(dirname \"$0\")/../scripts/hardware-check.sh\"; fi; echo; read -p \"Drücke Enter zum Schließen...\"' &"
+        ))
+        hw_row.add_suffix(hw_btn)
+        hw_row.set_activatable_widget(hw_btn)
+        group.add(hw_row)
 
         # Diagnose ausführen
-        diag_row = Adw.ActionRow(title="Diagnose ausführen", subtitle="Prüft System, Pakete und Konfigurationen")
+        diag_row = Adw.ActionRow(title="System-Diagnose ausführen (Doctor)", subtitle="Prüft Systempakete, Wayland-Portals, Audio und Konfigurationen")
         diag_btn = Gtk.Button(label="Starten", valign=Gtk.Align.CENTER)
-        diag_btn.add_css_class("suggested-action")
-        diag_btn.connect("clicked", lambda _: os.system("kitty --title 'Diagnose' bash -c '~/.config/hypr/scripts/diagnostics.sh; echo; read -p \"Drücke Enter...\"' &"))
+        diag_btn.connect("clicked", lambda _: os.system("kitty --title 'Diagnose' bash -c '~/.config/hypr/scripts/diagnostics.sh 2>/dev/null || ./doctor.sh; echo; read -p \"Drücke Enter...\"' &"))
         diag_row.add_suffix(diag_btn)
         diag_row.set_activatable_widget(diag_btn)
         group.add(diag_row)
+
+        # System Cleaner
+        clean_row = Adw.ActionRow(title="Arch System-Cleaner", subtitle="Bereinigt Pacman/yay Caches, verwaiste Pakete und Systemd-Logs")
+        clean_btn = Gtk.Button(label="Starten", valign=Gtk.Align.CENTER)
+        clean_btn.connect("clicked", lambda _: os.system("kitty --title 'System-Cleaner' bash -c '~/.config/hypr/scripts/clean-system.sh; echo; read -p \"Drücke Enter...\"' &"))
+        clean_row.add_suffix(clean_btn)
+        clean_row.set_activatable_widget(clean_btn)
+        group.add(clean_row)
 
         box.append(group)
         return box

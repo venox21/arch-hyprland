@@ -34,6 +34,14 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
   - GPU-Erkennung via `lspci`: automatische NVIDIA-Konfiguration (`nvidia-dkms`, Kernel-Header, `[multilib]` Aktivierung, `lib32-nvidia-utils`, `libva-nvidia-driver`), Setzen der 4 Hyprland-Env-Variablen ohne Duplikate (in `nvidia.conf` und `nvidia.lua`) sowie Mesa/RADV/ANV-Treiber für AMD/Intel
   - Laptop- & Akku-Erkennung (`/sys/class/power_supply/`): automatische `brightnessctl`-Bereitstellung und interaktive Auswahl bzw. Status-Check für `auto-cpufreq` / `tlp`
   - Detaillierter Abschluss-Report mit tabellarischer Zusammenfassung aller Komponenten und Statusänderungen
+- **Hardware- & Treiber-Zentrum in den GTK4 Einstellungen** (`settings/app.py`, `settings/config_manager.py`):
+  - Live-Erkennung und Anzeige von CPU-Modell, CPU-Microcode (`amd-ucode`/`intel-ucode`), GPU-Modelle inkl. Kernel-Treiber, NVIDIA-Wayland-Status, Systemtyp (Desktop vs. Laptop), Akku-Ladezustand und RAM
+  - 1-Klick-Aktionen zum Starten des Hardware-Checks (`hardware-check.sh`), System-Cleaners (`clean-system.sh`), App-Installers (`install-apps.sh`) und Doctor (`doctor.sh`)
+- **Echte Netzwerk- & Bluetooth-Steuerung in den GTK4 Einstellungen**:
+  - Live-Status der aktiven Netzwerkverbindung (SSID / Name, Verbindungstyp, IP-Adresse)
+  - WLAN-Schalter zur direkten Steuerung des Drahtlosadapters via NetworkManager (`nmcli radio wifi`)
+  - Direkter Aufruf des grafischen Netzwerk-Managers (`nm-connection-editor` bzw. `nmtui`)
+  - Vollwertige Bluetooth-Sektion mit Adapter-Status, An-/Aus-Schalter (`bluetoothctl power` / `rfkill`), Anzeige verbundener Geräte und Aufruf von `blueman-manager` zur Gerätekopplung
 
 ### Geändert
 - **SDDM-Anmeldebildschirm komplett neu gestaltet** (`assets/sddm/tokyo-night/Main.qml`): große, dünne Uhr, Avatar mit Benutzername (Benutzerwechsel bei mehreren Konten), Passwortfeld als Pille mit Pfeil-Button, Shake-Animation bei falschem Passwort, Feststelltasten-Warnung, Ladeindikator, sanfter Ein-/Ausblend-Übergang, Sitzungswähler, Tastaturlayout-Umschalter sowie Standby/Neustart/Herunterfahren. Benötigt keine zusätzlichen Qt-Module.
