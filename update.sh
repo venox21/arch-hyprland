@@ -300,6 +300,11 @@ if sudo -n true 2>/dev/null || sudo -v 2>/dev/null; then
         sudo cp -f "${REPO_DIR}/assets/sudoers/10-tokyo-timedate" /etc/sudoers.d/10-tokyo-timedate 2>/dev/null || true
         sudo chmod 0440 /etc/sudoers.d/10-tokyo-timedate 2>/dev/null || true
     fi
+    # SDDM Login-Screen Theme aktualisieren (falls eingerichtet)
+    if [[ -d "/usr/share/sddm/themes/tokyo-night" && -d "${REPO_DIR}/assets/sddm/tokyo-night" ]]; then
+        sudo cp -rf "${REPO_DIR}/assets/sddm/tokyo-night/"* /usr/share/sddm/themes/tokyo-night/ 2>/dev/null || true
+        echo -e "  ${GREEN}✓${NC} SDDM Login-Theme aktualisiert"
+    fi
     echo -e "  ${GREEN}✓${NC} Berechtigungen für Uhrzeit & Zeitzone eingerichtet"
 fi
 
