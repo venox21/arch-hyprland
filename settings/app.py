@@ -13,6 +13,8 @@ import glob
 import threading
 import re
 import subprocess
+from datetime import datetime
+from typing import Optional
 from pathlib import Path
 
 # Wayland-Umgebung automatisch ermitteln (SSH / TTY Support)
@@ -107,6 +109,7 @@ except ImportError:
         ComboRow = _MockBase
         SpinRow = _MockBase
         EntryRow = _MockBase
+        AlertDialog = _MockBase
     class _MockGtk:
         Box = _MockBase
         Button = _MockBase
@@ -222,25 +225,25 @@ class SettingsWindow(Adw.ApplicationWindow):
         footer_box.set_margin_top(4)
         footer_box.add_css_class("settings-footer-bar")
 
-        shutdown_btn = Gtk.Button(label="⏻ Ausschalten" if self.is_de else "⏻ Shut Down")
-        shutdown_btn.add_css_class("pill-action-btn")
-        shutdown_btn.connect("clicked", lambda _: subprocess.Popen(["systemctl", "poweroff"]))
+        self.shutdown_btn = Gtk.Button(label="⏻ Ausschalten" if self.is_de else "⏻ Shut Down")
+        self.shutdown_btn.add_css_class("pill-action-btn")
+        self.shutdown_btn.connect("clicked", lambda _: subprocess.Popen(["systemctl", "poweroff"]))
 
-        reboot_btn = Gtk.Button(label="⟳ Neustart" if self.is_de else "⟳ Restart")
-        reboot_btn.add_css_class("pill-action-btn")
-        reboot_btn.connect("clicked", lambda _: subprocess.Popen(["systemctl", "reboot"]))
+        self.reboot_btn = Gtk.Button(label="⟳ Neustart" if self.is_de else "⟳ Restart")
+        self.reboot_btn.add_css_class("pill-action-btn")
+        self.reboot_btn.connect("clicked", lambda _: subprocess.Popen(["systemctl", "reboot"]))
 
-        footer_box.append(shutdown_btn)
-        footer_box.append(reboot_btn)
+        footer_box.append(self.shutdown_btn)
+        footer_box.append(self.reboot_btn)
         root_box.append(footer_box)
 
         self.set_content(root_box)
 
         # Sidebar erstellen
-        sidebar_page = Adw.NavigationPage(title="Einstellungen" if self.is_de else "Settings")
+        self.sidebar_page = Adw.NavigationPage(title="Einstellungen" if self.is_de else "Settings")
         sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         sidebar_box.set_size_request(240, -1)
-        sidebar_page.set_child(sidebar_box)
+        self.sidebar_page.set_child(sidebar_box)
 
         # Header für Sidebar: Arch Logo + "Einstellungen"
         sidebar_brand = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
@@ -252,9 +255,9 @@ class SettingsWindow(Adw.ApplicationWindow):
         arch_icon_lbl.set_markup('<span font="24" foreground="#00f0ff" weight="bold">󰣇</span>')
         sidebar_brand.append(arch_icon_lbl)
 
-        settings_title_lbl = Gtk.Label()
-        settings_title_lbl.set_markup(f'<span font="18" weight="heavy" foreground="#ffffff">{"Einstellungen" if self.is_de else "Settings"}</span>')
-        sidebar_brand.append(settings_title_lbl)
+        self.settings_title_lbl = Gtk.Label()
+        self.settings_title_lbl.set_markup(f'<span font="18" weight="heavy" foreground="#ffffff">{"Einstellungen" if self.is_de else "Settings"}</span>')
+        sidebar_brand.append(self.settings_title_lbl)
 
         sidebar_box.append(sidebar_brand)
 
@@ -282,32 +285,46 @@ class SettingsWindow(Adw.ApplicationWindow):
         scroll.set_child(self.nav_list)
         sidebar_box.append(scroll)
 
-        self.split_view.set_sidebar(sidebar_page)
+        self.split_view.set_sidebar(self.sidebar_page)
 
-        # Funktion zur dynamischen Ermittlung des besten verfügbaren Icons
-        def _get_best_icon(candidates):
-            if isinstance(candidates, str):
-                candidates = [candidates]
-            try:
-                display = Gdk.Display.get_default()
-                if display and hasattr(Gtk, "IconTheme"):
-                    theme = Gtk.IconTheme.get_for_display(display)
-                    for cand in candidates:
-                        if theme.has_icon(cand):
-                            return cand
-            except Exception:
-                pass
-            return candidates[0] if candidates else "dialog-information-symbolic"
+        # Seitenleiste initial befüllen und Dashboard auswählen
+        self._populate_sidebar(select_index=0)
 
-        # ── Alle 18 Einstellungs-Kategorien vollständig verfügbar (Zweisprachig) ──
+        # CSS laden
+        self._apply_css()
+
+    def _get_best_icon(self, candidates):
+        """Ermittelt das am besten verfügbare Icon für die aktuelle Icon-Theme."""
+        if isinstance(candidates, str):
+            candidates = [candidates]
+        try:
+            display = Gdk.Display.get_default()
+            if display and hasattr(Gtk, "IconTheme"):
+                theme = Gtk.IconTheme.get_for_display(display)
+                for cand in candidates:
+                    if theme.has_icon(cand):
+                        return cand
+        except Exception:
+            pass
+        return candidates[0] if candidates else "dialog-information-symbolic"
+
+    def _get_pages(self):
+        """Liefert alle 19 Einstellungs-Kategorien (inkl. Sprache & Region) zweisprachig zurück."""
         is_de = self.is_de
-        self.pages = [
+        return [
             ("Übersicht & Dashboard" if is_de else "Dashboard & Overview", [
                 "preferences-system-symbolic",
                 "view-app-grid-symbolic",
                 "view-grid-symbolic",
                 "org.gnome.Settings-symbolic",
             ], self._page_general),
+            ("Sprache & Region" if is_de else "Language & Region", [
+                "preferences-desktop-locale-symbolic",
+                "locale-symbolic",
+                "preferences-desktop-peripherals-symbolic",
+                "accessories-character-map-symbolic",
+                "dialog-information-symbolic",
+            ], self._page_language),
             ("Hyprland Effekte" if is_de else "Hyprland Effects", [
                 "preferences-desktop-theme-symbolic",
                 "preferences-color-symbolic",
@@ -395,6 +412,24 @@ class SettingsWindow(Adw.ApplicationWindow):
             ], self._page_version_update),
         ]
 
+    def _populate_sidebar(self, select_index: Optional[int] = None):
+        """Erstellt oder aktualisiert die Navigationsleiste."""
+        self.pages = self._get_pages()
+
+        # Bestehende Zeilen leeren
+        count = 0
+        while count < 60:
+            row = self.nav_list.get_row_at_index(0)
+            if not row:
+                break
+            try:
+                self.nav_list.remove(row)
+            except Exception:
+                break
+            if "_MockBase" in type(row).__name__:
+                break
+            count += 1
+
         for title, icon_candidates, _ in self.pages:
             row = Gtk.ListBoxRow()
             row.add_css_class("nav-item-row")
@@ -405,7 +440,7 @@ class SettingsWindow(Adw.ApplicationWindow):
             row_box.set_margin_top(8)
             row_box.set_margin_bottom(8)
 
-            chosen_icon = _get_best_icon(icon_candidates)
+            chosen_icon = self._get_best_icon(icon_candidates)
             icon_img = Gtk.Image.new_from_icon_name(chosen_icon)
             icon_img.set_pixel_size(18)
             icon_img.add_css_class("nav-item-icon")
@@ -420,13 +455,51 @@ class SettingsWindow(Adw.ApplicationWindow):
             row.set_child(row_box)
             self.nav_list.append(row)
 
-        # Standardmäßig Hyprland Effekte (Index 1) auswählen
-        default_row = self.nav_list.get_row_at_index(1)
-        if default_row:
-            self.nav_list.select_row(default_row)
+        if select_index is not None and 0 <= select_index < len(self.pages):
+            target_row = self.nav_list.get_row_at_index(select_index)
+            if target_row:
+                self.nav_list.select_row(target_row)
+                self._on_nav_selected(self.nav_list, target_row)
 
-        # CSS laden
-        self._apply_css()
+    def switch_language(self, new_code: str):
+        """Schaltet die Systemsprache und Benutzeroberfläche live ohne Neustart um."""
+        if new_code not in ("de", "en"):
+            return
+
+        self.config.set_language(new_code)
+        self.lang = new_code
+        self.is_de = (new_code == "de")
+
+        # Fenstertitel & globale Beschriftungen sofort aktualisieren
+        self.set_title("Tokyo Night – Einstellungen" if self.is_de else "Tokyo Night – Settings")
+        if hasattr(self, "settings_title_lbl") and self.settings_title_lbl:
+            self.settings_title_lbl.set_markup(
+                f'<span font="18" weight="heavy" foreground="#ffffff">{"Einstellungen" if self.is_de else "Settings"}</span>'
+            )
+        if hasattr(self, "search_entry") and self.search_entry:
+            self.search_entry.set_placeholder_text(
+                "Einstellungen durchsuchen..." if self.is_de else "Search settings..."
+            )
+        if hasattr(self, "shutdown_btn") and self.shutdown_btn:
+            self.shutdown_btn.set_label("⏻ Ausschalten" if self.is_de else "⏻ Shut Down")
+        if hasattr(self, "reboot_btn") and self.reboot_btn:
+            self.reboot_btn.set_label("⟳ Neustart" if self.is_de else "⟳ Restart")
+        if hasattr(self, "sidebar_page") and self.sidebar_page:
+            self.sidebar_page.set_title("Einstellungen" if self.is_de else "Settings")
+
+        # Seitenleiste live neu aufbauen und aktuellen Index beibehalten
+        selected_row = self.nav_list.get_selected_row()
+        current_idx = selected_row.get_index() if selected_row else 0
+        self._populate_sidebar(select_index=current_idx)
+
+        # Erfolgsmeldung
+        msg_title = "Sprache geändert" if self.is_de else "Language Changed"
+        msg_body = (
+            "Die Sprache wurde auf Deutsch gesetzt. Kontrollzentrum, Statusleiste und Einstellungen wurden sofort synchronisiert."
+            if self.is_de else
+            "Language set to English. Control Center, Status Bar, and Settings have been synchronized immediately."
+        )
+        self._show_info(msg_title, msg_body)
 
     def _apply_css(self):
         """Tokyo Night Modern & Clean Glassmorphism CSS anwenden."""
@@ -1072,6 +1145,7 @@ class SettingsWindow(Adw.ApplicationWindow):
             if (
                 target_lower in t_lower
                 or t_lower in target_lower
+                or (("sprache" in target_lower or "language" in target_lower or "locale" in target_lower or "region" in target_lower) and ("sprache" in t_lower or "language" in t_lower or "region" in t_lower))
                 or ("monitor" in target_lower and ("bildschirm" in t_lower or "display" in t_lower))
                 or ("waybar" in target_lower and ("leiste" in t_lower or "bar" in t_lower))
                 or ("keybind" in target_lower and ("tasten" in t_lower or "shortcut" in t_lower))
@@ -1587,10 +1661,10 @@ class SettingsWindow(Adw.ApplicationWindow):
             description="Wichtige Desktop- und Hyprland-Metriken" if is_de else "Important desktop and Hyprland metrics"
         )
 
-        # Spracheinstellung (Deutsch / Englisch)
+        # Spracheinstellung (Deutsch / Englisch) mit Schnellzugriff & Live-Umschaltung
         lang_row = Adw.ComboRow(
             title="Systemsprache / Language" if is_de else "System Language / Sprache",
-            subtitle="Wähle zwischen Deutsch und Englisch für das gesamte System" if is_de else "Choose between English and German for the entire system",
+            subtitle="Sofort live umschalten für Desktop, Kontrollzentrum und Einstellungen" if is_de else "Switch instantly for desktop, control center, and settings",
         )
         lang_options = ["Deutsch (German)", "English (Englisch)"]
         lang_row.set_model(Gtk.StringList.new(lang_options))
@@ -1599,13 +1673,13 @@ class SettingsWindow(Adw.ApplicationWindow):
         def on_lang_changed(row, _):
             new_code = "de" if row.get_selected() == 0 else "en"
             if new_code != self.config.get_language():
-                self.config.set_language(new_code)
-                self._show_info(
-                    "Sprache geändert" if new_code == "de" else "Language Changed",
-                    "Die Sprache wurde erfolgreich aktualisiert. Bitte starte die Einstellungen neu, um die Seitenleiste und alle Beschriftungen zu aktualisieren." if new_code == "de" else "Language updated successfully. Please restart settings to update the sidebar and all interface labels."
-                )
+                self.switch_language(new_code)
 
         lang_row.connect("notify::selected", on_lang_changed)
+
+        lang_open_btn = Gtk.Button(label="Öffnen" if is_de else "Open", valign=Gtk.Align.CENTER)
+        lang_open_btn.connect("clicked", lambda _: self._select_page_by_title("Sprache"))
+        lang_row.add_suffix(lang_open_btn)
         group.add(lang_row)
 
         version_row = Adw.ActionRow(
@@ -1687,6 +1761,185 @@ class SettingsWindow(Adw.ApplicationWindow):
         actions.add(reload_row)
 
         box.append(actions)
+        return box
+
+    def _page_language(self) -> Gtk.Widget:
+        """Seite für Systemsprache, Tastaturlayout & Lokalisierung."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        box.set_margin_top(16)
+        box.set_margin_bottom(16)
+        is_de = self.is_de
+        cur_lang = self.config.get_language()
+
+        # ── Hero Card ─────────────────────────────────────────────
+        hero = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        hero.add_css_class("hero-card")
+        hero.set_margin_bottom(6)
+
+        icon_lbl = Gtk.Label()
+        icon_lbl.set_markup('<span font="36" foreground="#00f0ff">󰗊</span>')
+        hero.append(icon_lbl)
+
+        hero_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        hero_title = Gtk.Label()
+        hero_title.set_markup(
+            f'<span font="16" weight="heavy" foreground="#ffffff">{"Sprache & Region" if is_de else "Language & Region"}</span>'
+        )
+        hero_title.set_halign(Gtk.Align.START)
+        hero_text.append(hero_title)
+
+        hero_sub = Gtk.Label()
+        hero_sub.set_markup(
+            f'<span font="11" foreground="#787c99">{"Systemsprache, Tastaturlayout, Datums- und Lokalisierungsstandards live umschalten" if is_de else "Switch system language, keyboard layout, date and localization standards in real-time"}</span>'
+        )
+        hero_sub.set_halign(Gtk.Align.START)
+        hero_text.append(hero_sub)
+        hero.append(hero_text)
+        box.append(hero)
+
+        # ── 1. Gruppe: Systemsprache ──────────────────────────────
+        lang_group = Adw.PreferencesGroup(
+            title="Systemsprache" if is_de else "System Language",
+            description="Hauptsprache für Desktop, Kontrollzentrum, Statusleiste und Einstellungen" if is_de else "Primary language for desktop, control center, status bar, and settings",
+        )
+
+        lang_combo = Adw.ComboRow(
+            title="Sprachauswahl" if is_de else "Language Selection",
+            subtitle="Wird sofort ohne Neustart auf die gesamte Oberfläche angewendet" if is_de else "Applied immediately to the entire interface without restart",
+        )
+        lang_options = [
+            ("Deutsch (Deutschland) – [de_DE.UTF-8]", "de"),
+            ("English (United States) – [en_US.UTF-8]", "en"),
+        ]
+        lang_combo.set_model(Gtk.StringList.new([opt[0] for opt in lang_options]))
+        lang_combo.set_selected(0 if cur_lang == "de" else 1)
+
+        def on_lang_selected(row, _):
+            idx = row.get_selected()
+            if idx < len(lang_options):
+                chosen_code = lang_options[idx][1]
+                if chosen_code != self.config.get_language():
+                    self.switch_language(chosen_code)
+
+        lang_combo.connect("notify::selected", on_lang_selected)
+        lang_group.add(lang_combo)
+
+        # Status der aktuellen Lokalisierung
+        locale_status_row = Adw.ActionRow(
+            title="Aktive System-Locale" if is_de else "Active System Locale",
+            subtitle="~/.config/locale.conf & /etc/locale.conf",
+        )
+        locale_badge = Gtk.Label(label="de_DE.UTF-8" if cur_lang == "de" else "en_US.UTF-8")
+        locale_badge.add_css_class("hero-badge")
+        locale_status_row.add_suffix(locale_badge)
+        lang_group.add(locale_status_row)
+
+        # Synchronisierte Komponenten
+        sync_row = Adw.ActionRow(
+            title="SwayNC & Waybar" if is_de else "SwayNC & Waybar",
+            subtitle="Kontrollzentrum-Buttons, Schnellkacheln und Statusleisten-Texte" if is_de else "Control center buttons, quick tiles, and status bar labels",
+        )
+        sync_badge = Gtk.Label(label="Synchronisiert ✓" if is_de else "Synchronized ✓")
+        sync_badge.add_css_class("hero-badge")
+        sync_row.add_suffix(sync_badge)
+        lang_group.add(sync_row)
+
+        box.append(lang_group)
+
+        # ── 2. Gruppe: Tastaturlayout & Eingabe ────────────────────
+        inp = self.config.load_input_settings()
+        kb_group = Adw.PreferencesGroup(
+            title="Tastaturlayout" if is_de else "Keyboard Layout",
+            description="Tastenbelegung für Hyprland und Terminals" if is_de else "Key layout for Hyprland and terminals",
+        )
+
+        kb_row = Adw.ComboRow(
+            title="Tastaturbelegung" if is_de else "Keyboard Map",
+            subtitle="Sofort aktiv für alle neuen und bestehenden Fenster" if is_de else "Immediately active for all new and existing windows",
+        )
+        kb_options = [
+            ("Deutsch (QWERTZ) – Standard", "de", ""),
+            ("Deutsch (ohne Akzenttasten / nodeadkeys)", "de", "nodeadkeys"),
+            ("Englisch / US (QWERTY)", "us", ""),
+            ("Schweiz (Deutsch/Französisch)", "ch", ""),
+            ("UK (Großbritannien)", "gb", ""),
+        ]
+        kb_row.set_model(Gtk.StringList.new([opt[0] for opt in kb_options]))
+        cur_layout = inp.get("kb_layout", "de")
+        cur_variant = inp.get("kb_variant", "")
+        selected_idx = 0
+        for i, opt in enumerate(kb_options):
+            if opt[1] == cur_layout and opt[2] == cur_variant:
+                selected_idx = i
+                break
+        kb_row.set_selected(selected_idx)
+
+        def on_kb_changed(r, _):
+            idx = r.get_selected()
+            if idx < len(kb_options):
+                inp["kb_layout"] = kb_options[idx][1]
+                inp["kb_variant"] = kb_options[idx][2]
+                self.config.save_input_settings(inp, reload=True)
+                self._show_info(
+                    "Tastaturlayout geändert" if is_de else "Keyboard Layout Changed",
+                    f"Layout auf '{kb_options[idx][0]}' gesetzt und in Hyprland angewendet." if is_de else f"Layout set to '{kb_options[idx][0]}' and applied to Hyprland."
+                )
+
+        kb_row.connect("notify::selected", on_kb_changed)
+        kb_group.add(kb_row)
+        box.append(kb_group)
+
+        # ── 3. Gruppe: Regionale Standards & Zeit ─────────────────
+        region_group = Adw.PreferencesGroup(
+            title="Regionale Formate & Standards" if is_de else "Regional Formats & Standards",
+            description="Datumsanzeige, 24h-Zeit und Zahlenformate" if is_de else "Date display, 24h time, and number formats",
+        )
+
+        date_sample = datetime.now().strftime("%d.%m.%Y" if is_de else "%Y-%m-%d")
+        date_row = Adw.ActionRow(
+            title="Datumsformat" if is_de else "Date Format",
+            subtitle=f"Beispiel: {date_sample} ({'Tag.Monat.Jahr' if is_de else 'Year-Month-Day'})",
+        )
+        date_badge = Gtk.Label(label="DIN 1355 / DE" if is_de else "ISO 8601 / US")
+        date_badge.add_css_class("hero-badge")
+        date_row.add_suffix(date_badge)
+        region_group.add(date_row)
+
+        time_row = Adw.ActionRow(
+            title="Zeitformat" if is_de else "Time Format",
+            subtitle="24-Stunden-Format (14:30) aktiv" if is_de else "24-hour format (14:30) active",
+        )
+        time_link_btn = Gtk.Button(label="Uhrzeit anpassen" if is_de else "Adjust Clock", valign=Gtk.Align.CENTER)
+        time_link_btn.connect("clicked", lambda _: self._select_page_by_title("Uhr"))
+        time_row.add_suffix(time_link_btn)
+        region_group.add(time_row)
+
+        box.append(region_group)
+
+        # ── 4. Gruppe: Systemweite Synchronisierung ───────────────
+        sys_group = Adw.PreferencesGroup(
+            title="Systemweite Synchronisierung" if is_de else "System-wide Synchronization",
+            description="Aktualisiert System-Dateien (/etc/locale.gen, locale-gen & localectl)" if is_de else "Updates system files (/etc/locale.gen, locale-gen & localectl)",
+        )
+
+        sys_sync_row = Adw.ActionRow(
+            title="System-Locale generieren (localectl)" if is_de else "Generate System Locale (localectl)",
+            subtitle="Wendet die gewählte Sprache permanent auf die Konsole und systemd an" if is_de else "Permanently applies the chosen language to console and systemd",
+        )
+        sync_btn = Gtk.Button(label="Jetzt anwenden" if is_de else "Apply Now", valign=Gtk.Align.CENTER)
+        sync_btn.add_css_class("suggested-action")
+        def on_sync_clicked(_):
+            ok, msg = self.config.generate_system_locale(self.lang)
+            if ok:
+                self._show_info("System-Locale" if is_de else "System Locale", msg)
+            else:
+                self._show_info("Hinweis" if is_de else "Notice", msg)
+        sync_btn.connect("clicked", on_sync_clicked)
+        sys_sync_row.add_suffix(sync_btn)
+        sys_group.add(sys_sync_row)
+
+        box.append(sys_group)
+
         return box
 
     def _page_waybar(self) -> Gtk.Widget:

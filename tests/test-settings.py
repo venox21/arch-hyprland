@@ -559,6 +559,16 @@ class TestConfigManager(unittest.TestCase):
             sdata = json.load(f)
         self.assertEqual(sdata["widget-config"]["title"]["text"], "Kontrollzentrum")
 
+        # Prüfen ob locale.conf geschrieben wurde
+        loc_file = self.cm.config_dir / "locale.conf"
+        self.assertTrue(loc_file.exists())
+        self.assertIn("LANG=de_DE.UTF-8", loc_file.read_text(encoding="utf-8"))
+
+        # generate_system_locale testen
+        ok, msg = self.cm.generate_system_locale("en")
+        self.assertTrue(ok)
+        self.assertIn("LANG=en_US.UTF-8", loc_file.read_text(encoding="utf-8"))
+
 
 class TestKeybindParser(unittest.TestCase):
     """Tests für den Keybind-Parser."""

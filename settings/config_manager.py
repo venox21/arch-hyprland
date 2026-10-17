@@ -2037,7 +2037,52 @@ return M
         except Exception:
             pass
 
+        # 4. SwayNC & Waybar live aktualisieren falls aktiv
+        try:
+            subprocess.run(["swaync-client", "-R"], capture_output=True, timeout=1)
+            subprocess.run(["swaync-client", "-rs"], capture_output=True, timeout=1)
+        except Exception:
+            pass
+
+        if shutil.which("waybar"):
+            try:
+                subprocess.run(["pkill", "-USR2", "waybar"], capture_output=True, timeout=1)
+            except Exception:
+                pass
+
         return True
+
+    def generate_system_locale(self, lang: Optional[str] = None) -> tuple[bool, str]:
+        """Wendet die gewählte Locale permanent auf Systemdateien und localectl an."""
+        lang_code = lang or self.get_language()
+        is_de = str(lang_code).lower().startswith("de")
+        target_locale = "de_DE.UTF-8" if is_de else "en_US.UTF-8"
+        keymap = "de" if is_de else "us"
+
+        self.apply_language_to_system(lang_code)
+
+        # 1. localectl direkt testen
+        if shutil.which("localectl"):
+            try:
+                r1 = subprocess.run(["localectl", "set-locale", f"LANG={target_locale}", "LC_COLLATE=C"], capture_output=True, text=True, timeout=4)
+                if r1.returncode == 0:
+                    subprocess.run(["localectl", "set-keymap", keymap], capture_output=True, text=True, timeout=4)
+                    return True, f"System-Locale erfolgreich auf {target_locale} gesetzt."
+            except Exception:
+                pass
+
+        # 2. pkexec für sudo-Rechte falls ohne Rechte nicht gestattet
+        if shutil.which("pkexec") and shutil.which("localectl"):
+            try:
+                r2 = subprocess.run(["pkexec", "localectl", "set-locale", f"LANG={target_locale}", "LC_COLLATE=C"], capture_output=True, text=True, timeout=10)
+                if r2.returncode == 0:
+                    subprocess.run(["pkexec", "localectl", "set-keymap", keymap], capture_output=True, text=True, timeout=10)
+                    return True, f"System-Locale via pkexec auf {target_locale} gesetzt."
+            except Exception as e:
+                return False, f"Fehler bei pkexec: {e}"
+
+        return True, f"Locale in ~/.config/locale.conf auf {target_locale} gesetzt. Für systemweites Setzen: 'sudo localectl set-locale LANG={target_locale}'."
+
 
 
 
