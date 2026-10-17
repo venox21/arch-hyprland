@@ -149,9 +149,12 @@ fi
 copy_if_missing "${REPO_DIR}/config/waybar/config.jsonc" "${CONFIG_DIR}/waybar/config.jsonc"
 copy_if_missing "${REPO_DIR}/config/waybar/style.css" "${CONFIG_DIR}/waybar/style.css"
 
-# 2. SwayNC
-copy_if_missing "${REPO_DIR}/config/swaync/config.json" "${CONFIG_DIR}/swaync/config.json"
-copy_if_missing "${REPO_DIR}/config/swaync/style.css" "${CONFIG_DIR}/swaync/style.css"
+# 2. SwayNC: Kontrollzentrum Konfiguration & Cyber-Neon CSS aktualisieren
+if [[ -f "${REPO_DIR}/config/swaync/config.json" ]]; then
+    mkdir -p "${CONFIG_DIR}/swaync"
+    cp -f "${REPO_DIR}/config/swaync/config.json" "${CONFIG_DIR}/swaync/config.json" 2>/dev/null || true
+    cp -f "${REPO_DIR}/config/swaync/style.css" "${CONFIG_DIR}/swaync/style.css" 2>/dev/null || true
+fi
 
 # 3. Hyprland Lua:
 # System-Kerndateien werden aktualisiert (Bugfixes & neue Funktionen)

@@ -1,402 +1,391 @@
 /* ╔══════════════════════════════════════════════════════════════╗
- * ║  SwayNC – Tokyo Night Frosted Glass Kontrollzentrum CSS     ║
- * ║  Glassmorphism & Per-App Audio Mixer                        ║
+ * ║  SwayNC – Cyber Neon Glass Kontrollzentrum CSS              ║
+ * ║  Tokyo Night • Glassmorphism • Quick Settings Style         ║
  * ╚══════════════════════════════════════════════════════════════╝ */
 
-@define-color bg-dark rgba(26, 27, 38, 0.78);
-@define-color bg-surface rgba(36, 40, 59, 0.55);
-@define-color bg-surface-hover rgba(47, 53, 79, 0.75);
-@define-color text-main #c0caf5;
-@define-color text-muted #787c99;
-@define-color border-color rgba(122, 162, 247, 0.20);
-@define-color border-hover rgba(122, 162, 247, 0.45);
-@define-color accent-blue #7aa2f7;
-@define-color accent-cyan #7dcfff;
-@define-color accent-magenta #bb9af7;
-@define-color accent-yellow #e0af68;
-@define-color accent-orange #ff9e64;
-@define-color accent-red #f7768e;
-@define-color accent-green #9ece6a;
+@define-color bg-dark rgba(16, 18, 28, 0.85);
+@define-color bg-card rgba(255, 255, 255, 0.07);
+@define-color bg-card-hover rgba(255, 255, 255, 0.14);
+@define-color text-main #ffffff;
+@define-color text-sub #c0caf5;
+@define-color text-muted #7982a9;
+@define-color neon-cyan #00f0ff;
+@define-color neon-blue #7aa2f7;
+@define-color neon-purple #bb9af7;
+@define-color neon-magenta #d946ef;
+@define-color neon-amber #ffaf64;
+@define-color neon-red #f7768e;
+@define-color border-glass rgba(255, 255, 255, 0.12);
+@define-color border-cyan-glow rgba(0, 240, 255, 0.45);
+@define-color border-purple-glow rgba(187, 154, 247, 0.45);
 
 * {
     font-family: "JetBrainsMono Nerd Font", "Inter", sans-serif;
+    all: unset;
     font-size: 13px;
 }
 
-/* ── Hauptfenster des Kontrollzentrums (Frosted Glass) ────────── */
+/* ── Hauptfenster des Kontrollzentrums (Cyber Glass) ──────────── */
 .control-center {
     background: @bg-dark;
-    border: 1px solid @border-color;
-    border-radius: 16px;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border: 1.5px solid @border-cyan-glow;
+    border-radius: 26px;
+    box-shadow: 0 0 24px rgba(0, 240, 255, 0.18), 0 20px 50px rgba(0, 0, 0, 0.65);
     color: @text-main;
-    padding: 16px;
+    padding: 18px;
 }
 
-/* ── Titel & Alle löschen Button ─────────────────────────────── */
+/* ── Titelzeile (Quick Settings & Close) ─────────────────────── */
 .widget-title {
-    color: @accent-cyan;
-    font-size: 15px;
+    color: @text-main;
+    font-size: 18px;
     font-weight: 800;
-    margin-bottom: 10px;
-    padding: 0 4px;
-    letter-spacing: -0.2px;
+    margin-bottom: 12px;
+    padding: 2px 4px;
+    letter-spacing: -0.3px;
+}
+
+.widget-title > label {
+    font-size: 18px;
+    font-weight: 800;
+    color: @text-main;
 }
 
 .widget-title > button {
-    background: rgba(247, 118, 142, 0.12);
-    border: 1px solid rgba(247, 118, 142, 0.35);
-    border-radius: 8px;
-    color: @accent-red;
-    font-size: 11px;
-    font-weight: 600;
+    background: transparent;
+    border: none;
+    color: @neon-cyan;
+    font-size: 12px;
+    font-weight: 700;
     padding: 4px 10px;
+    border-radius: 12px;
     transition: all 0.2s ease;
 }
 
 .widget-title > button:hover {
-    background: rgba(247, 118, 142, 0.28);
-    border-color: @accent-red;
+    background: rgba(0, 240, 255, 0.15);
     color: #ffffff;
-    box-shadow: 0 0 10px rgba(247, 118, 142, 0.35);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.35);
 }
 
-/* ── DND (Nicht stören) ───────────────────────────────────────── */
-.widget-dnd {
-    background: @bg-surface;
-    border: 1px solid @border-color;
-    border-radius: 12px;
-    margin: 6px 0;
-    padding: 10px 14px;
+/* ── 1. Buttons-Grid: Quick Top (WLAN, Bluetooth, Night Light) ── */
+.widget-buttons-grid.quick-top {
+    margin-bottom: 8px;
+}
+
+.widget-buttons-grid.quick-top grid {
+    border-spacing: 8px;
+}
+
+.widget-buttons-grid.quick-top button {
+    background: @bg-card;
+    border: 1px solid @border-glass;
+    border-radius: 18px;
+    min-height: 60px;
+    padding: 10px 12px;
     color: @text-main;
-    font-weight: 600;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    font-weight: 700;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.widget-dnd > switch {
-    background: rgba(22, 22, 30, 0.75);
-    border: 1px solid @border-color;
-    border-radius: 9999px;
-    min-width: 44px;
-    min-height: 24px;
-    padding: 2px;
+.widget-buttons-grid.quick-top button:hover {
+    background: @bg-card-hover;
+    border-color: @neon-cyan;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+}
+
+/* WLAN aktiv (Heller Cyan-Neon-Schein wie in Vorlage) */
+.widget-buttons-grid.quick-top button:checked,
+.widget-buttons-grid.quick-top button:active {
+    background: linear-gradient(135deg, #00f0ff 0%, #22d3ee 100%);
+    border: none;
+    color: #10121c;
+    font-weight: 800;
+    box-shadow: 0 0 18px rgba(0, 240, 255, 0.65), 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* Bluetooth Rahmen mit Violett-Schein */
+.widget-buttons-grid.quick-top button:nth-child(2) {
+    border: 1.5px solid rgba(187, 154, 247, 0.55);
+    box-shadow: 0 0 12px rgba(187, 154, 247, 0.2);
+}
+.widget-buttons-grid.quick-top button:nth-child(2):hover {
+    border-color: @neon-purple;
+    box-shadow: 0 0 16px rgba(187, 154, 247, 0.45);
+}
+
+/* Night Light Rahmen mit Amber-Schein */
+.widget-buttons-grid.quick-top button:nth-child(3) {
+    border: 1.5px solid rgba(255, 175, 100, 0.55);
+    box-shadow: 0 0 12px rgba(255, 175, 100, 0.2);
+}
+.widget-buttons-grid.quick-top button:nth-child(3):hover {
+    border-color: @neon-amber;
+    box-shadow: 0 0 16px rgba(255, 175, 100, 0.45);
+}
+
+/* ── 2. Buttons-Grid: Quick Sub (DND, Airplane, Dark Mode) ───── */
+.widget-buttons-grid.quick-sub {
+    margin-bottom: 12px;
+}
+
+.widget-buttons-grid.quick-sub grid {
+    border-spacing: 8px;
+}
+
+.widget-buttons-grid.quick-sub button {
+    background: @bg-card;
+    border: 1px solid @border-glass;
+    border-radius: 16px;
+    min-height: 52px;
+    padding: 8px 10px;
+    color: @text-sub;
+    font-size: 11px;
+    font-weight: 600;
     transition: all 0.2s ease;
 }
 
-.widget-dnd > switch:checked {
-    background: linear-gradient(135deg, @accent-red, #ff8b9e);
-    border-color: transparent;
-    box-shadow: 0 0 10px rgba(247, 118, 142, 0.45);
-}
-
-.widget-dnd > switch slider {
-    background: #ffffff;
-    border-radius: 9999px;
-    min-width: 18px;
-    min-height: 18px;
-    margin: 1px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
-}
-
-/* ── Quick-Settings Grid (WLAN, BT, Audio, Nachtmodus, etc.) ─── */
-.widget-buttons-grid {
-    margin: 8px 0;
-    padding: 0;
-}
-
-.widget-buttons-grid > flowbox > flowboxchild > button {
-    background: @bg-surface;
-    border: 1px solid @border-color;
-    border-radius: 12px;
+.widget-buttons-grid.quick-sub button:hover {
+    background: @bg-card-hover;
+    border-color: @neon-cyan;
     color: @text-main;
-    font-size: 12px;
-    font-weight: 600;
-    min-height: 44px;
-    min-width: 110px;
-    padding: 8px 12px;
-    margin: 3px;
-    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-.widget-buttons-grid > flowbox > flowboxchild > button:hover {
-    background: @bg-surface-hover;
-    border-color: @accent-blue;
-    color: #ffffff;
-    box-shadow: 0 4px 14px rgba(122, 162, 247, 0.28);
+.widget-buttons-grid.quick-sub button:checked {
+    background: rgba(0, 240, 255, 0.18);
+    border-color: @neon-cyan;
+    color: @neon-cyan;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
 }
 
-.widget-buttons-grid > flowbox > flowboxchild > button.active,
-.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
-    background: linear-gradient(135deg, @accent-blue 0%, #638bee 100%);
-    border-color: transparent;
-    color: #1a1b26;
-    font-weight: 700;
-    box-shadow: 0 4px 14px rgba(122, 162, 247, 0.45);
-}
-
-/* ── Volume & Backlight Sliders (Pill Styling) ────────────────── */
+/* ── 3. Lautstärke & Helligkeit (Regler mit Farbverlauf) ───────── */
 .widget-volume,
 .widget-backlight {
-    background: @bg-surface;
-    border: 1px solid @border-color;
-    border-radius: 12px;
-    margin: 6px 0;
-    padding: 10px 14px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.widget-volume label {
-    color: @accent-blue;
-    font-size: 16px;
-    margin-right: 10px;
-}
-
-.widget-backlight label {
-    color: @accent-yellow;
-    font-size: 16px;
-    margin-right: 10px;
-}
-
-scale trough {
-    background: rgba(22, 22, 30, 0.80);
-    border: 1px solid rgba(122, 162, 247, 0.22);
-    border-radius: 9999px;
-    min-height: 10px;
-}
-
-scale highlight {
-    border-radius: 9999px;
-    min-height: 10px;
-}
-
-.widget-volume scale highlight {
-    background: linear-gradient(90deg, @accent-blue, @accent-magenta);
-}
-
-.widget-backlight scale highlight {
-    background: linear-gradient(90deg, @accent-yellow, @accent-orange);
-}
-
-scale slider {
-    background: #ffffff;
-    border-radius: 9999px;
-    min-height: 18px;
-    min-width: 18px;
-    margin: -4px 0;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
-    transition: all 0.15s ease;
-}
-
-scale slider:hover {
-    box-shadow: 0 0 10px rgba(122, 162, 247, 0.6);
-}
-
-/* ── Per-App Lautstärkeregler (Einzellaustärke Mixer) ────────── */
-.widget-volume > box > button {
-    background: rgba(122, 162, 247, 0.12);
-    border: 1px solid rgba(122, 162, 247, 0.25);
-    border-radius: 8px;
-    color: @accent-blue;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 8px;
-    margin-left: 6px;
-    transition: all 0.15s ease;
-}
-
-.widget-volume > box > button:hover {
-    background: rgba(122, 162, 247, 0.25);
-    color: #ffffff;
-    border-color: @accent-blue;
-}
-
-/* Container für einzelne Audio-Streams */
-.per-app {
-    background: rgba(22, 22, 30, 0.65);
-    border: 1px solid rgba(122, 162, 247, 0.16);
-    border-radius: 10px;
-    margin-top: 8px;
-    padding: 8px 10px;
-}
-
-.per-app-stream {
-    padding: 6px 4px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.per-app-stream:last-child {
-    border-bottom: none;
-}
-
-.per-app-stream label {
-    font-size: 12px;
-    font-weight: 600;
+    background: transparent;
+    padding: 4px 2px;
+    margin: 4px 0;
     color: @text-main;
-    margin-right: 6px;
 }
 
-.per-app-stream image {
-    margin-right: 8px;
-    border-radius: 4px;
+.widget-volume > box > label,
+.widget-backlight > box > label {
+    color: @neon-cyan;
+    font-size: 16px;
+    margin-right: 12px;
+    min-width: 22px;
 }
 
-.per-app-stream button {
-    background: rgba(36, 40, 59, 0.6);
-    border: 1px solid rgba(122, 162, 247, 0.2);
-    border-radius: 6px;
-    padding: 2px 6px;
-    color: @accent-blue;
-    font-size: 11px;
-    transition: all 0.15s ease;
+/* Schieberegler Hintergrund-Schiene (Trough) */
+scale trough {
+    background: rgba(255, 255, 255, 0.13);
+    border: none;
+    border-radius: 8px;
+    min-height: 14px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
-.per-app-stream button:hover {
-    background: rgba(247, 118, 142, 0.25);
-    color: @accent-red;
-    border-color: @accent-red;
+/* Schieberegler Füllung: Farbverlauf von Cyan nach Magenta */
+scale highlight {
+    background: linear-gradient(90deg, #00f0ff 0%, #7aa2f7 50%, #d946ef 100%);
+    border-radius: 8px;
+    min-height: 14px;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
 }
 
-/* Fein abgestimmte Schieberegler für Einzellaustärke */
-.per-app-stream scale trough {
-    background: rgba(18, 19, 26, 0.85);
-    border: 1px solid rgba(122, 162, 247, 0.15);
-    border-radius: 9999px;
-    min-height: 6px;
+/* Slider-Griff verbergen für sauberen Kapsel-Look */
+scale slider {
+    min-width: 0;
+    min-height: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
 
-.per-app-stream scale highlight {
-    background: linear-gradient(90deg, @accent-blue, @accent-cyan);
-    border-radius: 9999px;
-    min-height: 6px;
-}
-
-.per-app-stream scale slider {
-    background: #c0caf5;
-    border-radius: 9999px;
-    min-height: 12px;
-    min-width: 12px;
-    margin: -3px 0;
-}
-
-.per-app-empty {
-    color: @text-muted;
-    font-size: 11px;
-    font-style: italic;
-    padding: 6px 4px;
-}
-
-/* ── MPRIS (Media Player mit Album-Art) ───────────────────────── */
+/* ── 4. Musik Player (MPRIS) Glaskarte ────────────────────────── */
 .widget-mpris {
-    background: @bg-surface;
-    border: 1px solid @border-color;
-    border-radius: 12px;
-    margin: 6px 0;
-    padding: 12px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1.5px solid @border-purple-glow;
+    border-radius: 20px;
+    box-shadow: 0 0 16px rgba(187, 154, 247, 0.18);
+    margin: 10px 0;
+    padding: 12px 14px;
+    color: @text-main;
 }
 
 .widget-mpris-player {
     padding: 4px;
 }
 
-.widget-mpris-album-art {
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-}
-
 .widget-mpris-title {
     color: @text-main;
-    font-weight: 700;
-    font-size: 13px;
+    font-size: 15px;
+    font-weight: 800;
 }
 
 .widget-mpris-subtitle {
     color: @text-muted;
     font-size: 12px;
+    margin-top: 2px;
 }
 
-.widget-mpris > box > button {
+.widget-mpris-album-art {
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    margin-right: 12px;
+}
+
+/* MPRIS Medien-Steuerungstasten */
+.widget-mpris > box > box > button {
     background: transparent;
     border: none;
-    color: @accent-blue;
-    font-size: 18px;
-    padding: 4px 8px;
-    transition: all 0.15s ease;
-}
-
-.widget-mpris > box > button:hover {
-    color: @accent-cyan;
-}
-
-/* ── Benachrichtigungs-Liste ─────────────────────────────────── */
-.notification-row {
-    background: transparent;
-    outline: none;
+    color: @text-sub;
+    font-size: 15px;
+    margin: 0 4px;
     transition: all 0.2s ease;
 }
 
-.notification-row .notification-background {
-    background: rgba(36, 40, 59, 0.85);
-    border: 1px solid @border-color;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+.widget-mpris > box > box > button:hover {
+    color: @neon-cyan;
+    transform: scale(1.15);
+}
+
+/* Play/Pause Button im leuchtenden Kreis */
+.widget-mpris > box > box > button:nth-child(2) {
+    border: 2px solid @neon-cyan;
+    border-radius: 9999px;
+    color: @neon-cyan;
+    min-width: 32px;
+    min-height: 32px;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
+}
+
+/* ── 5. Benachrichtigungs-Überschrift ─────────────────────────── */
+.notif-header {
     color: @text-main;
+    font-size: 15px;
+    font-weight: 800;
+    margin: 12px 0 6px 4px;
+    letter-spacing: -0.2px;
+}
+
+/* ── 6. Benachrichtigungs-Karten ─────────────────────────────── */
+.notification {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(187, 154, 247, 0.30);
+    border-radius: 18px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
     margin: 6px 0;
     padding: 12px 14px;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
 }
 
-.notification-row .notification-background:hover {
-    background: rgba(47, 53, 79, 0.95);
-    border-color: @accent-blue;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+.notification:hover {
+    border-color: @neon-cyan;
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
 }
 
-.notification-row.low .notification-background {
-    border-left: 3px solid #414868;
-}
-
-.notification-row.normal .notification-background {
-    border-left: 3px solid @accent-blue;
-}
-
-.notification-row.critical .notification-background {
-    border-left: 3px solid @accent-red;
-    background: rgba(45, 25, 35, 0.90);
-    box-shadow: 0 0 16px rgba(247, 118, 142, 0.3);
+.notification-default-action {
+    padding: 0;
+    margin: 0;
 }
 
 .notification-content {
-    margin: 4px 0;
+    padding: 2px;
 }
 
-.summary {
-    color: @accent-cyan;
-    font-size: 13px;
-    font-weight: 700;
+.notification-content image {
+    border-radius: 12px;
+    margin-right: 12px;
 }
 
-.body {
+.notification-content .summary {
     color: @text-main;
+    font-size: 13.5px;
+    font-weight: 800;
+}
+
+.notification-content .body {
+    color: #9aa5ce;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+/* Aktionsbuttons der Benachrichtigung (z. B. Reply, Update Now) */
+.notification-action {
+    background: linear-gradient(135deg, #00f0ff 0%, #22d3ee 100%);
+    border: none;
+    border-radius: 14px;
+    color: #10121c;
+    font-size: 11px;
+    font-weight: 800;
+    margin: 6px 4px 2px 4px;
+    padding: 6px 14px;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
+    transition: all 0.2s ease;
+}
+
+.notification-action:hover {
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.75);
+    transform: scale(1.02);
+}
+
+.notification-action:active {
+    transform: scale(0.97);
+}
+
+/* Schließen-Kreuz der Benachrichtigung */
+.notification-close-button {
+    background: transparent;
+    border: none;
+    color: @text-muted;
     font-size: 12px;
 }
 
-.time {
-    color: @text-muted;
-    font-size: 11px;
+.notification-close-button:hover {
+    color: @neon-red;
 }
 
-.close-button {
+/* ── 7. Untere Leiste (Bottom Bar: DND, Lock, Power, Settings) ─ */
+.widget-buttons-grid.bottom-bar {
+    margin-top: 10px;
+    padding: 6px 0 2px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.widget-buttons-grid.bottom-bar grid {
+    border-spacing: 8px;
+}
+
+.widget-buttons-grid.bottom-bar button {
     background: transparent;
     border: none;
-    border-radius: 6px;
+    border-radius: 12px;
     color: @text-muted;
-    padding: 2px 6px;
-    transition: all 0.15s ease;
+    font-size: 18px;
+    min-height: 38px;
+    transition: all 0.2s ease;
 }
 
-.close-button:hover {
-    background: rgba(247, 118, 142, 0.2);
-    color: @accent-red;
+.widget-buttons-grid.bottom-bar button:hover {
+    background: rgba(255, 255, 255, 0.10);
+    color: @neon-cyan;
+    transform: scale(1.12);
+}
+
+.widget-buttons-grid.bottom-bar button:checked {
+    color: @neon-red;
+}
+
+/* ── Leere Benachrichtigungsliste ────────────────────────────── */
+.blank-window {
+    background: transparent;
+}
+
+.control-center-list-placeholder {
+    color: @text-muted;
+    font-size: 13px;
+    font-style: italic;
+    padding: 24px 0;
 }

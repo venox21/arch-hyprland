@@ -455,6 +455,29 @@ gamemode_status() {
     fi
 }
 
+# ── 8. Flugmodus (Airplane Mode) ──────────────────────────────
+airplane_toggle() {
+    if ! command -v nmcli &>/dev/null; then
+        notify "Fehler" "nmcli nicht verfügbar" "dialog-error"
+        return 1
+    fi
+    if nmcli radio all 2>/dev/null | grep -q "disabled"; then
+        nmcli radio all on 2>/dev/null || true
+        notify "Flugmodus deaktiviert" "WLAN und Funkmodule eingeschaltet" "network-wireless"
+    else
+        nmcli radio all off 2>/dev/null || true
+        notify "Flugmodus aktiviert" "Alle Funkverbindungen getrennt" "airplane-mode"
+    fi
+}
+
+airplane_status() {
+    if command -v nmcli &>/dev/null && nmcli radio all 2>/dev/null | grep -q "disabled"; then
+        echo "true"
+    else
+        echo "false"
+    fi
+}
+
 # ── 8. System-Cleaner ─────────────────────────────────────────
 cleaner_launch() {
     # SwayNC schließen, damit das Terminal sichtbar ist
@@ -522,6 +545,8 @@ case "${1:-}" in
     --powersave-status)             powersave_status ;;
     --gamemode-toggle)              gamemode_toggle ;;
     --gamemode-status)              gamemode_status ;;
+    --airplane-toggle)              airplane_toggle ;;
+    --airplane-status)              airplane_status ;;
     --cleaner|--clean-system)       cleaner_launch ;;
     --toggle|toggle)                toggle_panel ;;
     *)
