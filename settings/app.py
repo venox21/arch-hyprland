@@ -12,6 +12,7 @@ import os
 import glob
 import threading
 import re
+import subprocess
 from pathlib import Path
 
 # Wayland-Umgebung automatisch ermitteln (SSH / TTY Support)
@@ -74,7 +75,12 @@ except ImportError:
         def set_hexpand(self, *a, **kw): pass
         def set_sensitive(self, *a, **kw): pass
         def set_content_height(self, *a, **kw): pass
+        def set_content_width(self, *a, **kw): pass
         def set_draw_func(self, *a, **kw): pass
+        def set_spacing(self, *a, **kw): pass
+        def set_column_spacing(self, *a, **kw): pass
+        def set_row_spacing(self, *a, **kw): pass
+        def attach(self, *a, **kw): pass
         def queue_draw(self, *a, **kw): pass
         def set_pixel_size(self, *a, **kw): pass
         def get_row_at_index(self, *a, **kw): return self
@@ -120,6 +126,9 @@ except ImportError:
         Image = _MockBase
         FlowBox = _MockBase
         SearchEntry = _MockBase
+        Grid = _MockBase
+        Switch = _MockBase
+        Notebook = _MockBase
         StringList = type("StringList", (), {"new": staticmethod(lambda items: _MockBase())})
         class IconTheme:
             @staticmethod
@@ -177,35 +186,69 @@ class SettingsWindow(Adw.ApplicationWindow):
         except Exception:
             pass
 
-        self.set_title("Tokyo Night – Einstellungen")
-        self.set_default_size(960, 680)
+        self.set_title("Tokyo Night – Hyprland Settings")
+        self.set_default_size(980, 700)
         self.set_resizable(True)
 
         # WM_CLASS für Fensterregeln setzen
         self.set_startup_id("tokyo-settings")
 
-        # ── Haupt-Layout: NavigationSplitView ─────────────────
+        # ── Haupt-Layout: Vertikaler Container mit Content & Footer ──
+        root_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        root_box.add_css_class("settings-main-window")
+
         self.split_view = Adw.NavigationSplitView()
-        self.set_content(self.split_view)
+        self.split_view.set_vexpand(True)
+        root_box.append(self.split_view)
+
+        # ── Footer mit Power-Buttons (Ausschalten & Neustart wie im Screenshot) ──
+        footer_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        footer_box.set_halign(Gtk.Align.END)
+        footer_box.set_margin_end(24)
+        footer_box.set_margin_bottom(12)
+        footer_box.set_margin_top(4)
+        footer_box.add_css_class("settings-footer-bar")
+
+        shutdown_btn = Gtk.Button(label="⏻ Ausschalten")
+        shutdown_btn.add_css_class("pill-action-btn")
+        shutdown_btn.connect("clicked", lambda _: subprocess.Popen(["systemctl", "poweroff"]))
+
+        reboot_btn = Gtk.Button(label="⟳ Neustart")
+        reboot_btn.add_css_class("pill-action-btn")
+        reboot_btn.connect("clicked", lambda _: subprocess.Popen(["systemctl", "reboot"]))
+
+        footer_box.append(shutdown_btn)
+        footer_box.append(reboot_btn)
+        root_box.append(footer_box)
+
+        self.set_content(root_box)
 
         # Sidebar erstellen
         sidebar_page = Adw.NavigationPage(title="Einstellungen")
         sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         sidebar_page.set_child(sidebar_box)
 
-        # Header für Sidebar
-        sidebar_header = Adw.HeaderBar()
-        sidebar_header.set_title_widget(Adw.WindowTitle(
-            title="Einstellungen",
-            subtitle="Tokyo Night"
-        ))
-        sidebar_box.append(sidebar_header)
+        # Header für Sidebar: Arch Logo + "Settings" (exakt wie im Screenshot)
+        sidebar_brand = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        sidebar_brand.set_margin_start(16)
+        sidebar_brand.set_margin_top(16)
+        sidebar_brand.set_margin_bottom(10)
+
+        arch_icon_lbl = Gtk.Label()
+        arch_icon_lbl.set_markup('<span font="24" foreground="#00f0ff" weight="bold">󰣇</span>')
+        sidebar_brand.append(arch_icon_lbl)
+
+        settings_title_lbl = Gtk.Label()
+        settings_title_lbl.set_markup('<span font="18" weight="heavy" foreground="#ffffff">Settings</span>')
+        sidebar_brand.append(settings_title_lbl)
+
+        sidebar_box.append(sidebar_brand)
 
         # Schnelle Suche in den Einstellungen
         search_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         search_box.set_margin_start(10)
         search_box.set_margin_end(10)
-        search_box.set_margin_top(8)
+        search_box.set_margin_top(4)
         search_box.set_margin_bottom(6)
 
         self.search_entry = Gtk.SearchEntry()
@@ -242,107 +285,59 @@ class SettingsWindow(Adw.ApplicationWindow):
                 pass
             return candidates[0] if candidates else "dialog-information-symbolic"
 
-        # ── Seiten definieren (mit Fallback-Icons für alle GTK-Themes) ──
+        # ── 10 Seiten-Kategorien exakt wie im Screenshot ──
         self.pages = [
-            ("Allgemein", [
-                "preferences-system-symbolic",
-                "emblem-system-symbolic",
-                "applications-system-symbolic",
-                "org.gnome.Settings-symbolic",
-                "preferences-other-symbolic",
-            ], self._page_general),
-            ("Leisten-Stil & Waybar", [
+            ("Dashboard", [
                 "view-app-grid-symbolic",
                 "view-grid-symbolic",
-                "open-menu-symbolic",
-                "view-list-symbolic",
-            ], self._page_waybar),
-            ("Uhr und Datum", [
-                "preferences-system-time-symbolic",
-                "alarm-symbolic",
-                "x-office-calendar-symbolic",
-                "appointment-soon-symbolic",
-            ], self._page_clock),
-            ("Eingabegeräte", [
-                "input-mouse-symbolic",
-                "input-keyboard-symbolic",
-                "preferences-desktop-peripherals-symbolic",
-                "input-gaming-symbolic",
-            ], self._page_input),
-            ("Monitore & Bildschirme", [
+                "preferences-system-symbolic",
+                "org.gnome.Settings-symbolic",
+            ], self._page_general),
+            ("Display", [
                 "video-display-symbolic",
                 "preferences-desktop-display-symbolic",
                 "display-symbolic",
             ], self._page_monitors),
-            ("Systemleistung", [
-                "utilities-system-monitor-symbolic",
-                "speedometer-symbolic",
-                "applications-system-symbolic",
-                "dialog-information-symbolic",
-            ], self._page_performance),
-            ("Netzwerk & Bluetooth", [
-                "network-wireless-symbolic",
-                "network-wireless-signal-excellent-symbolic",
-                "network-workgroup-symbolic",
-                "bluetooth-active-symbolic",
-                "network-wired-symbolic",
-            ], self._page_network),
-            ("Audio", [
+            ("Hyprland FX", [
+                "preferences-desktop-theme-symbolic",
+                "video-display-symbolic",
+                "preferences-color-symbolic",
+            ], self._page_hyprland_fx),
+            ("Inputs", [
+                "input-mouse-symbolic",
+                "input-keyboard-symbolic",
+                "preferences-desktop-peripherals-symbolic",
+            ], self._page_input),
+            ("Audio & Sound", [
                 "audio-volume-high-symbolic",
                 "audio-speakers-symbolic",
                 "multimedia-volume-control-symbolic",
             ], self._page_audio),
-            ("Fenster und Animationen", [
-                "preferences-desktop-display-symbolic",
-                "video-display-symbolic",
-                "display-symbolic",
-                "preferences-desktop-theme-symbolic",
-            ], self._page_appearance),
-            ("Farben und Transparenz", [
+            ("Network & WiFi", [
+                "network-wireless-symbolic",
+                "network-wireless-signal-excellent-symbolic",
+                "network-wired-symbolic",
+            ], self._page_network),
+            ("Appearance", [
                 "preferences-color-symbolic",
                 "format-color-fill-symbolic",
-                "color-select-symbolic",
                 "applications-graphics-symbolic",
             ], self._page_colors),
-            ("Hintergrundbilder", [
-                "preferences-desktop-wallpaper-symbolic",
-                "image-x-generic-symbolic",
-                "emblem-photos-symbolic",
-                "folder-pictures-symbolic",
-            ], self._page_wallpaper),
-            ("Tastenkürzel", [
-                "input-keyboard-symbolic",
-                "accessories-keyboard-shortcut-symbolic",
-                "preferences-desktop-keyboard-shortcuts-symbolic",
-                "keyboard-symbolic",
-            ], self._page_keybinds),
-            ("Autostart", [
-                "media-playback-start-symbolic",
-                "media-playback-start",
+            ("Applications", [
+                "view-app-grid-symbolic",
                 "system-run-symbolic",
+                "applications-system-symbolic",
             ], self._page_autostart),
-            ("Backup", [
-                "drive-harddisk-symbolic",
-                "document-save-symbolic",
-                "system-software-update-symbolic",
-            ], self._page_backup),
-            ("Hardware & Treiber", [
+            ("System & Hardware", [
                 "preferences-system-devices-symbolic",
                 "computer-symbolic",
-                "video-display-symbolic",
                 "applications-system-symbolic",
             ], self._page_hardware),
-            ("Diagnostik", [
+            ("Advanced Settings", [
+                "preferences-other-symbolic",
                 "dialog-information-symbolic",
-                "help-browser-symbolic",
-                "utilities-terminal-symbolic",
-            ], self._page_diagnostics),
-            ("Version & Update", [
-                "system-software-update-symbolic",
-                "software-update-available-symbolic",
-                "system-software-install-symbolic",
                 "emblem-system-symbolic",
-            ], self._page_version_update),
+            ], self._page_advanced),
         ]
 
         for title, icon_candidates, _ in self.pages:
@@ -352,10 +347,10 @@ class SettingsWindow(Adw.ApplicationWindow):
             row.set_activatable(True)
             self.nav_list.append(row)
 
-        # Erste Seite auswählen
-        first_row = self.nav_list.get_row_at_index(0)
-        if first_row:
-            self.nav_list.select_row(first_row)
+        # Standardmäßig Hyprland FX (Index 2) auswählen wie im Screenshot
+        default_row = self.nav_list.get_row_at_index(2)
+        if default_row:
+            self.nav_list.select_row(default_row)
 
         # CSS laden
         self._apply_css()
@@ -460,11 +455,12 @@ class SettingsWindow(Adw.ApplicationWindow):
         }
 
         .navigation-sidebar row:selected {
-            background: linear-gradient(90deg, rgba(122, 162, 247, 0.22) 0%, rgba(122, 162, 247, 0.08) 100%);
-            color: #7aa2f7;
+            background: linear-gradient(90deg, rgba(0, 240, 255, 0.16) 0%, rgba(217, 70, 239, 0.12) 100%);
+            color: #ffffff;
             font-weight: 700;
-            border: 1px solid rgba(122, 162, 247, 0.35);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border: 1.5px solid #00f0ff;
+            border-radius: 12px;
+            box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
         }
 
         .navigation-sidebar row image {
@@ -792,6 +788,140 @@ class SettingsWindow(Adw.ApplicationWindow):
         .status-ok { color: #9ece6a; font-weight: bold; }
         .status-warn { color: #e0af68; font-weight: bold; }
         .status-error { color: #f7768e; font-weight: bold; }
+
+        /* Settings Main Window & Footer */
+        .settings-main-window {
+            background-color: #10121c;
+        }
+
+        .settings-footer-bar {
+            padding: 4px 0 8px 0;
+        }
+
+        .pill-action-btn {
+            background: rgba(26, 29, 46, 0.85);
+            color: #c0caf5;
+            border: 1.2px solid rgba(122, 162, 247, 0.3);
+            border-radius: 9999px;
+            padding: 6px 18px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 150ms ease;
+        }
+
+        .pill-action-btn:hover {
+            background: rgba(36, 42, 68, 0.95);
+            color: #ffffff;
+            border-color: #00f0ff;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+        }
+
+        /* Hyprland FX Styling */
+        .fx-slider-label {
+            color: #c0caf5;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .fx-value-label {
+            color: #c0caf5;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: "JetBrainsMono Nerd Font", monospace;
+        }
+
+        .cyber-gradient-scale trough {
+            min-height: 5px;
+            border-radius: 9999px;
+            background-color: rgba(32, 38, 62, 0.9);
+            border: 1px solid rgba(122, 162, 247, 0.18);
+        }
+
+        .cyber-gradient-scale highlight {
+            min-height: 5px;
+            border-radius: 9999px;
+            background: linear-gradient(90deg, #00f0ff 0%, #7aa2f7 50%, #d946ef 100%);
+        }
+
+        .cyber-gradient-scale slider {
+            min-width: 15px;
+            min-height: 15px;
+            margin: -5px;
+            border-radius: 50%;
+            background: #c0caf5;
+            border: 2px solid #7aa2f7;
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.45);
+        }
+
+        .cyber-gradient-scale slider:hover {
+            background: #ffffff;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.8);
+        }
+
+        .active-border-card {
+            background: rgba(18, 22, 36, 0.75);
+            border: 1.2px solid rgba(122, 162, 247, 0.3);
+            border-radius: 12px;
+            padding: 10px 14px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .active-border-label {
+            font-family: "JetBrainsMono Nerd Font", monospace;
+            font-size: 11px;
+            font-weight: 700;
+            color: #7dcfff;
+        }
+
+        .active-border-gradient-bar {
+            border-radius: 8px;
+            background: linear-gradient(90deg, #00f0ff 0%, #38bdf8 35%, #7aa2f7 65%, #d946ef 100%);
+            box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .bezier-frame {
+            background: rgba(14, 18, 30, 0.85);
+            border: 1.5px solid rgba(0, 240, 255, 0.45);
+            border-radius: 12px;
+            box-shadow: 0 0 14px rgba(0, 240, 255, 0.18), inset 0 0 12px rgba(0, 0, 0, 0.4);
+            padding: 3px;
+        }
+
+        .perf-card {
+            background: rgba(18, 22, 36, 0.75);
+            border: 1.2px solid rgba(122, 162, 247, 0.28);
+            border-radius: 12px;
+            padding: 10px 14px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .perf-pct-label {
+            font-family: "JetBrainsMono Nerd Font", monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: #7dcfff;
+        }
+
+        switch {
+            background-color: rgba(32, 38, 58, 0.9);
+            border: 1px solid rgba(122, 162, 247, 0.35);
+            border-radius: 9999px;
+        }
+
+        switch:checked {
+            background: linear-gradient(90deg, #00f0ff, #7aa2f7);
+            border-color: #00f0ff;
+        }
+
+        switch slider {
+            background-color: #ffffff;
+            border-radius: 9999px;
+            min-width: 16px;
+            min-height: 16px;
+            margin: 2px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+        }
         """
         provider = Gtk.CssProvider()
         provider.load_from_data(css)
@@ -852,6 +982,427 @@ class SettingsWindow(Adw.ApplicationWindow):
     # ══════════════════════════════════════════════════════════
     # ██ Seiten
     # ══════════════════════════════════════════════════════════
+
+    def _draw_bezier(self, area, cr, width, height):
+        """Zeichnet eine leuchtende kubische Bezier-Kurve wie im Screenshot."""
+        try:
+            cr.save()
+            # Dezent dunkler Hintergrund
+            cr.set_source_rgba(0.06, 0.08, 0.14, 0.85)
+            cr.paint()
+
+            # Horizontale Führungslinie
+            cr.set_source_rgba(0.48, 0.64, 0.97, 0.08)
+            cr.set_line_width(1.0)
+            cr.move_to(0, height * 0.5)
+            cr.line_to(width, height * 0.5)
+            cr.stroke()
+
+            # Bezier Koordinaten (S-Kurve mit glattem Schwung)
+            pad_x = 16
+            pad_y = 14
+            start_x = pad_x
+            start_y = height - pad_y
+            end_x = width - pad_x
+            end_y = pad_y
+
+            cp1_x = start_x + (end_x - start_x) * 0.28
+            cp1_y = start_y - (start_y - end_y) * 0.02
+            cp2_x = start_x + (end_x - start_x) * 0.72
+            cp2_y = end_y + (start_y - end_y) * 0.02
+
+            # 1. Äußerer Neon-Glow
+            cr.set_source_rgba(0.0, 0.94, 1.0, 0.25)
+            cr.set_line_width(7.0)
+            cr.move_to(start_x, start_y)
+            cr.curve_to(cp1_x, cp1_y, cp2_x, cp2_y, end_x, end_y)
+            cr.stroke()
+
+            # 2. Haupt-Bezier-Linie
+            cr.set_source_rgba(0.0, 0.94, 1.0, 0.95)
+            cr.set_line_width(3.0)
+            cr.move_to(start_x, start_y)
+            cr.curve_to(cp1_x, cp1_y, cp2_x, cp2_y, end_x, end_y)
+            cr.stroke()
+
+            # 3. Leuchtende Endpunkte (Start: Lila, Ende: Cyan)
+            for pt_x, pt_y, r, g, b in [
+                (start_x, start_y, 0.85, 0.27, 0.94),
+                (end_x, end_y, 0.0, 0.94, 1.0),
+            ]:
+                cr.set_source_rgba(r, g, b, 0.4)
+                cr.arc(pt_x, pt_y, 7, 0, 2 * 3.14159)
+                cr.fill()
+                cr.set_source_rgba(r, g, b, 1.0)
+                cr.arc(pt_x, pt_y, 3.5, 0, 2 * 3.14159)
+                cr.fill()
+
+            cr.restore()
+        except Exception:
+            pass
+
+    def _draw_perf_wave(self, area, cr, width, height):
+        """Zeichnet eine Oszilloskop-Performance-Wellenform wie im Screenshot."""
+        try:
+            cr.save()
+            cr.set_source_rgba(0.06, 0.08, 0.14, 0.85)
+            cr.paint()
+
+            # Normalisierte Wellenform mit Peak
+            points = [
+                (0.00, 0.78),
+                (0.08, 0.74),
+                (0.16, 0.80),
+                (0.24, 0.76),
+                (0.32, 0.78),
+                (0.40, 0.70),
+                (0.48, 0.22),  # Peak in der Mitte
+                (0.54, 0.68),
+                (0.62, 0.76),
+                (0.70, 0.80),
+                (0.78, 0.74),
+                (0.86, 0.68),
+                (0.92, 0.76),
+                (1.00, 0.75),
+            ]
+            pts = [(x * width, y * (height - 8) + 4) for x, y in points]
+
+            # 1. Fläche füllen
+            cr.move_to(0, height)
+            cr.line_to(pts[0][0], pts[0][1])
+            for i in range(len(pts) - 1):
+                p0 = pts[i]
+                p1 = pts[i + 1]
+                mid_x = (p0[0] + p1[0]) / 2.0
+                cr.curve_to(mid_x, p0[1], mid_x, p1[1], p1[0], p1[1])
+            cr.line_to(width, height)
+            cr.close_path()
+            cr.set_source_rgba(0.0, 0.94, 1.0, 0.12)
+            cr.fill()
+
+            # 2. Leuchtender Rand (Glow)
+            cr.set_source_rgba(0.0, 0.94, 1.0, 0.3)
+            cr.set_line_width(5.0)
+            cr.move_to(pts[0][0], pts[0][1])
+            for i in range(len(pts) - 1):
+                p0 = pts[i]
+                p1 = pts[i + 1]
+                mid_x = (p0[0] + p1[0]) / 2.0
+                cr.curve_to(mid_x, p0[1], mid_x, p1[1], p1[0], p1[1])
+            cr.stroke()
+
+            # 3. Feine Hauptlinie
+            cr.set_source_rgba(0.0, 0.94, 1.0, 0.95)
+            cr.set_line_width(2.0)
+            cr.move_to(pts[0][0], pts[0][1])
+            for i in range(len(pts) - 1):
+                p0 = pts[i]
+                p1 = pts[i + 1]
+                mid_x = (p0[0] + p1[0]) / 2.0
+                cr.curve_to(mid_x, p0[1], mid_x, p1[1], p1[0], p1[1])
+            cr.stroke()
+
+            cr.restore()
+        except Exception:
+            pass
+
+    def _page_hyprland_fx(self) -> Gtk.Widget:
+        """Hyprland FX Seite mit Fenster-Blur, Transparenz, Rahmen-Glow, Bezier & Performance."""
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18)
+        main_box.set_margin_top(8)
+        main_box.set_margin_bottom(16)
+
+        app = self.settings.get("appearance", {})
+        perf = self.settings.get("performance", {})
+
+        # Großer Titel
+        title_lbl = Gtk.Label()
+        title_lbl.set_markup('<span font="22" weight="heavy" foreground="#ffffff">Hyprland FX</span>')
+        title_lbl.set_halign(Gtk.Align.START)
+        main_box.append(title_lbl)
+
+        # ── Sektion 1: WINDOW BLUR & TRANSPARENCY ──
+        sec1_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        sec1_title = Gtk.Label()
+        sec1_title.set_markup('<span font="10" weight="bold" foreground="#7dcfff" letter_spacing="1500">WINDOW BLUR &amp; TRANSPARENCY</span>')
+        sec1_title.set_halign(Gtk.Align.START)
+        sec1_box.append(sec1_title)
+
+        def _make_slider_row(label_text, min_v, max_v, step, initial_v, unit="%", callback=None):
+            row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+            lbl = Gtk.Label(label=label_text)
+            lbl.set_halign(Gtk.Align.START)
+            lbl.set_size_request(200, -1)
+            lbl.add_css_class("fx-slider-label")
+            row.append(lbl)
+
+            adj = Gtk.Adjustment(
+                value=initial_v,
+                lower=min_v,
+                upper=max_v,
+                step_increment=step,
+                page_increment=step * 5,
+            )
+            scale = Gtk.Scale(orientation=Gtk.Orientation.HORIZONTAL, adjustment=adj)
+            scale.set_hexpand(True)
+            scale.set_draw_value(False)
+            scale.add_css_class("cyber-gradient-scale")
+            row.append(scale)
+
+            val_lbl = Gtk.Label(label=f"{int(initial_v)}{unit}")
+            val_lbl.set_size_request(55, -1)
+            val_lbl.set_halign(Gtk.Align.END)
+            val_lbl.add_css_class("fx-value-label")
+            row.append(val_lbl)
+
+            def on_val_changed(a):
+                v = a.get_value()
+                val_lbl.set_label(f"{int(v)}{unit}")
+                if callback:
+                    callback(v)
+
+            adj.connect("value-changed", on_val_changed)
+            return row
+
+        # Active Window Blur: 80%
+        blur_val = 80
+        sec1_box.append(_make_slider_row(
+            "Active Window Blur", 0, 100, 1, blur_val, "%",
+            lambda v: self._update_setting("appearance", "blur_size", max(1, int(v / 10)))
+        ))
+
+        # Inactive Opacity: 50%
+        inact_val = int(app.get("inactive_opacity", 0.5) * 100) if "inactive_opacity" in app else 50
+        sec1_box.append(_make_slider_row(
+            "Inactive Opacity", 10, 100, 1, inact_val, "%",
+            lambda v: self._update_setting("appearance", "inactive_opacity", round(v / 100.0, 2))
+        ))
+
+        main_box.append(sec1_box)
+
+        # ── 2-Spalten-Layout für Border Glow & Aesthetics + Animations & Performance ──
+        two_col_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=32)
+
+        left_col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        left_col.set_hexpand(True)
+
+        right_col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        right_col.set_size_request(270, -1)
+
+        # Left: Border Glow & Aesthetics
+        sec2_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        sec2_title = Gtk.Label()
+        sec2_title.set_markup('<span font="12" weight="bold" foreground="#c0caf5">Border Glow &amp; Aesthetics</span>')
+        sec2_title.set_halign(Gtk.Align.START)
+        sec2_box.append(sec2_title)
+
+        sec2_box.append(_make_slider_row(
+            "Border Glow Intensity", 0, 100, 1, 70, "%",
+            lambda v: self._update_setting("appearance", "glow_intensity", round(v / 100.0, 2))
+        ))
+
+        border_w = app.get("border_size", 2)
+        sec2_box.append(_make_slider_row(
+            "Border Width", 1, 10, 1, border_w, "px",
+            lambda v: self._update_setting("appearance", "border_size", int(v))
+        ))
+
+        round_w = app.get("rounding", 18)
+        sec2_box.append(_make_slider_row(
+            "Corner Rounding", 0, 30, 1, round_w, "px",
+            lambda v: self._update_setting("appearance", "rounding", int(v))
+        ))
+        left_col.append(sec2_box)
+
+        # Right: col.active_border Card + Damage Tracking Switch
+        sec2_right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        sec2_right.set_margin_top(18)
+
+        border_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        border_card.add_css_class("active-border-card")
+
+        border_lbl = Gtk.Label(label="col.active_border")
+        border_lbl.set_halign(Gtk.Align.START)
+        border_lbl.add_css_class("active-border-label")
+        border_card.append(border_lbl)
+
+        gradient_bar = Gtk.Box()
+        gradient_bar.add_css_class("active-border-gradient-bar")
+        gradient_bar.set_size_request(240, 32)
+        border_card.append(gradient_bar)
+        sec2_right.append(border_card)
+
+        # Damage Tracking Switch Row
+        dmg_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        dmg_lbl = Gtk.Label(label="Damage Tracking")
+        dmg_lbl.set_hexpand(True)
+        dmg_lbl.set_halign(Gtk.Align.START)
+        dmg_lbl.add_css_class("fx-slider-label")
+        dmg_row.append(dmg_lbl)
+
+        dmg_switch = Gtk.Switch()
+        dmg_switch.set_active(perf.get("damage_tracking", True))
+        dmg_switch.set_valign(Gtk.Align.CENTER)
+        dmg_switch.connect("notify::active", lambda s, _: self._update_setting("performance", "damage_tracking", s.get_active()))
+        dmg_row.append(dmg_switch)
+        sec2_right.append(dmg_row)
+
+        right_col.append(sec2_right)
+
+        # Left: Animations & Transitions
+        sec3_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        sec3_title = Gtk.Label()
+        sec3_title.set_markup('<span font="12" weight="bold" foreground="#c0caf5">Animations &amp; Transitions</span>')
+        sec3_title.set_halign(Gtk.Align.START)
+        sec3_box.append(sec3_title)
+
+        sec3_box.append(_make_slider_row(
+            "Animation Speed", 10, 100, 1, 50, "%",
+            lambda v: self._update_setting("appearance", "animation_speed", round(v / 50.0, 2))
+        ))
+
+        # Bezier Curves Row & Canvas
+        bezier_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        bezier_lbl = Gtk.Label(label="Bezier Curves")
+        bezier_lbl.set_halign(Gtk.Align.START)
+        bezier_lbl.set_size_request(200, -1)
+        bezier_lbl.add_css_class("fx-slider-label")
+        bezier_row.append(bezier_lbl)
+
+        bezier_frame = Gtk.Box()
+        bezier_frame.add_css_class("bezier-frame")
+        bezier_frame.set_hexpand(True)
+
+        bezier_area = Gtk.DrawingArea()
+        bezier_area.set_content_width(220)
+        bezier_area.set_content_height(75)
+        bezier_area.set_draw_func(self._draw_bezier)
+        bezier_frame.append(bezier_area)
+        bezier_row.append(bezier_frame)
+
+        sec3_box.append(bezier_row)
+        left_col.append(sec3_box)
+
+        # Right: Performance Card + V-Sync + System-Auslastung
+        sec4_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        sec4_title = Gtk.Label()
+        sec4_title.set_markup('<span font="12" weight="bold" foreground="#c0caf5">Performance</span>')
+        sec4_title.set_halign(Gtk.Align.START)
+        sec4_box.append(sec4_title)
+
+        perf_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        perf_card.add_css_class("perf-card")
+
+        perf_header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        perf_pct_lbl = Gtk.Label(label="32.7%")
+        perf_pct_lbl.set_hexpand(True)
+        perf_pct_lbl.set_halign(Gtk.Align.END)
+        perf_pct_lbl.add_css_class("perf-pct-label")
+        perf_header.append(perf_pct_lbl)
+        perf_card.append(perf_header)
+
+        perf_area = Gtk.DrawingArea()
+        perf_area.set_content_width(240)
+        perf_area.set_content_height(60)
+        perf_area.set_draw_func(self._draw_perf_wave)
+        perf_card.append(perf_area)
+        sec4_box.append(perf_card)
+
+        # V-Sync Switch Row
+        vsync_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        vsync_lbl = Gtk.Label(label="V-Sync")
+        vsync_lbl.set_hexpand(True)
+        vsync_lbl.set_halign(Gtk.Align.START)
+        vsync_lbl.add_css_class("fx-slider-label")
+        vsync_row.append(vsync_lbl)
+
+        vsync_switch = Gtk.Switch()
+        vsync_switch.set_active(perf.get("vsync", True))
+        vsync_switch.set_valign(Gtk.Align.CENTER)
+        vsync_switch.connect("notify::active", lambda s, _: self._update_setting("performance", "vsync", s.get_active()))
+        vsync_row.append(vsync_switch)
+        sec4_box.append(vsync_row)
+
+        # System-Auslastung Row
+        auslast_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        auslast_lbl = Gtk.Label(label="System-Auslastung")
+        auslast_lbl.set_hexpand(True)
+        auslast_lbl.set_halign(Gtk.Align.START)
+        auslast_lbl.add_css_class("fx-slider-label")
+        auslast_row.append(auslast_lbl)
+
+        auslast_val = Gtk.Label(label="30.2%")
+        auslast_val.add_css_class("fx-value-label")
+        auslast_row.append(auslast_val)
+        sec4_box.append(auslast_row)
+
+        right_col.append(sec4_box)
+
+        two_col_box.append(left_col)
+        two_col_box.append(right_col)
+        main_box.append(two_col_box)
+
+        return main_box
+
+    def _page_advanced(self) -> Gtk.Widget:
+        """Erweiterte Tokyo Night Einstellungen (Waybar, Wallpaper, Uhr, Tastenkürzel, Backup, Diagnose)."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        box.set_margin_top(16)
+        box.set_margin_bottom(16)
+
+        header = Gtk.Label()
+        header.set_markup('<span font="16" weight="bold" foreground="#c0caf5">Erweiterte Systemeinstellungen</span>')
+        header.set_halign(Gtk.Align.START)
+        box.append(header)
+
+        desc = Gtk.Label(label="Zusätzliche Konfigurationsmodule für Statusleisten, Tastenkürzel, Datensicherung und System-Updates.")
+        desc.set_halign(Gtk.Align.START)
+        desc.add_css_class("hero-subtitle")
+        box.append(desc)
+
+        group = Adw.PreferencesGroup(title="Konfigurationsbereiche")
+
+        modules = [
+            ("Waybar & Leisten-Stil", "Layouts und Transparenz der Statusleiste", self._page_waybar),
+            ("Uhr und Datum", "Zeitzone, NTP-Synchronisation und Formate", self._page_clock),
+            ("Hintergrundbilder & SDDM", "Wallpaper-Verwaltung und Sperrbildschirm-Sync", self._page_wallpaper),
+            ("Tastenkürzel & Bindings", "Hyprland Tastenbelegung konfigurieren", self._page_keybinds),
+            ("Sicherung & Wiederherstellung", "Automatische und manuelle Backups", self._page_backup),
+            ("Systemdiagnostik & Logs", "Hyprland Protokolle und Fehlerüberprüfung", self._page_diagnostics),
+            ("Version & Updates", "Tokyo Night Version prüfen und aktualisieren", self._page_version_update),
+        ]
+
+        for title, subtitle, page_fn in modules:
+            row = Adw.ActionRow(title=title, subtitle=subtitle)
+            row.set_activatable(True)
+            btn = Gtk.Button(label="Öffnen")
+            btn.add_css_class("flat")
+            btn.set_valign(Gtk.Align.CENTER)
+            btn.connect("clicked", lambda _, fn=page_fn, t=title: self._open_subpage(t, fn))
+            row.add_suffix(btn)
+            group.add(row)
+
+        box.append(group)
+        return box
+
+    def _open_subpage(self, title: str, page_fn):
+        """Öffnet eine Unterseite im Hauptbereich."""
+        content = page_fn()
+        content_page = Adw.NavigationPage(title=title)
+        page_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        header = Adw.HeaderBar()
+        header.set_show_back_button(True)
+        page_box.append(header)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_vexpand(True)
+        content.set_margin_start(28)
+        content.set_margin_end(28)
+        content.set_margin_top(20)
+        content.set_margin_bottom(28)
+        scroll.set_child(content)
+        page_box.append(scroll)
+        content_page.set_child(page_box)
+        self.split_view.set_content(content_page)
 
     def _page_general(self) -> Gtk.Widget:
         """Allgemeine Informationen und Desktop-Dashboard."""
