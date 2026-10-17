@@ -2,8 +2,8 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  Tokyo Night – Modern & Clean SDDM Login Screen             ║
-// ║  Glassmorphism Design • Pure QtQuick 2.15 • Qt5 & Qt6        ║
+// ║  Tokyo Night – Modern Neon Cyber Glass SDDM Login Screen     ║
+// ║  Cyan-Magenta Gradient Glass Card • Pure QtQuick 2.15        ║
 // ╚══════════════════════════════════════════════════════════════╝
 Rectangle {
     id: root
@@ -11,20 +11,19 @@ Rectangle {
     height: 1080
     color: bgDark
 
-    // ── Tokyo Night Farbpalette ──────────────────────────────
-    readonly property color bgDark:       "#1a1b26"
-    readonly property color surface:      "#24283b"
-    readonly property color surfaceAlt:   "#1f2335"
-    readonly property color fg:           "#c0caf5"
+    // ── Farbpalette ──────────────────────────────────────────
+    readonly property color bgDark:       "#13141f"
+    readonly property color cardBg:       Qt.rgba(18/255, 22/255, 34/255, 0.72)
+    readonly property color fg:           "#ffffff"
     readonly property color fgMuted:      "#7982a9"
-    readonly property color blue:         "#7aa2f7"
-    readonly property color cyan:         "#7dcfff"
-    readonly property color magenta:      "#bb9af7"
-    readonly property color purple:       "#9d7cd8"
+    readonly property color fgSubtle:     "#9aa5ce"
+    readonly property color neonCyan:     "#00f0ff"
+    readonly property color neonBlue:     "#38bdf8"
+    readonly property color neonMagenta:  "#d946ef"
+    readonly property color neonPurple:   "#c084fc"
     readonly property color red:          "#f7768e"
     readonly property color yellow:       "#e0af68"
     readonly property color green:        "#9ece6a"
-    readonly property color teal:         "#73daca"
 
     readonly property string uiFont: "JetBrainsMono Nerd Font, JetBrains Mono, Noto Sans, sans-serif"
 
@@ -33,15 +32,16 @@ Rectangle {
     property bool   leaving: false
     property string errorText: ""
     property real   intro: 0.0
-    readonly property string currentUser: userList.currentItem ? userList.currentItem.userName : ""
+    property string currentUserName: (typeof userModel !== "undefined" && userModel.lastIndex >= 0 && userModel.lastIndex < userModel.count)
+                                     ? userModel.lastUser : "fabian"
 
     NumberAnimation on intro {
-        from: 0; to: 1; duration: 800
+        from: 0; to: 1; duration: 750
         easing.type: Easing.OutCubic
         running: true
     }
 
-    // ── Hintergrundbild mit sanftem Einblenden ────────────────
+    // ── Hintergrundbild ──────────────────────────────────────
     Image {
         id: backgroundImage
         anchors.fill: parent
@@ -53,659 +53,585 @@ Rectangle {
         opacity: root.intro * 0.95
     }
 
-    // Modernes Vignette- & Tiefen-Overlay (Ambient Glow & Fokus auf die Mitte)
+    // Dunkles Vignette- & Cyber-Overlay
     Rectangle {
         anchors.fill: parent
         gradient: Gradient {
-            GradientStop { position: 0.00; color: Qt.rgba(15/255, 16/255, 24/255, 0.72) }
-            GradientStop { position: 0.45; color: Qt.rgba(26/255, 27/255, 38/255, 0.55) }
-            GradientStop { position: 0.80; color: Qt.rgba(22/255, 24/255, 35/255, 0.70) }
-            GradientStop { position: 1.00; color: Qt.rgba(15/255, 16/255, 24/255, 0.88) }
+            GradientStop { position: 0.00; color: Qt.rgba(10/255, 12/255, 20/255, 0.75) }
+            GradientStop { position: 0.50; color: Qt.rgba(18/255, 20/255, 32/255, 0.55) }
+            GradientStop { position: 1.00; color: Qt.rgba(10/255, 12/255, 20/255, 0.85) }
         }
     }
 
-    // ── Obere Leiste / Minimalistische Uhr & Datum ───────────
-    Column {
-        id: clock
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: root.height * 0.12 - (1 - root.intro) * 20
-        opacity: root.intro
-        spacing: 6
-
-        Text {
-            id: timeLabel
-            anchors.horizontalCenter: parent.horizontalCenter
-            font.family: root.uiFont
-            font.pixelSize: 84
-            font.weight: Font.ExtraLight
-            font.letterSpacing: 2
-            color: root.fg
-            renderType: Text.NativeRendering
-
-            function updateTime() {
-                text = Qt.formatTime(new Date(), "HH:mm")
-            }
-        }
-
-        Row {
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 8
-
-            Rectangle {
-                width: 6
-                height: 6
-                radius: 3
-                color: root.cyan
-                anchors.verticalCenter: parent.verticalCenter
-                opacity: 0.8
-            }
-
-            Text {
-                id: dateLabel
-                font.family: root.uiFont
-                font.pixelSize: 15
-                font.letterSpacing: 1.2
-                color: root.cyan
-                renderType: Text.NativeRendering
-
-                function updateDate() {
-                    var d = new Date()
-                    var days = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
-                    var months = ["Januar", "Februar", "März", "April", "Mai", "Juni",
-                                  "Juli", "August", "September", "Oktober", "November", "Dezember"]
-                    text = days[d.getDay()] + ", " + d.getDate() + ". " + months[d.getMonth()]
-                }
-            }
-
-            Rectangle {
-                width: 6
-                height: 6
-                radius: 3
-                color: root.cyan
-                anchors.verticalCenter: parent.verticalCenter
-                opacity: 0.8
-            }
-        }
-    }
-
-    Timer {
-        interval: 1000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            timeLabel.updateTime()
-            dateLabel.updateDate()
-        }
-    }
-
-    // ── Zentraler Glassmorphismus-Login-Kartenbereich ─────────
+    // ══════════════════════════════════════════════════════════
+    //  ZENTRALE GLAS-KARTE (NEON CYAN-MAGENTA GRADIENT BORDER)
+    // ══════════════════════════════════════════════════════════
     Item {
-        id: loginCardWrapper
-        width: 380
-        height: 340
+        id: cardWrapper
+        width: 400
+        height: 560
         anchors.centerIn: parent
-        anchors.verticalCenterOffset: 50 + (1 - root.intro) * 25
+        anchors.verticalCenterOffset: (1 - root.intro) * 20
         opacity: root.intro
 
         property real shakeX: 0
 
-        // Subtiler äußerer Weichzeichner-/Schattierungseffekt
+        // Äußerer Neon-Schein (Soft Ambient Glow)
         Rectangle {
             anchors.centerIn: parent
             width: parent.width + 16
             height: parent.height + 16
-            radius: 32
-            color: Qt.rgba(10/255, 12/255, 20/255, 0.45)
+            radius: 34
+            color: "transparent"
+            border.width: 8
+            border.color: Qt.rgba(0/255, 240/255, 255/255, 0.08)
+            z: -2
+        }
+
+        // Subtiler Tiefenschatten
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.width + 6
+            height: parent.height + 6
+            radius: 30
+            color: Qt.rgba(0, 0, 0, 0.45)
             z: -1
         }
 
-        // Die gefrostete Glaskarte (Glass Card)
+        // Farbverlaufs-Rahmen (Cyan nach Magenta)
         Rectangle {
-            id: loginCard
+            id: gradientBorder
             width: parent.width
             height: parent.height
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.horizontalCenterOffset: loginCardWrapper.shakeX
+            anchors.horizontalCenterOffset: cardWrapper.shakeX
             anchors.verticalCenter: parent.verticalCenter
-            radius: 26
-            clip: false
+            radius: 28
 
             gradient: Gradient {
-                GradientStop { position: 0.0; color: Qt.rgba(36/255, 40/255, 59/255, 0.72) }
-                GradientStop { position: 1.0; color: Qt.rgba(22/255, 24/255, 35/255, 0.82) }
+                GradientStop { position: 0.00; color: root.neonCyan }
+                GradientStop { position: 0.45; color: root.neonBlue }
+                GradientStop { position: 0.75; color: root.neonPurple }
+                GradientStop { position: 1.00; color: root.neonMagenta }
             }
 
-            border.width: 1
-            border.color: passwordField.activeFocus
-                          ? Qt.rgba(122/255, 162/255, 247/255, 0.45)
-                          : Qt.rgba(255/255, 255/255, 255/255, 0.12)
-
-            Behavior on border.color { ColorAnimation { duration: 220 } }
-
-            // Subtile Lichtkante oben
+            // Innenkarte (Dunkles gefrostetes Glas)
             Rectangle {
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.margins: 1
-                height: 1
+                id: innerCard
+                anchors.fill: parent
+                anchors.margins: 1.6
                 radius: 26
-                color: Qt.rgba(255/255, 255/255, 255/255, 0.15)
-            }
+                color: root.cardBg
+                clip: false
 
-            // Fallback Benutzerliste
-            ListModel {
-                id: fallbackUsers
-                ListElement { name: "user"; realName: "Benutzer"; icon: "" }
-            }
-
-            // Benutzer-Karussell (Avatar & Benutzername)
-            ListView {
-                id: userList
-                anchors.top: parent.top
-                anchors.topMargin: 28
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width - 40
-                height: 140
-                orientation: ListView.Horizontal
-                interactive: false
-                clip: true
-                snapMode: ListView.SnapOneItem
-                highlightRangeMode: ListView.StrictlyEnforceRange
-                preferredHighlightBegin: 0
-                preferredHighlightEnd: width
-                highlightMoveDuration: 280
-                model: (typeof userModel !== "undefined") ? userModel : fallbackUsers
-
-                delegate: Item {
-                    width: userList.width
-                    height: userList.height
-
-                    property string userName: model.name
-                    property string displayName: (model.realName && model.realName !== "") ? model.realName : model.name
-                    property string userIcon: (typeof model.icon !== "undefined" && model.icon) ? model.icon : ""
-
-                    // Avatar Kreis mit leuchtendem Rahmen
-                    Rectangle {
-                        id: avatarRing
-                        width: 86
-                        height: 86
-                        radius: 43
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: Qt.rgba(26/255, 27/255, 38/255, 0.90)
-                        border.width: 2
-                        border.color: passwordField.activeFocus ? root.blue : Qt.rgba(122/255, 162/255, 247/255, 0.35)
-
-                        Behavior on border.color { ColorAnimation { duration: 200 } }
-
-                        // Avatar-Bild
-                        Image {
-                            id: avatarImage
-                            anchors.fill: parent
-                            anchors.margins: 2
-                            source: userIcon
-                            fillMode: Image.PreserveAspectCrop
-                            smooth: true
-                            visible: status === Image.Ready
-                            asynchronous: true
-                        }
-
-                        // Fallback: Eleganter Benutzer-Initialbuchstabe
-                        Text {
-                            anchors.centerIn: parent
-                            visible: !avatarImage.visible
-                            text: displayName.charAt(0).toUpperCase()
-                            font.family: root.uiFont
-                            font.pixelSize: 34
-                            font.bold: true
-                            color: root.blue
-                        }
-                    }
-
-                    // Benutzer-Anzeigename
-                    Text {
-                        anchors.top: avatarRing.bottom
-                        anchors.topMargin: 12
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: displayName
-                        font.family: root.uiFont
-                        font.pixelSize: 19
-                        font.bold: true
-                        color: root.fg
-                        renderType: Text.NativeRendering
-                    }
-                }
-
-                Component.onCompleted: {
-                    if (typeof userModel !== "undefined" && userModel.lastIndex >= 0) {
-                        currentIndex = userModel.lastIndex
-                    }
-                }
-            }
-
-            // Benutzer wechseln Buttons (nur sichtbar bei mehreren Benutzern)
-            Rectangle {
-                id: prevUserBtn
-                anchors.left: parent.left
-                anchors.leftMargin: 16
-                y: 54
-                width: 32
-                height: 32
-                radius: 16
-                visible: userList.count > 1
-                color: prevArea.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06)
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.10)
-                Behavior on color { ColorAnimation { duration: 150 } }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "\uf053"
-                    font.family: root.uiFont
-                    font.pixelSize: 12
-                    color: prevArea.containsMouse ? root.fg : root.fgMuted
-                }
-
-                MouseArea {
-                    id: prevArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: userList.decrementCurrentIndex()
-                }
-            }
-
-            Rectangle {
-                id: nextUserBtn
-                anchors.right: parent.right
-                anchors.rightMargin: 16
-                y: 54
-                width: 32
-                height: 32
-                radius: 16
-                visible: userList.count > 1
-                color: nextArea.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06)
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.10)
-                Behavior on color { ColorAnimation { duration: 150 } }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "\uf054"
-                    font.family: root.uiFont
-                    font.pixelSize: 12
-                    color: nextArea.containsMouse ? root.fg : root.fgMuted
-                }
-
-                MouseArea {
-                    id: nextArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: userList.incrementCurrentIndex()
-                }
-            }
-
-            // ── Modernes Passwortfeld (Pille) ──────────────────────
-            Item {
-                id: passwordWrap
-                width: parent.width - 56
-                height: 48
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 195
-
-                TextField {
-                    id: passwordField
-                    anchors.fill: parent
-                    leftPadding: 44
-                    rightPadding: (submitButton.visible || capsIndicator.visible) ? 48 : 20
-                    enabled: !root.busy
-                    placeholderText: "Passwort..."
-                    placeholderTextColor: root.fgMuted
-                    echoMode: TextInput.Password
-                    passwordCharacter: "\u25CF"
-                    verticalAlignment: TextInput.AlignVCenter
-                    font.family: root.uiFont
-                    font.pixelSize: 14
-                    color: root.fg
-                    selectionColor: root.blue
-                    selectedTextColor: root.bgDark
-
-                    background: Rectangle {
-                        radius: 24
-                        color: passwordField.activeFocus ? Qt.rgba(1, 1, 1, 0.11) : Qt.rgba(1, 1, 1, 0.06)
-                        border.width: 1.5
-                        border.color: root.errorText !== "" ? root.red
-                                    : passwordField.activeFocus ? root.blue
-                                    : Qt.rgba(1, 1, 1, 0.14)
-
-                        Behavior on color { ColorAnimation { duration: 180 } }
-                        Behavior on border.color { ColorAnimation { duration: 180 } }
-                    }
-
-                    onTextChanged: if (text !== "") root.errorText = ""
-
-                    Keys.onReturnPressed: root.doLogin()
-                    Keys.onEnterPressed: root.doLogin()
-                    Keys.onEscapePressed: text = ""
-                }
-
-                // Schloss-Symbol links
-                Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 16
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "\uf023"
-                    font.family: root.uiFont
-                    font.pixelSize: 14
-                    color: root.errorText !== "" ? root.red : passwordField.activeFocus ? root.blue : root.fgMuted
-                    Behavior on color { ColorAnimation { duration: 180 } }
-                }
-
-                // CapsLock-Warnung Icon
-                Text {
-                    id: capsIndicator
-                    anchors.right: submitButton.visible ? submitButton.left : parent.right
-                    anchors.rightMargin: 8
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: (typeof keyboard !== "undefined" && keyboard && keyboard.capsLock) ? true : false
-                    text: "\uf062"
-                    font.family: root.uiFont
-                    font.pixelSize: 12
-                    color: root.yellow
-                    opacity: 0.9
-                }
-
-                // Absenden-Button (mit weichem Pop-in)
+                // Subtile Lichtkante oben
                 Rectangle {
-                    id: submitButton
-                    width: 36
-                    height: 36
-                    radius: 18
+                    anchors.top: parent.top
+                    anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.rightMargin: 6
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: submitArea.containsMouse ? Qt.lighter(root.blue, 1.15) : root.blue
-                    opacity: (passwordField.text.length > 0 || root.busy) ? 1.0 : 0.0
-                    scale: opacity > 0 ? 1.0 : 0.6
-                    visible: opacity > 0.05
+                    anchors.margins: 1
+                    height: 1
+                    radius: 26
+                    color: Qt.rgba(255, 255, 255, 0.20)
+                }
 
-                    Behavior on opacity { NumberAnimation { duration: 180 } }
-                    Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                // ── 1. Leuchtendes Arch Linux Neon Logo ───────────────
+                Item {
+                    id: logoWrap
+                    width: 86
+                    height: 86
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.top
+                    anchors.topMargin: 26
 
+                    Image {
+                        id: archLogoImg
+                        anchors.fill: parent
+                        source: "arch_logo.svg"
+                        fillMode: Image.PreserveAspectFit
+                        asynchronous: true
+                        smooth: true
+                        visible: status === Image.Ready
+                    }
+
+                    // Fallback Nerd Font Glyph (falls SVG nicht geladen wird)
                     Text {
                         anchors.centerIn: parent
-                        text: root.busy ? "\uf110" : "\uf061"
+                        visible: !archLogoImg.visible
+                        text: "\uf303"
+                        font.family: root.uiFont
+                        font.pixelSize: 68
+                        color: root.neonCyan
+                        style: Text.Outline
+                        styleColor: Qt.rgba(0/255, 240/255, 255/255, 0.4)
+                    }
+                }
+
+                // ── 2. "WELCOME BACK" Überschrift ────────────────────
+                Text {
+                    id: welcomeText
+                    anchors.top: logoWrap.bottom
+                    anchors.topMargin: 12
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "WELCOME BACK"
+                    font.family: root.uiFont
+                    font.pixelSize: 20
+                    font.bold: true
+                    font.letterSpacing: 3.5
+                    color: root.fg
+                    renderType: Text.NativeRendering
+                }
+
+                // ── 3. Digitale Uhrzeit & Datum ──────────────────────
+                Column {
+                    id: clockCol
+                    anchors.top: welcomeText.bottom
+                    anchors.topMargin: 8
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 3
+
+                    Text {
+                        id: timeText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        font.family: root.uiFont
+                        font.pixelSize: 26
+                        font.bold: true
+                        font.letterSpacing: 1.5
+                        color: root.neonBlue
+                        renderType: Text.NativeRendering
+
+                        function updateTime() {
+                            text = Qt.formatTime(new Date(), "HH:mm")
+                        }
+                    }
+
+                    Text {
+                        id: dateText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        font.family: root.uiFont
+                        font.pixelSize: 13
+                        color: root.fgSubtle
+                        renderType: Text.NativeRendering
+
+                        function updateDate() {
+                            var d = new Date()
+                            var days = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
+                            var months = ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni",
+                                          "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."]
+                            text = days[d.getDay()] + ", " + d.getDate() + ". " + months[d.getMonth()]
+                        }
+                    }
+                }
+
+                Timer {
+                    interval: 1000
+                    running: true
+                    repeat: true
+                    triggeredOnStart: true
+                    onTriggered: {
+                        timeText.updateTime()
+                        dateText.updateDate()
+                    }
+                }
+
+                // ── 4. Benutzername Eingabekapsel ──────────────────────
+                Rectangle {
+                    id: userCapsule
+                    width: parent.width - 64
+                    height: 42
+                    radius: 21
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: clockCol.bottom
+                    anchors.topMargin: 22
+                    color: usernameField.activeFocus ? Qt.rgba(1, 1, 1, 0.11) : Qt.rgba(1, 1, 1, 0.07)
+                    border.width: 1
+                    border.color: usernameField.activeFocus ? root.neonCyan : Qt.rgba(1, 1, 1, 0.12)
+
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                    // Benutzer-Icon
+                    Text {
+                        id: userIcon
+                        anchors.left: parent.left
+                        anchors.leftMargin: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "\uf007"
                         font.family: root.uiFont
                         font.pixelSize: 14
-                        color: root.bgDark
+                        color: usernameField.activeFocus ? root.neonCyan : root.fgMuted
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
 
-                        RotationAnimator on rotation {
-                            from: 0; to: 360; duration: 900
-                            loops: Animation.Infinite
-                            running: root.busy
+                    TextField {
+                        id: usernameField
+                        anchors.left: userIcon.right
+                        anchors.leftMargin: 10
+                        anchors.right: parent.right
+                        anchors.rightMargin: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.currentUserName
+                        placeholderText: "Username"
+                        placeholderTextColor: root.fgMuted
+                        font.family: root.uiFont
+                        font.pixelSize: 13
+                        color: root.fg
+                        background: null
+                        selectByMouse: true
+                        selectionColor: root.neonCyan
+                        selectedTextColor: root.bgDark
+                        onTextChanged: root.currentUserName = text
+                        Keys.onReturnPressed: passwordField.forceActiveFocus()
+                    }
+                }
+
+                // ── 5. Passwort Eingabekapsel mit Neon-Glow ──────────
+                Rectangle {
+                    id: passwordCapsule
+                    width: parent.width - 64
+                    height: 42
+                    radius: 21
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: userCapsule.bottom
+                    anchors.topMargin: 12
+                    color: passwordField.activeFocus ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.07)
+                    border.width: passwordField.activeFocus ? 1.5 : 1.0
+                    border.color: root.errorText !== "" ? root.red
+                                : passwordField.activeFocus ? root.neonCyan
+                                : Qt.rgba(125/255, 207/255, 255/255, 0.35)
+
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                    // Schloss-Icon
+                    Text {
+                        id: lockIcon
+                        anchors.left: parent.left
+                        anchors.leftMargin: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "\uf023"
+                        font.family: root.uiFont
+                        font.pixelSize: 14
+                        color: root.errorText !== "" ? root.red : root.neonCyan
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+
+                    TextField {
+                        id: passwordField
+                        anchors.left: lockIcon.right
+                        anchors.leftMargin: 10
+                        anchors.right: capsLockIcon.visible ? capsLockIcon.left : parent.right
+                        anchors.rightMargin: 14
+                        anchors.verticalCenter: parent.verticalCenter
+                        placeholderText: "Password ••••••••"
+                        placeholderTextColor: root.fgMuted
+                        echoMode: TextInput.Password
+                        passwordCharacter: "\u25CF"
+                        font.family: root.uiFont
+                        font.pixelSize: 13
+                        color: root.fg
+                        background: null
+                        selectByMouse: true
+                        selectionColor: root.neonCyan
+                        selectedTextColor: root.bgDark
+
+                        onTextChanged: if (text !== "") root.errorText = ""
+                        Keys.onReturnPressed: root.doLogin()
+                        Keys.onEnterPressed: root.doLogin()
+                    }
+
+                    // CapsLock Indikator
+                    Text {
+                        id: capsLockIcon
+                        anchors.right: parent.right
+                        anchors.rightMargin: 14
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: (typeof keyboard !== "undefined" && keyboard && keyboard.capsLock) ? true : false
+                        text: "\uf062"
+                        font.family: root.uiFont
+                        font.pixelSize: 12
+                        color: root.yellow
+                    }
+                }
+
+                // ── 6. Login Button (Kreis-Pfeil + LOGIN) ─────────────
+                Rectangle {
+                    id: loginButton
+                    width: 140
+                    height: 38
+                    radius: 19
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: passwordCapsule.bottom
+                    anchors.topMargin: 18
+                    color: loginMouse.containsMouse ? Qt.rgba(0/255, 240/255, 255/255, 0.22)
+                                                   : Qt.rgba(0/255, 240/255, 255/255, 0.10)
+                    border.width: 1.2
+                    border.color: loginMouse.containsMouse ? root.neonCyan : Qt.rgba(0/255, 240/255, 255/255, 0.45)
+                    scale: loginMouse.pressed ? 0.96 : 1.0
+
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 100 } }
+
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 10
+
+                        // Cyan Kreis mit Pfeil
+                        Rectangle {
+                            width: 26
+                            height: 26
+                            radius: 13
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: root.neonCyan
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: root.busy ? "\uf110" : "\uf061"
+                                font.family: root.uiFont
+                                font.pixelSize: 12
+                                font.bold: true
+                                color: root.bgDark
+
+                                RotationAnimator on rotation {
+                                    from: 0; to: 360; duration: 900
+                                    loops: Animation.Infinite
+                                    running: root.busy
+                                }
+                            }
+                        }
+
+                        // "LOGIN" Text
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "LOGIN"
+                            font.family: root.uiFont
+                            font.pixelSize: 13
+                            font.bold: true
+                            font.letterSpacing: 2.0
+                            color: root.fg
+                            renderType: Text.NativeRendering
                         }
                     }
 
                     MouseArea {
-                        id: submitArea
+                        id: loginMouse
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.doLogin()
                     }
                 }
-            }
 
-            // ── Statuszeile: Fehler / CapsLock / Anmelden ────────
-            Text {
-                id: statusText
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: passwordWrap.bottom
-                anchors.topMargin: 12
-                width: parent.width - 60
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.WordWrap
-                font.family: root.uiFont
-                font.pixelSize: 12
-                renderType: Text.NativeRendering
+                // ── Status-/Fehlertext ────────────────────────────────
+                Text {
+                    id: statusLabel
+                    anchors.top: loginButton.bottom
+                    anchors.topMargin: 8
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: root.uiFont
+                    font.pixelSize: 11
+                    color: root.errorText !== "" ? root.red : root.yellow
+                    text: root.busy ? "Anmelden …"
+                        : root.errorText !== "" ? root.errorText
+                        : (typeof keyboard !== "undefined" && keyboard && keyboard.capsLock) ? "Feststelltaste aktiv"
+                        : ""
+                    opacity: text !== "" ? 1.0 : 0.0
+                    Behavior on opacity { NumberAnimation { duration: 180 } }
+                }
 
-                readonly property bool capsOn: (typeof keyboard !== "undefined" && keyboard && keyboard.capsLock) ? true : false
+                // ── 7. Hyprland Session Indikator & Wechselschalter ──
+                Rectangle {
+                    id: sessionBtn
+                    width: parent.width - 80
+                    height: 44
+                    radius: 14
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 16
+                    color: sessionMouse.containsMouse ? Qt.rgba(255, 255, 255, 0.06) : "transparent"
 
-                text: root.busy ? "Anmelden …"
-                    : root.errorText !== "" ? root.errorText
-                    : capsOn ? "Feststelltaste (Caps Lock) aktiv"
-                    : ""
-                color: root.busy ? root.fgMuted
-                     : root.errorText !== "" ? root.red
-                     : root.yellow
-                opacity: text !== "" ? 1.0 : 0.0
-                Behavior on opacity { NumberAnimation { duration: 200 } }
+                    Behavior on color { ColorAnimation { duration: 140 } }
+
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 12
+
+                        // Hyprland Wellen-Logo (SVG oder Sinuskurve Canvas)
+                        Item {
+                            width: 26
+                            height: 26
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Image {
+                                id: hyprLogoImg
+                                anchors.fill: parent
+                                source: "hyprland_logo.svg"
+                                fillMode: Image.PreserveAspectFit
+                                visible: status === Image.Ready
+                            }
+
+                            // Fallback Sinus-Symbol
+                            Text {
+                                anchors.centerIn: parent
+                                visible: !hyprLogoImg.visible
+                                text: "∿"
+                                font.pixelSize: 22
+                                font.bold: true
+                                color: root.neonCyan
+                            }
+                        }
+
+                        // Session Beschriftung
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 1
+
+                            Text {
+                                id: sessionNameText
+                                text: (sessionSelector.currentIndex >= 0 && sessionSelector.model && sessionSelector.model.length > 0)
+                                      ? sessionSelector.displayText.toLowerCase() : "hyprland"
+                                font.family: root.uiFont
+                                font.pixelSize: 13
+                                font.bold: true
+                                color: root.fg
+                                renderType: Text.NativeRendering
+                            }
+
+                            Text {
+                                text: "hyprland session"
+                                font.family: root.uiFont
+                                font.pixelSize: 10
+                                color: root.fgMuted
+                                renderType: Text.NativeRendering
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        id: sessionMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (sessionSelector.count > 1) {
+                                sessionSelector.currentIndex = (sessionSelector.currentIndex + 1) % sessionSelector.count
+                            }
+                        }
+                    }
+                }
+
+                // Unsichtbare ComboBox für SDDM-Sitzungen
+                ComboBox {
+                    id: sessionSelector
+                    visible: false
+                    model: (typeof sessionModel !== "undefined") ? sessionModel : ["Hyprland"]
+                    textRole: "name"
+                    currentIndex: (typeof sessionModel !== "undefined" && typeof sessionModel.lastIndex !== "undefined" && sessionModel.lastIndex >= 0)
+                                  ? sessionModel.lastIndex : 0
+                }
             }
         }
 
         // Shake-Animation bei falschem Passwort
         SequentialAnimation {
             id: shakeAnimation
-            NumberAnimation { target: loginCardWrapper; property: "shakeX"; to: -12; duration: 50 }
-            NumberAnimation { target: loginCardWrapper; property: "shakeX"; to:  12; duration: 80 }
-            NumberAnimation { target: loginCardWrapper; property: "shakeX"; to:  -8; duration: 70 }
-            NumberAnimation { target: loginCardWrapper; property: "shakeX"; to:   8; duration: 70 }
-            NumberAnimation { target: loginCardWrapper; property: "shakeX"; to:  -4; duration: 60 }
-            NumberAnimation { target: loginCardWrapper; property: "shakeX"; to:   0; duration: 60 }
+            NumberAnimation { target: cardWrapper; property: "shakeX"; to: -12; duration: 50 }
+            NumberAnimation { target: cardWrapper; property: "shakeX"; to:  12; duration: 80 }
+            NumberAnimation { target: cardWrapper; property: "shakeX"; to:  -8; duration: 70 }
+            NumberAnimation { target: cardWrapper; property: "shakeX"; to:   8; duration: 70 }
+            NumberAnimation { target: cardWrapper; property: "shakeX"; to:  -4; duration: 60 }
+            NumberAnimation { target: cardWrapper; property: "shakeX"; to:   0; duration: 60 }
         }
     }
 
-    // ── Untere Leiste: Schwebende Glas-Kapseln (Floating Dock) ──
-
-    // 1. Unten links: Sitzungsauswahl (Hyprland Wayland)
-    ComboBox {
-        id: sessionSelector
-        x: 32
-        y: root.height - height - 32
-        width: 220
-        height: 40
-        opacity: root.intro
-        model: (typeof sessionModel !== "undefined") ? sessionModel : []
-        textRole: "name"
-        currentIndex: (typeof sessionModel !== "undefined" && typeof sessionModel.lastIndex !== "undefined" && sessionModel.lastIndex >= 0)
-                      ? sessionModel.lastIndex : 0
-        font.family: root.uiFont
-        font.pixelSize: 12
-        enabled: !root.busy
-
-        background: Rectangle {
-            radius: 20
-            color: sessionSelector.hovered || sessionSelector.popup.visible ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.08)
-            border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.14)
-            Behavior on color { ColorAnimation { duration: 150 } }
-        }
-
-        contentItem: Item {
-            Text {
-                anchors.left: parent.left
-                anchors.leftMargin: 16
-                anchors.right: parent.right
-                anchors.rightMargin: 32
-                anchors.verticalCenter: parent.verticalCenter
-                text: "\uf108  " + sessionSelector.displayText
-                font: sessionSelector.font
-                color: root.fg
-                elide: Text.ElideRight
-            }
-        }
-
-        indicator: Text {
-            x: sessionSelector.width - width - 16
-            y: (sessionSelector.height - height) / 2
-            text: "\uf077"
-            font.family: root.uiFont
-            font.pixelSize: 10
-            color: root.fgMuted
-        }
-
-        delegate: ItemDelegate {
-            width: sessionSelector.width - 12
-            height: 36
-            highlighted: sessionSelector.highlightedIndex === index
-
-            contentItem: Text {
-                text: model[sessionSelector.textRole]
-                font: sessionSelector.font
-                color: parent.highlighted ? root.bgDark : root.fg
-                elide: Text.ElideRight
-                verticalAlignment: Text.AlignVCenter
-                leftPadding: 10
-            }
-            background: Rectangle {
-                radius: 12
-                color: parent.highlighted ? root.blue : "transparent"
-            }
-        }
-
-        popup: Popup {
-            y: -height - 8
-            width: sessionSelector.width
-            implicitHeight: contentItem.implicitHeight + 12
-            padding: 6
-
-            contentItem: ListView {
-                clip: true
-                implicitHeight: contentHeight
-                model: sessionSelector.popup.visible ? sessionSelector.delegateModel : null
-                currentIndex: sessionSelector.highlightedIndex
-            }
-
-            background: Rectangle {
-                radius: 18
-                color: Qt.rgba(26/255, 27/255, 38/255, 0.96)
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.15)
-            }
-        }
-    }
-
-    // 2. Unten mitte: Tastaturlayout-Kapsel (Klick wechselt)
-    Rectangle {
-        id: layoutCapsule
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: root.height - height - 32
-        height: 40
-        width: layoutRow.width + 32
-        radius: 20
-        opacity: root.intro
-        visible: (typeof keyboard !== "undefined" && keyboard && keyboard.layouts && keyboard.layouts.length > 0)
-        color: layoutArea.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.08)
-        border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.14)
-        Behavior on color { ColorAnimation { duration: 150 } }
-
-        Row {
-            id: layoutRow
-            anchors.centerIn: parent
-            spacing: 8
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: "\uf11c"
-                font.family: root.uiFont
-                font.pixelSize: 13
-                color: root.teal
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                font.family: root.uiFont
-                font.pixelSize: 12
-                font.bold: true
-                color: layoutArea.containsMouse ? root.fg : root.fgMuted
-                text: (typeof keyboard !== "undefined" && keyboard && keyboard.layouts && keyboard.layouts.length > 0 && keyboard.currentLayout >= 0 && keyboard.currentLayout < keyboard.layouts.length && keyboard.layouts[keyboard.currentLayout])
-                      ? (keyboard.layouts[keyboard.currentLayout].shortName || "DE").toUpperCase() : "DE"
-            }
-        }
-
-        MouseArea {
-            id: layoutArea
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                if (typeof keyboard !== "undefined" && keyboard && keyboard.layouts && keyboard.layouts.length > 1) {
-                    keyboard.currentLayout = (keyboard.currentLayout + 1) % keyboard.layouts.length
-                }
-            }
-        }
-    }
-
-    // 3. Unten rechts: Einheitliche Power-Kapsel (Standby, Reboot, Power Off)
+    // ══════════════════════════════════════════════════════════
+    //  UNTEN RECHTS: MINIMALISTISCHE POWER-ICONS
+    // ══════════════════════════════════════════════════════════
     Row {
-        id: powerArea
+        id: powerRow
         anchors.right: parent.right
-        anchors.rightMargin: 32
-        y: root.height - 40 - 32
-        spacing: 12
+        anchors.rightMargin: 36
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 32
+        spacing: 20
         opacity: root.intro
 
-        Text {
-            id: powerHint
-            anchors.verticalCenter: parent.verticalCenter
-            font.family: root.uiFont
-            font.pixelSize: 12
-            color: root.fgMuted
-            text: ""
+        // 1. Neustart (⟳)
+        Rectangle {
+            width: 36
+            height: 36
+            radius: 18
+            color: restartMouse.containsMouse ? Qt.rgba(255, 255, 255, 0.14) : "transparent"
+            Behavior on color { ColorAnimation { duration: 150 } }
+
+            Text {
+                anchors.centerIn: parent
+                text: "\uf021"
+                font.family: root.uiFont
+                font.pixelSize: 18
+                color: restartMouse.containsMouse ? root.neonCyan : root.fgMuted
+                Behavior on color { ColorAnimation { duration: 150 } }
+            }
+
+            MouseArea {
+                id: restartMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.runPower("reboot")
+            }
         }
 
+        // 2. Herunterfahren (⏻)
         Rectangle {
-            height: 40
-            width: 130
-            radius: 20
-            color: Qt.rgba(1, 1, 1, 0.08)
-            border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.14)
+            width: 36
+            height: 36
+            radius: 18
+            color: shutdownMouse.containsMouse ? Qt.rgba(255, 255, 255, 0.14) : "transparent"
+            Behavior on color { ColorAnimation { duration: 150 } }
 
-            Row {
-                id: powerRow
+            Text {
                 anchors.centerIn: parent
-                spacing: 6
+                text: "\uf011"
+                font.family: root.uiFont
+                font.pixelSize: 18
+                color: shutdownMouse.containsMouse ? root.red : root.fgMuted
+                Behavior on color { ColorAnimation { duration: 150 } }
+            }
 
-                Repeater {
-                    model: [
-                        { glyph: "\uf186", label: "Standby",        action: "suspend",  hoverColor: root.yellow },
-                        { glyph: "\uf021", label: "Neustart",       action: "reboot",   hoverColor: root.cyan },
-                        { glyph: "\uf011", label: "Ausschalten",    action: "powerOff", hoverColor: root.red }
-                    ]
+            MouseArea {
+                id: shutdownMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.runPower("powerOff")
+            }
+        }
 
-                    delegate: Rectangle {
-                        width: 32
-                        height: 32
-                        radius: 16
-                        visible: root.canPower(modelData.action)
-                        color: btnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : "transparent"
-                        Behavior on color { ColorAnimation { duration: 150 } }
+        // 3. Abmelden / Standby (➜)
+        Rectangle {
+            width: 36
+            height: 36
+            radius: 18
+            color: suspendMouse.containsMouse ? Qt.rgba(255, 255, 255, 0.14) : "transparent"
+            Behavior on color { ColorAnimation { duration: 150 } }
 
-                        Text {
-                            anchors.centerIn: parent
-                            text: modelData.glyph
-                            font.family: root.uiFont
-                            font.pixelSize: 13
-                            color: btnMouse.containsMouse ? modelData.hoverColor : root.fg
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                        }
+            Text {
+                anchors.centerIn: parent
+                text: "\uf2f5"
+                font.family: root.uiFont
+                font.pixelSize: 17
+                color: suspendMouse.containsMouse ? root.neonPurple : root.fgMuted
+                Behavior on color { ColorAnimation { duration: 150 } }
+            }
 
-                        MouseArea {
-                            id: btnMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onEntered: powerHint.text = modelData.label
-                            onExited: powerHint.text = ""
-                            onClicked: root.runPower(modelData.action)
-                        }
-                    }
-                }
+            MouseArea {
+                id: suspendMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.runPower("suspend")
             }
         }
     }
@@ -720,14 +646,6 @@ Rectangle {
     }
 
     // ── SDDM System-Funktionen ─────────────────────────────────
-    function canPower(action) {
-        if (typeof sddm === "undefined") return true
-        if (action === "suspend")  return sddm.canSuspend
-        if (action === "reboot")   return sddm.canReboot
-        if (action === "powerOff") return sddm.canPowerOff
-        return false
-    }
-
     function runPower(action) {
         if (typeof sddm === "undefined") return
         if (action === "suspend")  sddm.suspend()
@@ -736,11 +654,11 @@ Rectangle {
     }
 
     function doLogin() {
-        if (root.busy || passwordField.text === "" || root.currentUser === "") return
+        if (root.busy || passwordField.text === "" || root.currentUserName === "") return
         root.errorText = ""
         root.busy = true
         if (typeof sddm !== "undefined") {
-            sddm.login(root.currentUser, passwordField.text, sessionSelector.currentIndex)
+            sddm.login(root.currentUserName, passwordField.text, sessionSelector.currentIndex)
         } else {
             root.busy = false
         }
