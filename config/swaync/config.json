@@ -33,9 +33,9 @@
   ],
   "widget-config": {
     "title": {
-      "text": "Quick Settings",
+      "text": "Kontrollzentrum",
       "clear-all-button": true,
-      "button-text": "✕ Close"
+      "button-text": "✕ Schließen"
     },
     "buttons-grid#quick-top": {
       "buttons-per-row": 3,
@@ -48,14 +48,14 @@
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --wifi-status'"
         },
         {
-          "label": "󰂯  Bluetooth\nHeadphones",
+          "label": "󰂯  Bluetooth\nGeräte",
           "type": "toggle",
           "active": false,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --bluetooth-menu'",
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --bluetooth-status'"
         },
         {
-          "label": "󰖔\nNight Light",
+          "label": "󰖔\nNachtmodus",
           "type": "toggle",
           "active": false,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --nightmode-toggle'",
@@ -67,21 +67,21 @@
       "buttons-per-row": 3,
       "actions": [
         {
-          "label": "󰂛\nDo Not Disturb",
+          "label": "󰂛\nNicht stören",
           "type": "toggle",
           "active": false,
           "command": "swaync-client -d -sw",
           "update-command": "sh -c '[[ $(swaync-client -D) == \"true\" ]] && echo true || echo false'"
         },
         {
-          "label": "󰀝\nAirplane Mode",
+          "label": "󰀝\nFlugmodus",
           "type": "toggle",
           "active": false,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --airplane-toggle'",
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --airplane-status'"
         },
         {
-          "label": "󰔎\nDark Mode",
+          "label": "󰔎\nDunkelmodus",
           "type": "normal",
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --theme-toggle'"
         }
@@ -104,7 +104,7 @@
       "autohide": false
     },
     "label#notif-header": {
-      "text": "Notifications",
+      "text": "Benachrichtigungen",
       "max-lines": 1
     },
     "buttons-grid#bottom-bar": {

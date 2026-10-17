@@ -186,7 +186,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         except Exception:
             pass
 
-        self.set_title("Tokyo Night – Hyprland Settings")
+        self.set_title("Tokyo Night – Einstellungen")
         self.set_default_size(980, 700)
         self.set_resizable(True)
 
@@ -228,7 +228,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         sidebar_page.set_child(sidebar_box)
 
-        # Header für Sidebar: Arch Logo + "Settings" (exakt wie im Screenshot)
+        # Header für Sidebar: Arch Logo + "Einstellungen"
         sidebar_brand = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         sidebar_brand.set_margin_start(16)
         sidebar_brand.set_margin_top(16)
@@ -239,7 +239,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         sidebar_brand.append(arch_icon_lbl)
 
         settings_title_lbl = Gtk.Label()
-        settings_title_lbl.set_markup('<span font="18" weight="heavy" foreground="#ffffff">Settings</span>')
+        settings_title_lbl.set_markup('<span font="18" weight="heavy" foreground="#ffffff">Einstellungen</span>')
         sidebar_brand.append(settings_title_lbl)
 
         sidebar_box.append(sidebar_brand)
@@ -285,45 +285,45 @@ class SettingsWindow(Adw.ApplicationWindow):
                 pass
             return candidates[0] if candidates else "dialog-information-symbolic"
 
-        # ── 10 Seiten-Kategorien exakt wie im Screenshot ──
+        # ── 10 Seiten-Kategorien auf Deutsch ──
         self.pages = [
-            ("Dashboard", [
+            ("Übersicht", [
                 "view-app-grid-symbolic",
                 "view-grid-symbolic",
                 "preferences-system-symbolic",
                 "org.gnome.Settings-symbolic",
             ], self._page_general),
-            ("Display", [
+            ("Bildschirme", [
                 "video-display-symbolic",
                 "preferences-desktop-display-symbolic",
                 "display-symbolic",
             ], self._page_monitors),
-            ("Hyprland FX", [
+            ("Hyprland Effekte", [
                 "preferences-desktop-theme-symbolic",
                 "video-display-symbolic",
                 "preferences-color-symbolic",
             ], self._page_hyprland_fx),
-            ("Inputs", [
+            ("Eingabegeräte", [
                 "input-mouse-symbolic",
                 "input-keyboard-symbolic",
                 "preferences-desktop-peripherals-symbolic",
             ], self._page_input),
-            ("Audio & Sound", [
+            ("Audio & Klang", [
                 "audio-volume-high-symbolic",
                 "audio-speakers-symbolic",
                 "multimedia-volume-control-symbolic",
             ], self._page_audio),
-            ("Network & WiFi", [
+            ("Netzwerk & WLAN", [
                 "network-wireless-symbolic",
                 "network-wireless-signal-excellent-symbolic",
                 "network-wired-symbolic",
             ], self._page_network),
-            ("Appearance", [
+            ("Erscheinungsbild", [
                 "preferences-color-symbolic",
                 "format-color-fill-symbolic",
                 "applications-graphics-symbolic",
             ], self._page_colors),
-            ("Applications", [
+            ("Anwendungen", [
                 "view-app-grid-symbolic",
                 "system-run-symbolic",
                 "applications-system-symbolic",
@@ -333,7 +333,7 @@ class SettingsWindow(Adw.ApplicationWindow):
                 "computer-symbolic",
                 "applications-system-symbolic",
             ], self._page_hardware),
-            ("Advanced Settings", [
+            ("Erweiterte Einstellungen", [
                 "preferences-other-symbolic",
                 "dialog-information-symbolic",
                 "emblem-system-symbolic",
@@ -971,8 +971,17 @@ class SettingsWindow(Adw.ApplicationWindow):
 
     def _select_page_by_title(self, target_title: str):
         """Wechselt direkt zu einer bestimmten Seite."""
+        target_lower = target_title.lower()
         for idx, (title, _, _) in enumerate(self.pages):
-            if title == target_title or target_title in title:
+            t_lower = title.lower()
+            if (
+                target_lower in t_lower
+                or t_lower in target_lower
+                or ("monitor" in target_lower and "bildschirm" in t_lower)
+                or ("version" in target_lower and "erweitert" in t_lower)
+                or ("leiste" in target_lower and "erweitert" in t_lower)
+                or ("waybar" in target_lower and "erweitert" in t_lower)
+            ):
                 row = self.nav_list.get_row_at_index(idx)
                 if row:
                     self.nav_list.select_row(row)
@@ -1117,14 +1126,14 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         # Großer Titel
         title_lbl = Gtk.Label()
-        title_lbl.set_markup('<span font="22" weight="heavy" foreground="#ffffff">Hyprland FX</span>')
+        title_lbl.set_markup('<span font="22" weight="heavy" foreground="#ffffff">Hyprland Effekte</span>')
         title_lbl.set_halign(Gtk.Align.START)
         main_box.append(title_lbl)
 
-        # ── Sektion 1: WINDOW BLUR & TRANSPARENCY ──
+        # ── Sektion 1: FENSTER-UNSCHÄRFE & TRANSPARENZ ──
         sec1_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         sec1_title = Gtk.Label()
-        sec1_title.set_markup('<span font="10" weight="bold" foreground="#7dcfff" letter_spacing="1500">WINDOW BLUR &amp; TRANSPARENCY</span>')
+        sec1_title.set_markup('<span font="10" weight="bold" foreground="#7dcfff" letter_spacing="1500">FENSTER-UNSCHÄRFE &amp; TRANSPARENZ</span>')
         sec1_title.set_halign(Gtk.Align.START)
         sec1_box.append(sec1_title)
 
@@ -1164,23 +1173,23 @@ class SettingsWindow(Adw.ApplicationWindow):
             adj.connect("value-changed", on_val_changed)
             return row
 
-        # Active Window Blur: 80%
+        # Aktiver Fenster-Blur: 80%
         blur_val = 80
         sec1_box.append(_make_slider_row(
-            "Active Window Blur", 0, 100, 1, blur_val, "%",
+            "Aktiver Fenster-Blur", 0, 100, 1, blur_val, "%",
             lambda v: self._update_setting("appearance", "blur_size", max(1, int(v / 10)))
         ))
 
-        # Inactive Opacity: 50%
+        # Inaktive Fenster-Deckkraft: 50%
         inact_val = int(app.get("inactive_opacity", 0.5) * 100) if "inactive_opacity" in app else 50
         sec1_box.append(_make_slider_row(
-            "Inactive Opacity", 10, 100, 1, inact_val, "%",
+            "Inaktive Fenster-Deckkraft", 10, 100, 1, inact_val, "%",
             lambda v: self._update_setting("appearance", "inactive_opacity", round(v / 100.0, 2))
         ))
 
         main_box.append(sec1_box)
 
-        # ── 2-Spalten-Layout für Border Glow & Aesthetics + Animations & Performance ──
+        # ── 2-Spalten-Layout für Rahmenleuchten & Animationen / Leistung ──
         two_col_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=32)
 
         left_col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
@@ -1189,39 +1198,39 @@ class SettingsWindow(Adw.ApplicationWindow):
         right_col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
         right_col.set_size_request(270, -1)
 
-        # Left: Border Glow & Aesthetics
+        # Links: Rahmenleuchten & Ästhetik
         sec2_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         sec2_title = Gtk.Label()
-        sec2_title.set_markup('<span font="12" weight="bold" foreground="#c0caf5">Border Glow &amp; Aesthetics</span>')
+        sec2_title.set_markup('<span font="12" weight="bold" foreground="#c0caf5">Rahmenleuchten &amp; Ästhetik</span>')
         sec2_title.set_halign(Gtk.Align.START)
         sec2_box.append(sec2_title)
 
         sec2_box.append(_make_slider_row(
-            "Border Glow Intensity", 0, 100, 1, 70, "%",
+            "Rahmen-Leuchtintensität", 0, 100, 1, 70, "%",
             lambda v: self._update_setting("appearance", "glow_intensity", round(v / 100.0, 2))
         ))
 
         border_w = app.get("border_size", 2)
         sec2_box.append(_make_slider_row(
-            "Border Width", 1, 10, 1, border_w, "px",
+            "Rahmenbreite", 1, 10, 1, border_w, "px",
             lambda v: self._update_setting("appearance", "border_size", int(v))
         ))
 
         round_w = app.get("rounding", 18)
         sec2_box.append(_make_slider_row(
-            "Corner Rounding", 0, 30, 1, round_w, "px",
+            "Eckenrundung", 0, 30, 1, round_w, "px",
             lambda v: self._update_setting("appearance", "rounding", int(v))
         ))
         left_col.append(sec2_box)
 
-        # Right: col.active_border Card + Damage Tracking Switch
+        # Rechts: col.active_border Vorschau + Damage Tracking
         sec2_right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         sec2_right.set_margin_top(18)
 
         border_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         border_card.add_css_class("active-border-card")
 
-        border_lbl = Gtk.Label(label="col.active_border")
+        border_lbl = Gtk.Label(label="Aktiver Rahmen (col.active_border)")
         border_lbl.set_halign(Gtk.Align.START)
         border_lbl.add_css_class("active-border-label")
         border_card.append(border_lbl)
@@ -1232,9 +1241,9 @@ class SettingsWindow(Adw.ApplicationWindow):
         border_card.append(gradient_bar)
         sec2_right.append(border_card)
 
-        # Damage Tracking Switch Row
+        # Schadensverfolgung (Damage Tracking) Switch Row
         dmg_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        dmg_lbl = Gtk.Label(label="Damage Tracking")
+        dmg_lbl = Gtk.Label(label="Schadensverfolgung (Damage Tracking)")
         dmg_lbl.set_hexpand(True)
         dmg_lbl.set_halign(Gtk.Align.START)
         dmg_lbl.add_css_class("fx-slider-label")
@@ -1249,21 +1258,21 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         right_col.append(sec2_right)
 
-        # Left: Animations & Transitions
+        # Links: Animationen & Übergänge
         sec3_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         sec3_title = Gtk.Label()
-        sec3_title.set_markup('<span font="12" weight="bold" foreground="#c0caf5">Animations &amp; Transitions</span>')
+        sec3_title.set_markup('<span font="12" weight="bold" foreground="#c0caf5">Animationen &amp; Übergänge</span>')
         sec3_title.set_halign(Gtk.Align.START)
         sec3_box.append(sec3_title)
 
         sec3_box.append(_make_slider_row(
-            "Animation Speed", 10, 100, 1, 50, "%",
+            "Animationsgeschwindigkeit", 10, 100, 1, 50, "%",
             lambda v: self._update_setting("appearance", "animation_speed", round(v / 50.0, 2))
         ))
 
-        # Bezier Curves Row & Canvas
+        # Bézier-Kurven
         bezier_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
-        bezier_lbl = Gtk.Label(label="Bezier Curves")
+        bezier_lbl = Gtk.Label(label="Bézier-Kurven")
         bezier_lbl.set_halign(Gtk.Align.START)
         bezier_lbl.set_size_request(200, -1)
         bezier_lbl.add_css_class("fx-slider-label")
@@ -1283,10 +1292,10 @@ class SettingsWindow(Adw.ApplicationWindow):
         sec3_box.append(bezier_row)
         left_col.append(sec3_box)
 
-        # Right: Performance Card + V-Sync + System-Auslastung
+        # Rechts: Leistung & V-Sync & Auslastung
         sec4_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         sec4_title = Gtk.Label()
-        sec4_title.set_markup('<span font="12" weight="bold" foreground="#c0caf5">Performance</span>')
+        sec4_title.set_markup('<span font="12" weight="bold" foreground="#c0caf5">Systemleistung &amp; Grafik</span>')
         sec4_title.set_halign(Gtk.Align.START)
         sec4_box.append(sec4_title)
 
@@ -1310,7 +1319,7 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         # V-Sync Switch Row
         vsync_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        vsync_lbl = Gtk.Label(label="V-Sync")
+        vsync_lbl = Gtk.Label(label="V-Sync (Bildsynchronisation)")
         vsync_lbl.set_hexpand(True)
         vsync_lbl.set_halign(Gtk.Align.START)
         vsync_lbl.add_css_class("fx-slider-label")
