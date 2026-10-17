@@ -92,15 +92,27 @@ echo -e "${GREEN}${BOLD}╚═════════════════�
 echo ""
 
 # Vorschau-Test anbieten
-if [[ "${1:-}" == "--test" || "${1:-}" == "-t" ]]; then
+run_preview() {
+    local theme="$1"
     echo -e "${BLUE}Starte Login-Screen Vorschau im Fenster...${NC}"
-    if command -v sddm-greeter &>/dev/null; then
-        sddm-greeter --test-mode --theme "${THEME_DEST}" 2>/dev/null &
+    if command -v sddm-greeter-qt6 &>/dev/null; then
+        sddm-greeter-qt6 --test-mode --theme "${theme}" 2>/dev/null &
+    elif command -v qmlscene &>/dev/null; then
+        qmlscene "${theme}/Main.qml" 2>/dev/null &
+    elif command -v qml6 &>/dev/null; then
+        qml6 "${theme}/Main.qml" 2>/dev/null &
+    elif command -v sddm-greeter &>/dev/null; then
+        DISPLAY="${DISPLAY:-:0}" sddm-greeter --test-mode --theme "${theme}" 2>/dev/null &
     else
-        echo -e "${YELLOW}Hinweis:${NC} sddm-greeter nicht direkt aufrufbar."
+        echo -e "${YELLOW}Hinweis:${NC} Kein Greeter-Vorschau-Tool gefunden."
     fi
+}
+
+if [[ "${1:-}" == "--test" || "${1:-}" == "-t" ]]; then
+    run_preview "${THEME_DEST}"
 else
-    echo -e "Tipp: Du kannst den neuen Login-Screen direkt in einem Testfenster ansehen mit:"
-    echo -e "  ${BOLD}sddm-greeter --test-mode --theme ${THEME_DEST}${NC}"
+    echo -e "Tipp: Vorschau direkt im Fenster ansehen:"
+    echo -e "  ${BOLD}qmlscene ${THEME_SRC}/Main.qml${NC}"
+    echo -e "  oder: ${BOLD}DISPLAY=:0 sddm-greeter --test-mode --theme ${THEME_DEST}${NC}"
 fi
 echo ""
