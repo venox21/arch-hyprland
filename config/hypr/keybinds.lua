@@ -204,3 +204,6 @@ hl.bind("SUPER + SHIFT + K",         hl.dsp.exec_cmd(scripts .. "/hotkeys.sh"))
 
 -- Waybar neu starten
 hl.bind("SUPER + SHIFT + B",         hl.dsp.exec_cmd(scripts .. "/waybar-restart.sh"))
+
+-- GameMode / Performance-Toggle (Maximale FPS)
+hl.bind("SUPER + F1",                hl.dsp.exec_cmd(scripts .. "/gamemode.sh --toggle"))

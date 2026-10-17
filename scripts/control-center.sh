@@ -432,7 +432,49 @@ powersave_status() {
     fi
 }
 
-# ── 7. SwayNC Panel umschalten ────────────────────────────────
+# ── 7. GameMode / Performance-Toggle ─────────────────────────
+gamemode_toggle() {
+    local gm_script="${HOME}/.config/hypr/scripts/gamemode.sh"
+    if [[ ! -f "${gm_script}" ]]; then
+        gm_script="$(dirname "${BASH_SOURCE[0]}")/gamemode.sh"
+    fi
+    if [[ -f "${gm_script}" ]]; then
+        bash "${gm_script}" --toggle
+    fi
+}
+
+gamemode_status() {
+    local gm_script="${HOME}/.config/hypr/scripts/gamemode.sh"
+    if [[ ! -f "${gm_script}" ]]; then
+        gm_script="$(dirname "${BASH_SOURCE[0]}")/gamemode.sh"
+    fi
+    if [[ -f "${gm_script}" ]]; then
+        bash "${gm_script}" --status
+    else
+        echo "false"
+    fi
+}
+
+# ── 8. System-Cleaner ─────────────────────────────────────────
+cleaner_launch() {
+    # SwayNC schließen, damit das Terminal sichtbar ist
+    if command -v swaync-client &>/dev/null; then
+        swaync-client -cp 2>/dev/null || true
+    fi
+
+    local clean_script="${HOME}/.config/hypr/scripts/clean-system.sh"
+    if [[ ! -f "${clean_script}" ]]; then
+        clean_script="$(dirname "${BASH_SOURCE[0]}")/clean-system.sh"
+    fi
+
+    if command -v kitty &>/dev/null; then
+        kitty --class tokyo-system-cleaner --title "System-Cleaner" -e bash -c "bash '${clean_script}'; echo ''; read -r -p 'Drücke Enter zum Schließen...' _dummy" &
+    else
+        bash "${clean_script}" &
+    fi
+}
+
+# ── 9. SwayNC Panel umschalten ────────────────────────────────
 toggle_panel() {
     # Falls SwayNC noch nicht läuft, zuverlässig initialisieren & starten
     if ! pgrep -x swaync &>/dev/null; then
@@ -478,9 +520,12 @@ case "${1:-}" in
     --theme-toggle)                 theme_toggle ;;
     --powersave-toggle)             powersave_toggle ;;
     --powersave-status)             powersave_status ;;
+    --gamemode-toggle)              gamemode_toggle ;;
+    --gamemode-status)              gamemode_status ;;
+    --cleaner|--clean-system)       cleaner_launch ;;
     --toggle|toggle)                toggle_panel ;;
     *)
-        echo "Verwendung: $0 {--wifi-menu|--wifi-toggle|--wifi-status|--bluetooth-menu|--bluetooth-toggle|--bluetooth-status|--audio-toggle|--nightmode-toggle|--nightmode-status|--theme-toggle|--powersave-toggle|--powersave-status|--toggle}"
+        echo "Verwendung: $0 {--wifi-menu|--wifi-toggle|--wifi-status|--bluetooth-menu|--bluetooth-toggle|--bluetooth-status|--audio-toggle|--nightmode-toggle|--nightmode-status|--theme-toggle|--powersave-toggle|--powersave-status|--gamemode-toggle|--gamemode-status|--cleaner|--toggle}"
         exit 1
         ;;
 esac

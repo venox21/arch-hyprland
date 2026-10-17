@@ -19,6 +19,14 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
   - Paketauswahl: Google Chrome, Visual Studio Code, Spotify, Spotify + Spicetify, Steam, Obsidian
   - Automatische Aktivierung des `[multilib]` Repositories für Steam in `/etc/pacman.conf`
   - Paket-Deduplizierung und automatische Schreibrechte-Konfiguration für Spicetify (`/opt/spotify`)
+- **GameMode / Performance-Toggle** (`scripts/gamemode.sh`, Hotkey: `SUPER + F1`, Kontrollzentrum):
+  - Schaltet Hyprland-Effekte (Blur, Schatten, Animationen, Gaps) für maximale Gaming-FPS temporär ab
+  - Aktiviert Tearing (`allow_tearing true`) und setzt den CPU-Governor auf `performance`
+  - Integriert als Toggle im SwayNC-Kontrollzentrum mit Live-Statusanzeige
+- **Arch System-Cleaner** (`scripts/clean-system.sh`, Kontrollzentrum, Rofi):
+  - Bereinigt Pacman- & yay/AUR-Caches (`paccache -rk2`), entfernt verwaiste Pakete (`pacman -Qtdq`), stutzt Journal-Logs und Thumbnail-Caches
+  - Führt Systemd-Gesundheitsprüfung durch und berechnet freigegebenen Speicherplatz
+  - Direkt über das Kontrollzentrum oder als App in Rofi startbar
 
 ### Geändert
 - **SDDM-Anmeldebildschirm komplett neu gestaltet** (`assets/sddm/tokyo-night/Main.qml`): große, dünne Uhr, Avatar mit Benutzername (Benutzerwechsel bei mehreren Konten), Passwortfeld als Pille mit Pfeil-Button, Shake-Animation bei falschem Passwort, Feststelltasten-Warnung, Ladeindikator, sanfter Ein-/Ausblend-Übergang, Sitzungswähler, Tastaturlayout-Umschalter sowie Standby/Neustart/Herunterfahren. Benötigt keine zusätzlichen Qt-Module.

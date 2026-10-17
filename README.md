@@ -126,6 +126,7 @@ Das Skript `update.sh` synchronisiert alle Konfigurationen, setzt die Dateirecht
 | `SUPER + ALT + W` | Zufälliges Wallpaper wechseln |
 | `SUPER + SHIFT + R` | Konfiguration neu laden |
 | `SUPER + SHIFT + B` | Waybar neu starten |
+| `SUPER + F1` | GameMode / Performance-Toggle (Maximale FPS) |
 
 Alle Tastenkürzel sind im Hotkey-Manager anzeig- und bearbeitbar.
 
@@ -139,6 +140,8 @@ Das integrierte Tokyo Night Kontrollzentrum bietet schnellen Zugriff auf alle es
 - **Nachtmodus**: Blaulichtfilter mit warmer Farbtemperatur (4000K)
 - **Theme**: Sofortiger Aufruf der Tokyo Night Einstellungs-App
 - **Energiesparmodus**: Schaltet rechenintensive Effekte (Blur, Schatten, Animationen) temporär aus, um die Akkulaufzeit zu maximieren
+- **GameMode**: Schaltet alle Effekte & Gaps ab, aktiviert Tearing und den Performance-Governor für maximale Gaming-FPS
+- **System-Cleaner**: 1-Klick Terminal-Wartung für Paket-Caches, verwaiste Pakete, Systemd-Logs und Temp-Dateien
 - **Benachrichtigungen**: Interaktive Benachrichtigungsliste, Einzel- und Gesamtlöschung, DND-Modus
 - **Schieberegler & Medien**: Lautstärke- und Helligkeitsregler sowie MPRIS Media Player Steuerung
 

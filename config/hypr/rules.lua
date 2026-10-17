@@ -100,6 +100,14 @@ hl.window_rule({
     center = true,
 })
 
+-- System-Cleaner (TUI im Terminal)
+hl.window_rule({
+    match = { class = "tokyo-system-cleaner" },
+    float = true,
+    size = "860 620",
+    center = true,
+})
+
 -- Rofi Fensterregeln (Fallback)
 hl.window_rule({
     match = { class = "rofi" },

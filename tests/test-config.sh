@@ -151,6 +151,7 @@ OTHER_FILES=(
     "config/starship/starship.toml"
     "assets/desktop/tokyo-shot.desktop"
     "assets/desktop/tokyo-app-installer.desktop"
+    "assets/desktop/tokyo-cleaner.desktop"
 )
 
 for f in "${OTHER_FILES[@]}"; do
@@ -168,7 +169,7 @@ echo -e "${BLUE}── Hilfsskripte ──${NC}"
 SCRIPTS=(
     screenshot.sh tokyo-shot power-menu.sh clipboard.sh wallpaper.sh
     waybar-restart.sh backup.sh diagnostics.sh settings.sh hotkeys.sh
-    control-center.sh autostart.sh app-installer.sh
+    control-center.sh autostart.sh app-installer.sh gamemode.sh clean-system.sh
 )
 
 for s in "${SCRIPTS[@]}"; do

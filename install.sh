@@ -234,6 +234,7 @@ PACKAGES=(
     fastfetch
     htop
     jq
+    pacman-contrib
     networkmanager
     nm-connection-editor
     bluez
