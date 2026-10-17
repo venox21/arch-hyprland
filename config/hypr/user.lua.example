@@ -1,0 +1,23 @@
+-- ╔══════════════════════════════════════════════════════════════╗
+-- ║  Tokyo Night – Eigene Benutzereinstellungen (user.lua)        ║
+-- ║  Wird bei Updates NIEMALS überschrieben                     ║
+-- ║  Kopiere diese Datei nach ~/.config/hypr/user.lua            ║
+-- ╚══════════════════════════════════════════════════════════════╝
+-- Hier kannst du eigene Hyprland-Tastenbelegungen, Fensterregeln
+-- oder Einstellungen eintragen, die updatesicher bestehen bleiben.
+
+-- Beispiel: Eigene App-Tastenkürzel
+-- hl.bind({ "SUPER", "b", "exec", "zen-browser" })
+-- hl.bind({ "SUPER", "e", "exec", "thunar" })
+
+-- Beispiel: Eigene Fensterregeln
+-- hl.windowrule({ "float", "class:^(pavucontrol)$" })
+-- hl.windowrule({ "size 900 600", "class:^(pavucontrol)$" })
+
+-- Beispiel: Gaps oder Borders individuell anpassen
+-- hl.config({
+--     general = {
+--         gaps_in = 6,
+--         gaps_out = 12,
+--     },
+-- })

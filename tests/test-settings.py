@@ -483,6 +483,46 @@ class TestConfigManager(unittest.TestCase):
             _, changed = ConfigManager.set_css_bar_opacity(css, 0.5)
             self.assertEqual(changed, meta["bar_background"], lid)
 
+    def test_reapply_user_settings(self):
+        """Wiederherstellen von Benutzereinstellungen nach Updates prüfen."""
+        self.cm.hypr_dir = Path(self.temp_dir) / "hypr"
+        self.cm.waybar_dir = Path(self.temp_dir) / "waybar"
+        self.cm.config_dir = Path(self.temp_dir)
+        self.cm.hypr_dir.mkdir(parents=True, exist_ok=True)
+        self.cm.waybar_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Fall: Keine user_settings.json vorhanden
+        res = self.cm.reapply_user_settings(reload=False)
+        self.assertFalse(res.get("applied", False))
+
+        # 2. Fall: user_settings.json anlegen mit spezifischen Benutzereinstellungen
+        custom_settings = {
+            "theme": {"variant": "storm"},
+            "waybar": {"layout": "crystal", "opacity_by_layout": {"crystal": 0.45}},
+            "appearance": {"rofi_opacity": 0.65},
+            "input": {"kb_layout": "de", "sensitivity": 0.25},
+        }
+        self.cm.save_settings(custom_settings)
+
+        # Reapply ausführen
+        res = self.cm.reapply_user_settings(reload=False)
+        self.assertTrue(res.get("applied"))
+
+        # Prüfen ob Farbschema angewendet wurde
+        colors_file = self.cm.hypr_dir / "colors.lua"
+        self.assertTrue(colors_file.exists())
+        self.assertIn("Tokyo Night Storm", colors_file.read_text(encoding="utf-8"))
+
+        # Prüfen ob input.lua generiert wurde
+        input_file = self.cm.hypr_dir / "input.lua"
+        self.assertTrue(input_file.exists())
+        self.assertIn('kb_layout  = "de"', input_file.read_text(encoding="utf-8"))
+
+        # Prüfen ob Waybar-Layout & Opazität übernommen wurden
+        style_file = self.cm.waybar_dir / "style.css"
+        self.assertTrue(style_file.exists())
+        self.assertIn("0.45", style_file.read_text(encoding="utf-8"))
+
 
 
 class TestKeybindParser(unittest.TestCase):

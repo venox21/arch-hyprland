@@ -106,7 +106,7 @@ elif [[ -n "${REPO_VER}" && "${REPO_VER}" != "${CURRENT_VER}" ]]; then
     HAS_REAL_UPDATE=true
 fi
 
-echo -e "${BLUE}[2/5] Konfigurationen kopieren...${NC}"
+echo -e "${BLUE}[2/5] Konfigurationen aktualisieren & Benutzereinstellungen schützen...${NC}"
 mkdir -p \
     "${CONFIG_DIR}/hypr" \
     "${CONFIG_DIR}/hypr/scripts" \
@@ -119,37 +119,94 @@ mkdir -p \
     "${CONFIG_DIR}/gtk-3.0" \
     "${CONFIG_DIR}/gtk-4.0"
 
-# Waybar
-if [[ -d "${REPO_DIR}/config/waybar" ]]; then
-    cp -f "${REPO_DIR}/config/waybar/"* "${CONFIG_DIR}/waybar/" 2>/dev/null || true
-    if [[ -d "${REPO_DIR}/config/waybar/layouts" ]]; then
-        mkdir -p "${CONFIG_DIR}/waybar/layouts"
-        cp -rf "${REPO_DIR}/config/waybar/layouts/"* "${CONFIG_DIR}/waybar/layouts/" 2>/dev/null || true
+# ── Automatisches Sicherheits-Backup vor dem Update ──
+BACKUP_BASE="${CONFIG_DIR}/tokyo-hypr-backup"
+BACKUP_UPDATE_DIR="${BACKUP_BASE}/pre-update_$(date '+%Y-%m-%d_%H-%M-%S')"
+mkdir -p "${BACKUP_UPDATE_DIR}"
+for comp in hypr waybar swaync rofi kitty; do
+    if [[ -d "${CONFIG_DIR}/${comp}" ]]; then
+        cp -a "${CONFIG_DIR}/${comp}" "${BACKUP_UPDATE_DIR}/" 2>/dev/null || true
     fi
+done
+echo -e "  ${GREEN}✓${NC} Sicherheits-Backup vor dem Update angelegt: ${BACKUP_UPDATE_DIR}"
+
+# Hilfsfunktion: Datei nur anlegen, falls am Ziel noch nicht vorhanden (schützt persönliche Anpassungen)
+copy_if_missing() {
+    local src="$1"
+    local dest="$2"
+    if [[ ! -e "${dest}" ]]; then
+        mkdir -p "$(dirname "${dest}")"
+        cp "${src}" "${dest}" 2>/dev/null || true
+    fi
+}
+
+# 1. Waybar: Layout-Vorlagen immer aktualisieren (damit Bugfixes & neue Presets ankommen)
+if [[ -d "${REPO_DIR}/config/waybar/layouts" ]]; then
+    mkdir -p "${CONFIG_DIR}/waybar/layouts"
+    cp -rf "${REPO_DIR}/config/waybar/layouts/"* "${CONFIG_DIR}/waybar/layouts/" 2>/dev/null || true
 fi
-# SwayNC
-[[ -d "${REPO_DIR}/config/swaync" ]] && cp -f "${REPO_DIR}/config/swaync/"* "${CONFIG_DIR}/swaync/" 2>/dev/null || true
-# Hyprland Lua
-[[ -d "${REPO_DIR}/config/hypr" ]] && cp -f "${REPO_DIR}/config/hypr/"*.lua "${CONFIG_DIR}/hypr/" 2>/dev/null || true
-# Hyprlock / Hyprpaper
+# Aktive Waybar-Konfiguration (config.jsonc & style.css) NIEMALS überschreiben, falls bereits vorhanden!
+copy_if_missing "${REPO_DIR}/config/waybar/config.jsonc" "${CONFIG_DIR}/waybar/config.jsonc"
+copy_if_missing "${REPO_DIR}/config/waybar/style.css" "${CONFIG_DIR}/waybar/style.css"
+
+# 2. SwayNC
+copy_if_missing "${REPO_DIR}/config/swaync/config.json" "${CONFIG_DIR}/swaync/config.json"
+copy_if_missing "${REPO_DIR}/config/swaync/style.css" "${CONFIG_DIR}/swaync/style.css"
+
+# 3. Hyprland Lua:
+# System-Kerndateien werden aktualisiert (Bugfixes & neue Funktionen)
+for core_file in hyprland.lua rules.lua animations.lua; do
+    if [[ -f "${REPO_DIR}/config/hypr/${core_file}" ]]; then
+        cp -f "${REPO_DIR}/config/hypr/${core_file}" "${CONFIG_DIR}/hypr/${core_file}" 2>/dev/null || true
+    fi
+done
+
+# Benutzereigene Hyprland-Dateien NIEMALS überschreiben (Monitore, Tastatur, Theme-Farben, Binds, Autostart)
+copy_if_missing "${REPO_DIR}/config/hypr/monitors.lua" "${CONFIG_DIR}/hypr/monitors.lua"
+copy_if_missing "${REPO_DIR}/config/hypr/input.lua" "${CONFIG_DIR}/hypr/input.lua"
+copy_if_missing "${REPO_DIR}/config/hypr/colors.lua" "${CONFIG_DIR}/hypr/colors.lua"
+
+# Keybinds & Autostart: Bestehende Dateien unberührt lassen; Upstream-Referenz danebenlegen
+if [[ -f "${CONFIG_DIR}/hypr/keybinds.lua" ]]; then
+    cp -f "${REPO_DIR}/config/hypr/keybinds.lua" "${CONFIG_DIR}/hypr/keybinds.lua.upstream" 2>/dev/null || true
+else
+    cp -f "${REPO_DIR}/config/hypr/keybinds.lua" "${CONFIG_DIR}/hypr/keybinds.lua" 2>/dev/null || true
+fi
+
+if [[ -f "${CONFIG_DIR}/hypr/autostart.lua" ]]; then
+    cp -f "${REPO_DIR}/config/hypr/autostart.lua" "${CONFIG_DIR}/hypr/autostart.lua.upstream" 2>/dev/null || true
+else
+    cp -f "${REPO_DIR}/config/hypr/autostart.lua" "${CONFIG_DIR}/hypr/autostart.lua" 2>/dev/null || true
+fi
+
+# user.lua.example als Vorlage für eigene Shortcuts bereitstellen
+[[ -f "${REPO_DIR}/config/hypr/user.lua.example" ]] && cp -f "${REPO_DIR}/config/hypr/user.lua.example" "${CONFIG_DIR}/hypr/user.lua.example" 2>/dev/null || true
+
+# 4. Hyprlock & Hyprpaper
 [[ -f "${REPO_DIR}/config/hyprlock/hyprlock.conf" ]] && cp -f "${REPO_DIR}/config/hyprlock/hyprlock.conf" "${CONFIG_DIR}/hypr/hyprlock.conf" 2>/dev/null || true
-[[ -f "${REPO_DIR}/config/hyprpaper/hyprpaper.conf" ]] && cp -f "${REPO_DIR}/config/hyprpaper/hyprpaper.conf" "${CONFIG_DIR}/hypr/hyprpaper.conf" 2>/dev/null || true
-# Rofi
-[[ -d "${REPO_DIR}/config/rofi" ]] && cp -f "${REPO_DIR}/config/rofi/"* "${CONFIG_DIR}/rofi/" 2>/dev/null || true
-# Kitty
-[[ -f "${REPO_DIR}/config/kitty/kitty.conf" ]] && cp -f "${REPO_DIR}/config/kitty/kitty.conf" "${CONFIG_DIR}/kitty/kitty.conf" 2>/dev/null || true
-# GTK
-[[ -d "${REPO_DIR}/config/gtk-3.0" ]] && cp -f "${REPO_DIR}/config/gtk-3.0/"* "${CONFIG_DIR}/gtk-3.0/" 2>/dev/null || true
-[[ -d "${REPO_DIR}/config/gtk-4.0" ]] && cp -f "${REPO_DIR}/config/gtk-4.0/"* "${CONFIG_DIR}/gtk-4.0/" 2>/dev/null || true
-# Settings App
+copy_if_missing "${REPO_DIR}/config/hyprpaper/hyprpaper.conf" "${CONFIG_DIR}/hypr/hyprpaper.conf"
+
+# 5. Rofi
+[[ -f "${REPO_DIR}/config/rofi/wallpaper.rasi" ]] && cp -f "${REPO_DIR}/config/rofi/wallpaper.rasi" "${CONFIG_DIR}/rofi/wallpaper.rasi" 2>/dev/null || true
+copy_if_missing "${REPO_DIR}/config/rofi/config.rasi" "${CONFIG_DIR}/rofi/config.rasi"
+
+# 6. Kitty & GTK
+copy_if_missing "${REPO_DIR}/config/kitty/kitty.conf" "${CONFIG_DIR}/kitty/kitty.conf"
+copy_if_missing "${REPO_DIR}/config/gtk-3.0/settings.ini" "${CONFIG_DIR}/gtk-3.0/settings.ini"
+copy_if_missing "${REPO_DIR}/config/gtk-4.0/settings.ini" "${CONFIG_DIR}/gtk-4.0/settings.ini"
+[[ -f "${REPO_DIR}/config/gtk-4.0/gtk.css" ]] && cp -f "${REPO_DIR}/config/gtk-4.0/gtk.css" "${CONFIG_DIR}/gtk-4.0/gtk.css" 2>/dev/null || true
+
+# 7. Settings App (user_settings.json bleibt erhalten, da nur *.py kopiert wird)
 [[ -d "${REPO_DIR}/settings" ]] && cp -f "${REPO_DIR}/settings/"*.py "${CONFIG_DIR}/hypr/settings/" 2>/dev/null || true
-# Tokyo Shot (Screenshot-Manager & Editor)
+
+# 8. Tokyo Shot (Screenshot-Manager & Editor)
 if [[ -d "${REPO_DIR}/screenshot" ]]; then
     mkdir -p "${CONFIG_DIR}/hypr/screenshot"
     cp -f "${REPO_DIR}/screenshot/"*.py "${CONFIG_DIR}/hypr/screenshot/" 2>/dev/null || true
     chmod +x "${CONFIG_DIR}/hypr/screenshot/"*.py 2>/dev/null || true
 fi
-# Skripte (inkl. tokyo-shot)
+
+# 9. Skripte & CLI Starter
 [[ -d "${REPO_DIR}/scripts" ]] && cp -f "${REPO_DIR}/scripts/"* "${CONFIG_DIR}/hypr/scripts/" 2>/dev/null || true
 chmod +x "${CONFIG_DIR}/hypr/scripts/"* 2>/dev/null || true
 chmod +x "${REPO_DIR}/"*.sh "${REPO_DIR}/scripts/"* 2>/dev/null || true
@@ -163,8 +220,25 @@ if [[ -d "${REPO_DIR}/assets/desktop" ]]; then
     cp -f "${REPO_DIR}/assets/desktop/"*.desktop "${HOME}/.local/share/applications/" 2>/dev/null || true
     update-desktop-database "${HOME}/.local/share/applications" 2>/dev/null || true
 fi
-# Wallpapers
+
+# 10. Wallpapers (neue hinzufügen, bestehende niemals überschreiben)
 [[ -d "${REPO_DIR}/assets/wallpapers" ]] && cp -n "${REPO_DIR}/assets/wallpapers/"* "${CONFIG_DIR}/hypr/wallpapers/" 2>/dev/null || true
+
+# 11. Gespeicherte Benutzereinstellungen aus user_settings.json wiederherstellen/abgleichen
+if command -v python3 &>/dev/null && [[ -f "${CONFIG_DIR}/hypr/settings/config_manager.py" && -f "${CONFIG_DIR}/hypr/settings/user_settings.json" ]]; then
+    python3 -c "
+import sys
+sys.path.insert(0, '${CONFIG_DIR}/hypr/settings')
+try:
+    from config_manager import ConfigManager
+    cm = ConfigManager()
+    res = cm.reapply_user_settings(reload=False)
+    if res.get('applied'):
+        print('  \033[0;32m✓\033[0m Gespeicherte Benutzereinstellungen (Design, Waybar, Input) erfolgreich beibehalten')
+except Exception as e:
+    print(f'  \033[0;33m⚠\033[0m Hinweis bei Einstellungsabgleich: {e}')
+" 2>/dev/null || true
+fi
 
 # ── Versionsverwaltung: Die Version wird zentral über VERSION im Repo gesteuert (aktuell: 1.0) ──
 TARGET_VER="1.0"
@@ -198,15 +272,19 @@ else
     echo -e "  ${GREEN}✓${NC} Konfigurationen erfolgreich synchronisiert (Version: ${BOLD}v${CURRENT_VER}${NC})"
 fi
 
-echo -e "${BLUE}[3/5] Design & Icons konfigurieren...${NC}"
+echo -e "${BLUE}[3/5] Design & Icons prüfen...${NC}"
 if command -v gsettings &>/dev/null; then
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark' 2>/dev/null || true
-    if pacman -Qi papirus-icon-theme &>/dev/null; then
-        gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
-        echo -e "  ${GREEN}✓${NC} Papirus-Dark Icon-Theme aktiv"
-    else
-        echo -e "  ${YELLOW}⚠${NC} Papirus-Icon-Theme nicht installiert (optional: sudo pacman -S papirus-icon-theme)"
+    current_gtk="$(gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null | tr -d "'" || true)"
+    if [[ -z "${current_gtk}" || "${current_gtk}" == "Adwaita" ]]; then
+        gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark' 2>/dev/null || true
+    fi
+    current_icon="$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d "'" || true)"
+    if [[ -z "${current_icon}" || "${current_icon}" == "Adwaita" || "${current_icon}" == "hicolor" ]]; then
+        if pacman -Qi papirus-icon-theme &>/dev/null; then
+            gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
+            echo -e "  ${GREEN}✓${NC} Papirus-Dark Icon-Theme aktiv"
+        fi
     fi
 fi
 
@@ -304,12 +382,13 @@ out_file.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding
 " 2>/dev/null || true
 
 echo ""
-echo -e "${MAGENTA}${BOLD}┌── Aktualisierte Module & Komponenten ─────────────────────┐${NC}"
-echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Hyprland${NC} (Lua-Skripte, Keybinds, Regeln, Monitore)       ${MAGENTA}${BOLD}│${NC}"
+echo -e "${MAGENTA}${BOLD}┌── Status der Komponenten & Benutzereinstellungen ──────────┐${NC}"
+echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Hyprland Core${NC} (Lua-Kerndateien & Regeln synchronisiert)     ${MAGENTA}${BOLD}│${NC}"
+echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Benutzereinstellungen${NC} (Monitore, Tastatur, Theme bewahrt)  ${MAGENTA}${BOLD}│${NC}"
+echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Waybar & Rofi${NC} (Aktives Layout & Transparenz geschützt)      ${MAGENTA}${BOLD}│${NC}"
 echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Tokyo Shot${NC} (Screenshot Hub, Annotation-Editor)          ${MAGENTA}${BOLD}│${NC}"
-echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}App-Installer${NC} (Discord, Heroic, Steam, Chrome, Spotify) ${MAGENTA}${BOLD}│${NC}"
+echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}App-Installer${NC} (Discord, Heroic, Cyber Suite, Tools)       ${MAGENTA}${BOLD}│${NC}"
 echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Hardware-Check${NC} (Nvidia, AMD, Intel, Microcode, Akku)     ${MAGENTA}${BOLD}│${NC}"
-echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Waybar Statusleiste${NC} (Crystal & Classic Layouts)         ${MAGENTA}${BOLD}│${NC}"
 echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}SwayNC Kontrollzentrum${NC} (Tokyo Night CSS & Toggles)      ${MAGENTA}${BOLD}│${NC}"
 echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Settings-App${NC} (Version v${NEW_VER} & Update-Zentrum)           ${MAGENTA}${BOLD}│${NC}"
 echo -e "${MAGENTA}${BOLD}└───────────────────────────────────────────────────────────┘${NC}"

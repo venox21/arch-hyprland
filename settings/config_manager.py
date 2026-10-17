@@ -290,7 +290,7 @@ class ConfigManager:
         settings = self.load_settings()
         return settings.get("waybar", {}).get("layout", "classic")
 
-    def apply_waybar_layout(self, layout_id: str) -> tuple[bool, str]:
+    def apply_waybar_layout(self, layout_id: str, reload: bool = True) -> tuple[bool, str]:
         """Aktiviert ein Waybar-Layout, kopiert Config & CSS und startet Waybar neu."""
         if layout_id not in self.WAYBAR_LAYOUTS:
             return False, f"Unbekanntes Layout: {layout_id}"
@@ -327,7 +327,8 @@ class ConfigManager:
                 self.apply_waybar_opacity(self.get_waybar_opacity(layout_id),
                                           layout_id, reload=False)
 
-            self.restart_waybar()
+            if reload:
+                self.restart_waybar()
             return True, f"Waybar-Layout '{meta['name']}' erfolgreich aktiviert!"
         except OSError as e:
             return False, f"Fehler beim Aktivieren des Layouts: {e}"
@@ -1204,7 +1205,7 @@ class ConfigManager:
         defaults = self._default_settings()["input"]
         return self._deep_merge(defaults, settings)
 
-    def save_input_settings(self, inp: dict) -> bool:
+    def save_input_settings(self, inp: dict, reload: bool = True) -> bool:
         """Speichert Tastatur- und Mauseinstellungen und aktualisiert input.lua."""
         self.update_setting("input", "kb_layout", inp.get("kb_layout", "de"))
         self.update_setting("input", "kb_variant", inp.get("kb_variant", ""))
@@ -1263,14 +1264,15 @@ hl.env("XCURSOR_THEME", "Adwaita")
             input_file.write_text(content, encoding="utf-8")
 
             # Sofort per hyprctl anwenden
-            try:
-                subprocess.run(["hyprctl", "keyword", "input:kb_layout", inp.get("kb_layout", "de")], capture_output=True, timeout=2)
-                subprocess.run(["hyprctl", "keyword", "input:kb_variant", inp.get("kb_variant", "")], capture_output=True, timeout=2)
-                subprocess.run(["hyprctl", "keyword", "input:sensitivity", str(inp.get("sensitivity", 0.0))], capture_output=True, timeout=2)
-                subprocess.run(["hyprctl", "keyword", "input:touchpad:natural_scroll", "true" if inp.get("natural_scroll", True) else "false"], capture_output=True, timeout=2)
-                subprocess.run(["hyprctl", "keyword", "input:touchpad:tap-to-click", "true" if inp.get("tap_to_click", True) else "false"], capture_output=True, timeout=2)
-            except (OSError, subprocess.TimeoutExpired):
-                pass
+            if reload:
+                try:
+                    subprocess.run(["hyprctl", "keyword", "input:kb_layout", inp.get("kb_layout", "de")], capture_output=True, timeout=2)
+                    subprocess.run(["hyprctl", "keyword", "input:kb_variant", inp.get("kb_variant", "")], capture_output=True, timeout=2)
+                    subprocess.run(["hyprctl", "keyword", "input:sensitivity", str(inp.get("sensitivity", 0.0))], capture_output=True, timeout=2)
+                    subprocess.run(["hyprctl", "keyword", "input:touchpad:natural_scroll", "true" if inp.get("natural_scroll", True) else "false"], capture_output=True, timeout=2)
+                    subprocess.run(["hyprctl", "keyword", "input:touchpad:tap-to-click", "true" if inp.get("tap_to_click", True) else "false"], capture_output=True, timeout=2)
+                except (OSError, subprocess.TimeoutExpired):
+                    pass
             return True
         except OSError as e:
             print(f"Fehler beim Speichern von input.lua: {e}")
@@ -1425,7 +1427,7 @@ hl.monitor({
         },
     }
 
-    def apply_color_theme(self, theme_key: str) -> bool:
+    def apply_color_theme(self, theme_key: str, reload: bool = True) -> bool:
         """Wendet ein Tokyo Night Akzentfarb-Schema an."""
         if theme_key not in self.THEME_PALETTES:
             return False
@@ -1487,8 +1489,9 @@ return M
             colors_file.parent.mkdir(parents=True, exist_ok=True)
             self._backup_file(colors_file)
             colors_file.write_text(content, encoding="utf-8")
-            self.reload_hyprland()
-            self.restart_waybar()
+            if reload:
+                self.reload_hyprland()
+                self.restart_waybar()
             return True
         except OSError as e:
             print(f"Fehler beim Setzen des Farbschemas: {e}")
@@ -1531,6 +1534,70 @@ return M
                     print(f"Fehler beim Aktualisieren von {conf}: {e}")
 
         return modified or True
+
+    def reapply_user_settings(self, reload: bool = False) -> dict:
+        """Wendet gespeicherte Benutzereinstellungen (Farbschema, Waybar-Layout & Opazität,
+        Rofi-Transparenz, Tastaturlayout) erneut an, damit sie nach Updates unverändert bleiben.
+        """
+        if not self.settings_file.exists():
+            return {"applied": False, "reason": "No user_settings.json found"}
+
+        results = {}
+        settings = self.load_settings()
+
+        # 1. Tokyo Night Farbschema (colors.lua)
+        theme_variant = settings.get("theme", {}).get("variant")
+        if theme_variant and theme_variant in self.THEME_PALETTES:
+            try:
+                self.apply_color_theme(theme_variant, reload=reload)
+                results["theme"] = theme_variant
+            except Exception as e:
+                results["theme_error"] = str(e)
+
+        # 2. Waybar-Layout & Deckkraft
+        waybar_settings = settings.get("waybar", {})
+        waybar_layout = waybar_settings.get("layout", "classic")
+        active_config = self.waybar_dir / "config.jsonc"
+        active_style = self.waybar_dir / "style.css"
+
+        # Falls config.jsonc oder style.css fehlen, Layout initial ausrollen
+        if not active_config.exists() or not active_style.exists():
+            if waybar_layout in self.WAYBAR_LAYOUTS:
+                self.apply_waybar_layout(waybar_layout, reload=reload)
+                results["waybar_layout_restored"] = waybar_layout
+
+        # Deckkraft für das aktive Layout auf aktive style.css anwenden
+        if active_style.exists():
+            try:
+                opacity = self.get_waybar_opacity(waybar_layout)
+                self.apply_waybar_opacity(opacity, waybar_layout, reload=reload)
+                results["waybar_opacity"] = opacity
+            except Exception as e:
+                results["waybar_opacity_error"] = str(e)
+
+        # 3. Rofi Transparenz
+        rofi_opacity = settings.get("appearance", {}).get("rofi_opacity")
+        if rofi_opacity is not None:
+            try:
+                self.apply_rofi_opacity(float(rofi_opacity))
+                results["rofi_opacity"] = float(rofi_opacity)
+            except Exception as e:
+                results["rofi_error"] = str(e)
+
+        # 4. Tastaturlayout & Eingabegeräte (input.lua)
+        input_file = self.hypr_dir / "input.lua"
+        inp = settings.get("input")
+        if inp and isinstance(inp, dict):
+            # Nur wiederherstellen, falls input.lua fehlt
+            if not input_file.exists():
+                try:
+                    self.save_input_settings(inp, reload=reload)
+                    results["input_restored"] = True
+                except Exception as e:
+                    results["input_error"] = str(e)
+
+        results["applied"] = True
+        return results
 
     # ── Hilfsfunktionen ───────────────────────────────────────
 

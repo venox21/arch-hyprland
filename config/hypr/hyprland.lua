@@ -101,3 +101,6 @@ require("animations")   -- Animationen und Kurven
 require("rules")        -- Fensterregeln
 require("keybinds")     -- Tastenkürzel
 require("autostart")    -- Autostart-Programme
+
+-- Optionale benutzereigene Konfiguration (~/.config/hypr/user.lua – wird bei Updates nie überschrieben)
+pcall(require, "user")

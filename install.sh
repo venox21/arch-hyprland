@@ -323,6 +323,7 @@ for lua_file in "${SCRIPT_DIR}"/config/hypr/*.lua; do
         install_config "${lua_file}" "${CONFIG_DIR}/hypr/$(basename "${lua_file}")"
     fi
 done
+[[ -f "${SCRIPT_DIR}/config/hypr/user.lua.example" ]] && install_config "${SCRIPT_DIR}/config/hypr/user.lua.example" "${CONFIG_DIR}/hypr/user.lua.example"
 
 # Version und initialen Commit festhalten
 if [[ -f "${SCRIPT_DIR}/VERSION" ]]; then
