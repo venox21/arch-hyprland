@@ -87,6 +87,7 @@ fi
 # Skripte (inkl. tokyo-shot)
 [[ -d "${REPO_DIR}/scripts" ]] && cp -f "${REPO_DIR}/scripts/"* "${CONFIG_DIR}/hypr/scripts/" 2>/dev/null || true
 chmod +x "${CONFIG_DIR}/hypr/scripts/"* 2>/dev/null || true
+chmod +x "${REPO_DIR}/"*.sh "${REPO_DIR}/scripts/"* 2>/dev/null || true
 mkdir -p "${HOME}/.local/bin"
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2>/dev/null || true
 if [[ -d "${REPO_DIR}/assets/desktop" ]]; then

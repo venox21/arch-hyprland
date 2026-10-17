@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Falls das Skript mit 'sh' (oder dash) aufgerufen wurde, sofort mit 'bash' neu starten:
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec bash "$0" "$@"
+fi
+
 # ╔══════════════════════════════════════════════════════════════╗
 # ║  Tokyo Night Hyprland – Interaktiver TUI App-Installer       ║
 # ║  Installiert beliebte Anwendungen via Pacman & yay (AUR)     ║
