@@ -206,6 +206,56 @@ if pgrep -x waybar &>/dev/null; then
     echo -e "  ${GREEN}✓${NC} Waybar neu geladen"
 fi
 
+# ── Update-Zusammenfassung & Manifest für Einstellungs-App schreiben ──
+UPDATE_DATE="$(date '+%d.%m.%Y um %H:%M Uhr')"
+UPDATE_ISO="$(date '+%Y-%m-%d %H:%M:%S')"
+
+# Letzte Commits auslesen
+COMMITS_FILE="${CONFIG_DIR}/hypr/.update_commits.tmp"
+if command -v git &>/dev/null && [[ -d "${REPO_DIR}/.git" ]]; then
+    git -C "${REPO_DIR}" log -n 6 --pretty=format:'%s' 2>/dev/null > "${COMMITS_FILE}" || true
+fi
+
+python3 -c "
+import json
+from pathlib import Path
+
+commits = []
+c_file = Path('${CONFIG_DIR}/hypr/.update_commits.tmp')
+if c_file.is_file():
+    commits = [line.strip() for line in c_file.read_text(encoding='utf-8').splitlines() if line.strip()]
+    c_file.unlink(missing_ok=True)
+
+manifest = {
+    'version': '${NEW_VER}',
+    'previous_version': '${CURRENT_VER}',
+    'date': '${UPDATE_DATE}',
+    'timestamp': '${UPDATE_ISO}',
+    'commits': commits,
+    'components': [
+        {'name': 'Hyprland Konfiguration & Lua-Skripte', 'status': 'Aktualisiert', 'icon': 'preferences-desktop-display-symbolic'},
+        {'name': 'Tokyo Shot Screenshot-Hub & Editor', 'status': 'Aktualisiert', 'icon': 'camera-photo-symbolic'},
+        {'name': 'TUI App-Installer (pacman & yay)', 'status': 'Aktualisiert', 'icon': 'system-software-install-symbolic'},
+        {'name': 'Hardware- & Treiber-Assistent', 'status': 'Aktualisiert', 'icon': 'preferences-system-devices-symbolic'},
+        {'name': 'Waybar Statusleiste & Layouts (Crystal/Classic)', 'status': 'Neu geladen', 'icon': 'view-app-grid-symbolic'},
+        {'name': 'SwayNC Kontrollzentrum & Tokyo CSS', 'status': 'Neu geladen', 'icon': 'preferences-system-notifications-symbolic'},
+        {'name': 'Einstellungs-App & Update-Zentrum', 'status': 'Aktualisiert', 'icon': 'system-software-update-symbolic'}
+    ]
+}
+out_file = Path('${CONFIG_DIR}/hypr/last_update.json')
+out_file.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding='utf-8')
+" 2>/dev/null || true
+
+echo ""
+echo -e "${MAGENTA}${BOLD}┌── Aktualisierte Module & Komponenten ─────────────────────┐${NC}"
+echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Hyprland${NC} (Lua-Skripte, Keybinds, Regeln, Monitore)       ${MAGENTA}${BOLD}│${NC}"
+echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Tokyo Shot${NC} (Screenshot Hub, Annotation-Editor)          ${MAGENTA}${BOLD}│${NC}"
+echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}App-Installer${NC} (TUI-Auswahl für Chrome, Spotify, Steam)   ${MAGENTA}${BOLD}│${NC}"
+echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Hardware-Check${NC} (Nvidia, AMD, Intel, Microcode, Akku)     ${MAGENTA}${BOLD}│${NC}"
+echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Waybar Statusleiste${NC} (Crystal & Classic Layouts)         ${MAGENTA}${BOLD}│${NC}"
+echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}SwayNC Kontrollzentrum${NC} (Tokyo Night CSS & Toggles)      ${MAGENTA}${BOLD}│${NC}"
+echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Settings-App${NC} (Version v${NEW_VER} & Update-Zentrum)           ${MAGENTA}${BOLD}│${NC}"
+echo -e "${MAGENTA}${BOLD}└───────────────────────────────────────────────────────────┘${NC}"
 echo ""
 echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}${BOLD}║  Update auf Version ${NEW_VER} erfolgreich abgeschlossen!    ║${NC}"

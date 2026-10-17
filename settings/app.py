@@ -11,6 +11,7 @@ import sys
 import os
 import glob
 import threading
+import re
 from pathlib import Path
 
 # Wayland-Umgebung automatisch ermitteln (SSH / TTY Support)
@@ -517,6 +518,66 @@ class SettingsWindow(Adw.ApplicationWindow):
             padding: 3px 10px;
             font-size: 11px;
             font-weight: 700;
+        }
+
+        .badge-feat {
+            background-color: rgba(158, 206, 106, 0.18);
+            color: #9ece6a;
+            border: 1px solid rgba(158, 206, 106, 0.4);
+            border-radius: 9999px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .badge-fix {
+            background-color: rgba(247, 118, 142, 0.18);
+            color: #f7768e;
+            border: 1px solid rgba(247, 118, 142, 0.4);
+            border-radius: 9999px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .badge-perf {
+            background-color: rgba(125, 207, 255, 0.18);
+            color: #7dcfff;
+            border: 1px solid rgba(125, 207, 255, 0.4);
+            border-radius: 9999px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .badge-style {
+            background-color: rgba(187, 154, 247, 0.18);
+            color: #bb9af7;
+            border: 1px solid rgba(187, 154, 247, 0.4);
+            border-radius: 9999px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .badge-info {
+            background-color: rgba(122, 162, 247, 0.18);
+            color: #7aa2f7;
+            border: 1px solid rgba(122, 162, 247, 0.4);
+            border-radius: 9999px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .version-next-pill {
+            background: linear-gradient(135deg, rgba(122, 162, 247, 0.22), rgba(187, 154, 247, 0.22));
+            color: #7aa2f7;
+            border: 1px solid rgba(122, 162, 247, 0.45);
+            border-radius: 9999px;
+            padding: 3px 12px;
+            font-size: 12px;
+            font-weight: 800;
         }
 
         /* Content-Bereich & Modern Cards */
@@ -2632,8 +2693,31 @@ class SettingsWindow(Adw.ApplicationWindow):
         box.set_margin_bottom(16)
 
         cur_ver = self.config.get_version()
+        next_ver = self.config.get_next_version()
+        last_info = self.config.get_last_update_info()
+        last_date = last_info.get("date", "Erstinstallation")
 
-        # ── Hero Banner ──
+        def parse_commit_badge(message: str) -> tuple[str, str, str]:
+            msg_lower = message.lower()
+            if msg_lower.startswith("feat:") or msg_lower.startswith("feat("):
+                clean = re.sub(r"^feat(\([^)]+\))?:\s*", "", message)
+                return "✨ NEU", "badge-feat", clean
+            elif msg_lower.startswith("fix:") or msg_lower.startswith("fix("):
+                clean = re.sub(r"^fix(\([^)]+\))?:\s*", "", message)
+                return "🐛 FIX", "badge-fix", clean
+            elif msg_lower.startswith("perf:") or msg_lower.startswith("perf("):
+                clean = re.sub(r"^perf(\([^)]+\))?:\s*", "", message)
+                return "⚡ SPEED", "badge-perf", clean
+            elif msg_lower.startswith("style:") or "theme" in msg_lower:
+                clean = re.sub(r"^style(\([^)]+\))?:\s*", "", message)
+                return "🎨 THEME", "badge-style", clean
+            elif msg_lower.startswith("refactor:") or msg_lower.startswith("chore:"):
+                clean = re.sub(r"^(refactor|chore)(\([^)]+\))?:\s*", "", message)
+                return "🔧 UPDATE", "badge-info", clean
+            else:
+                return "📦 UPDATE", "badge-info", message
+
+        # ── 1. Hero Banner ───────────────────────────────────────
         hero_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
         hero_box.add_css_class("hero-banner")
 
@@ -2647,7 +2731,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         title_box.append(title_lbl)
         title_box.append(status_badge)
 
-        sub_lbl = Gtk.Label(label="Automatische Update-Prüfung via GitHub & One-Click System-Synchronisation")
+        sub_lbl = Gtk.Label(label=f"Installiert: v{cur_ver} • Letzte Aktualisierung: {last_date}")
         sub_lbl.add_css_class("hero-subtitle")
         sub_lbl.set_halign(Gtk.Align.START)
 
@@ -2656,33 +2740,15 @@ class SettingsWindow(Adw.ApplicationWindow):
         hero_box.append(hero_text)
         box.append(hero_box)
 
-        # ── Update-Status Karte ──
-        status_group = Adw.PreferencesGroup(
-            title="Versions- & Update-Status",
-            description="Überprüfe den aktuellen Stand mit dem offiziellen GitHub-Repository",
+        # ── 2. Online Update-Prüfung & GitHub Status ──────────────
+        check_group = Adw.PreferencesGroup(
+            title="Online-Aktualisierungen (GitHub)",
+            description="Überprüfe das offizielle Repository auf neue Features, Fehlerbehebungen und Themes",
         )
-
-        ver_row = Adw.ActionRow(
-            title=f"Installierte Version: v{cur_ver}",
-            subtitle="Startet bei 1.0 und erhöht sich nach jedem erfolgreichen Update automatisch um 0.1",
-        )
-        ver_badge = Gtk.Label(label=f"v{cur_ver}")
-        ver_badge.add_css_class("hero-badge")
-        ver_row.add_suffix(ver_badge)
-        status_group.add(ver_row)
-
-        repo_row = Adw.ActionRow(
-            title="GitHub Repository",
-            subtitle="https://github.com/venox21/arch-hyprland (origin/main)",
-        )
-        repo_badge = Gtk.Label(label="origin/main")
-        repo_badge.add_css_class("hero-badge")
-        repo_row.add_suffix(repo_badge)
-        status_group.add(repo_row)
 
         check_row = Adw.ActionRow(
-            title="Update-Prüfung",
-            subtitle="Klicke auf 'Auf Updates prüfen', um nach neuen Versionen zu suchen",
+            title="Update-Status",
+            subtitle="Klicke auf 'Jetzt prüfen', um nach neuen Versionen zu suchen",
         )
         spinner = Gtk.Spinner()
         spinner.set_spinning(False)
@@ -2694,36 +2760,71 @@ class SettingsWindow(Adw.ApplicationWindow):
         check_badge = Gtk.Label(label="Bereit zur Prüfung")
         check_badge.add_css_class("hero-badge")
         check_row.add_suffix(check_badge)
-        status_group.add(check_row)
 
-        # Changelog-Container (anfänglich unsichtbar)
-        changelog_row = Adw.ActionRow(
-            title="Verfügbare Aktualisierungen auf GitHub",
-            subtitle="Neue Änderungen in origin/main",
+        check_btn = Gtk.Button(label="Jetzt prüfen", valign=Gtk.Align.CENTER)
+        check_row.add_suffix(check_btn)
+        check_row.set_activatable_widget(check_btn)
+        check_group.add(check_row)
+
+        # Container für verfügbare Neuerungen auf GitHub (vor dem Update)
+        incoming_group = Adw.PreferencesGroup(
+            title="Verfügbare Neuerungen im nächsten Update",
+            description=f"Änderungen auf GitHub für die kommende Version v{next_ver}",
         )
-        changelog_row.set_visible(False)
-        status_group.add(changelog_row)
+        incoming_group.set_visible(False)
 
-        box.append(status_group)
+        box.append(check_group)
+        box.append(incoming_group)
 
-        # ── Aktionen Gruppe ──
+        # ── 3. Was wurde im letzten Update aktualisiert? ──────────
+        last_group = Adw.PreferencesGroup(
+            title=f"Im letzten Update aktualisiert (Version {cur_ver})",
+            description=f"Übersicht der eingerichteten Module und Fehlerbehebungen ({last_date})",
+        )
+
+        # Module-Übersicht
+        components = last_info.get("components", [])
+        for comp in components[:6]:
+            c_row = Adw.ActionRow(
+                title=comp.get("name", ""),
+                subtitle=comp.get("desc", ""),
+            )
+            c_icon = comp.get("icon", "emblem-ok-symbolic")
+            c_row.set_icon_name(c_icon)
+            c_badge = Gtk.Label(label=comp.get("status", "Aktuell"))
+            c_badge.add_css_class("hero-badge")
+            c_row.add_suffix(c_badge)
+            last_group.add(c_row)
+
+        # Letzte Commits / Änderungen
+        commits = last_info.get("commits", [])
+        if commits:
+            commits_header = Adw.ActionRow(
+                title="Letzte Fehlerbehebungen & Funktions-Updates",
+                subtitle="Ausgewählte Änderungen der aktuellen Version",
+            )
+            last_group.add(commits_header)
+
+            for c_msg in commits[:5]:
+                b_text, b_css, clean_msg = parse_commit_badge(c_msg)
+                c_item_row = Adw.ActionRow(title=clean_msg)
+                badge_lbl = Gtk.Label(label=b_text)
+                badge_lbl.add_css_class(b_css)
+                badge_lbl.set_valign(Gtk.Align.CENTER)
+                c_item_row.add_prefix(badge_lbl)
+                last_group.add(c_item_row)
+
+        box.append(last_group)
+
+        # ── 4. Aktionen & Changelog ──────────────────────────────
         actions_group = Adw.PreferencesGroup(
             title="Update-Aktionen",
-            description="Prüfe online auf Neuerungen oder führe das System-Update aus",
+            description="System aktualisieren oder detailliertes Änderungsprotokoll einsehen",
         )
-
-        check_action = Adw.ActionRow(
-            title="Auf Updates prüfen",
-            subtitle="Vergleicht lokale Commits mit GitHub origin/main",
-        )
-        check_btn = Gtk.Button(label="Jetzt prüfen", valign=Gtk.Align.CENTER)
-        check_action.add_suffix(check_btn)
-        check_action.set_activatable_widget(check_btn)
-        actions_group.add(check_action)
 
         update_action = Adw.ActionRow(
-            title="System aktualisieren & synchronisieren",
-            subtitle="Führt update.sh im Terminal aus und erhöht die Versionsnummer um 0.1",
+            title=f"System aktualisieren (Ziel: v{next_ver})",
+            subtitle="Führt update.sh aus, synchronisiert alle Konfigurationen und zählt die Version um +0.1 hoch",
         )
         update_btn = Gtk.Button(label="Update ausführen", valign=Gtk.Align.CENTER)
         update_btn.add_css_class("suggested-action")
@@ -2731,9 +2832,19 @@ class SettingsWindow(Adw.ApplicationWindow):
         update_action.set_activatable_widget(update_btn)
         actions_group.add(update_action)
 
+        changelog_action = Adw.ActionRow(
+            title="Vollständiges Änderungsprotokoll",
+            subtitle="Alle historischen Neuerungen, Layouts und Features aus CHANGELOG.md anzeigen",
+        )
+        changelog_btn = Gtk.Button(label="Changelog anzeigen", valign=Gtk.Align.CENTER)
+        changelog_action.add_suffix(changelog_btn)
+        changelog_action.set_activatable_widget(changelog_btn)
+        actions_group.add(changelog_action)
+
         box.append(actions_group)
 
-        # Callback für Update-Prüfung im Hintergrund-Thread
+        # ── Callbacks ────────────────────────────────────────────
+
         def on_check_clicked(_):
             check_btn.set_sensitive(False)
             spinner.set_visible(True)
@@ -2757,21 +2868,32 @@ class SettingsWindow(Adw.ApplicationWindow):
                         check_badge.set_label("Update verfügbar!")
                         check_badge.remove_css_class("hero-badge")
                         check_badge.add_css_class("status-warn")
-                        status_badge.set_label("Update verfügbar")
-                        status_badge.remove_css_class("hero-badge")
-                        status_badge.add_css_class("status-warn")
 
+                        status_badge.set_label(f"v{cur_ver} ➔ v{next_ver} verfügbar!")
+                        status_badge.remove_css_class("hero-badge")
+                        status_badge.add_css_class("version-next-pill")
+
+                        # Incoming Group füllen
                         changes = res.get("changelog", [])
                         if changes:
-                            changelog_row.set_subtitle("\n".join(f"• {c}" for c in changes[:5]))
-                            changelog_row.set_visible(True)
+                            # Alte Zeilen entfernen
+                            incoming_group.set_visible(True)
+                            for c_msg in changes[:6]:
+                                b_text, b_css, clean_msg = parse_commit_badge(c_msg)
+                                in_row = Adw.ActionRow(title=clean_msg)
+                                in_badge = Gtk.Label(label=b_text)
+                                in_badge.add_css_class(b_css)
+                                in_badge.set_valign(Gtk.Align.CENTER)
+                                in_row.add_prefix(in_badge)
+                                incoming_group.add(in_row)
 
+                        update_btn.set_label(f"Jetzt auf v{next_ver} aktualisieren")
                         update_btn.add_css_class("suggested-action")
                     elif res.get("success"):
                         check_badge.set_label("Aktuell")
                         check_badge.remove_css_class("hero-badge")
                         check_badge.add_css_class("status-ok")
-                        changelog_row.set_visible(False)
+                        incoming_group.set_visible(False)
                     else:
                         check_badge.set_label("Offline / Fehler")
                         check_badge.remove_css_class("hero-badge")
@@ -2784,7 +2906,6 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         check_btn.connect("clicked", on_check_clicked)
 
-        # Update ausführen Callback
         def on_update_clicked(_):
             repo = self.config.get_repo_path()
             repo_str = str(repo) if repo else "${HOME}/Desktop/hyprland/tokyo-hypr-dots"
@@ -2797,6 +2918,24 @@ class SettingsWindow(Adw.ApplicationWindow):
             )
 
         update_btn.connect("clicked", on_update_clicked)
+
+        def on_changelog_clicked(_):
+            highlights = self.config.get_recent_changelog()
+            lines = []
+            for h in highlights:
+                t = h.get("title", "")
+                d = h.get("description", "")
+                lines.append(f"• {t}\n  {d[:130]}...")
+            body_text = "\n\n".join(lines) if lines else "Keine Highlights gefunden."
+
+            dialog = Adw.AlertDialog(
+                heading="Tokyo Night – Versions-Highlights",
+                body=body_text,
+            )
+            dialog.add_response("close", "Schließen")
+            dialog.present(self)
+
+        changelog_btn.connect("clicked", on_changelog_clicked)
 
         return box
 

@@ -1774,3 +1774,98 @@ return M
                 "changelog": [],
             }
 
+    def get_next_version(self) -> str:
+        """Berechnet die nächste Versionsnummer (+0.1)."""
+        curr = self.get_version()
+        try:
+            val = float(curr)
+            return f"{val + 0.1:.1f}"
+        except ValueError:
+            return "1.1"
+
+    def get_last_update_info(self) -> dict:
+        """Liest die Zusammenfassung des letzten Updates aus last_update.json."""
+        update_file = self.hypr_dir / "last_update.json"
+        if update_file.is_file():
+            try:
+                with open(update_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        return data
+            except (json.JSONDecodeError, OSError):
+                pass
+
+        cur_ver = self.get_version()
+        repo = self.get_repo_path()
+        commits = []
+        if repo and (repo / ".git").is_dir():
+            try:
+                res = subprocess.run(
+                    ["git", "log", "-n", "5", "--pretty=format:%s"],
+                    cwd=str(repo),
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                )
+                if res.returncode == 0 and res.stdout.strip():
+                    commits = [c.strip() for c in res.stdout.strip().splitlines() if c.strip()]
+            except Exception:
+                pass
+
+        return {
+            "version": cur_ver,
+            "previous_version": cur_ver,
+            "date": "Erstinstallation / Vorheriges Release",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "commits": commits or [
+                "feat: Tokyo Shot Screenshot-Hub & Annotation-Editor",
+                "feat: TUI App-Installer mit Checkbox-Auswahl",
+                "feat: Versionsanzeige & Update-Center",
+                "fix: Shell Re-Exec und Dateiberechtigungen korrigiert",
+            ],
+            "components": [
+                {"name": "Hyprland Konfiguration & Lua-Skripte", "status": "Aktuell", "icon": "preferences-desktop-display-symbolic"},
+                {"name": "Tokyo Shot Screenshot-Hub & Editor", "status": "Bereit", "icon": "camera-photo-symbolic"},
+                {"name": "TUI App-Installer (pacman & yay)", "status": "Bereit", "icon": "system-software-install-symbolic"},
+                {"name": "Hardware- & Treiber-Assistent", "status": "Aktiv", "icon": "preferences-system-devices-symbolic"},
+                {"name": "Waybar Statusleiste & Layouts (Crystal/Classic)", "status": "Synchronisiert", "icon": "view-app-grid-symbolic"},
+                {"name": "SwayNC Kontrollzentrum & Tokyo CSS", "status": "Aktiv", "icon": "preferences-system-notifications-symbolic"},
+                {"name": "Einstellungs-App & Update-Zentrum", "status": "Aktiv", "icon": "system-software-update-symbolic"}
+            ],
+        }
+
+    def get_recent_changelog(self) -> list[dict]:
+        """Liest die wichtigsten Highlights aus CHANGELOG.md aus."""
+        repo = self.get_repo_path()
+        changelog_file = None
+        if repo:
+            candidate = repo / "CHANGELOG.md"
+            if candidate.is_file():
+                changelog_file = candidate
+
+        if not changelog_file:
+            local_cand = Path(__file__).resolve().parent.parent / "CHANGELOG.md"
+            if local_cand.is_file():
+                changelog_file = local_cand
+
+        if not changelog_file or not changelog_file.is_file():
+            return []
+
+        try:
+            content = changelog_file.read_text(encoding="utf-8")
+            items = []
+            pattern = re.compile(r"^[*-]\s+\*\*([^*]+)\*\*(?:\s*\(([^)]+)\))?:\s*(.+)$", re.MULTILINE)
+            for match in pattern.finditer(content):
+                title, path, desc = match.groups()
+                items.append({
+                    "title": title.strip(),
+                    "path": path.strip() if path else "",
+                    "description": desc.strip(),
+                })
+                if len(items) >= 8:
+                    break
+            return items
+        except Exception:
+            return []
+
+

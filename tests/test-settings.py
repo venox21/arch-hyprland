@@ -356,6 +356,7 @@ class TestConfigManager(unittest.TestCase):
         # Wenn Version-Datei existiert
         (self.cm.hypr_dir / "VERSION").write_text("1.3\n", encoding="utf-8")
         self.assertEqual(self.cm.get_version(), "1.3")
+        self.assertEqual(self.cm.get_next_version(), "1.4")
 
         # Repo-Pfad Ermittlung testen
         repo = self.cm.get_repo_path()
@@ -366,6 +367,16 @@ class TestConfigManager(unittest.TestCase):
         self.assertIn("current_version", res)
         self.assertIn("update_available", res)
         self.assertIn("message", res)
+
+        # Last-Update-Info Test
+        info = self.cm.get_last_update_info()
+        self.assertIn("version", info)
+        self.assertIn("components", info)
+        self.assertGreater(len(info["components"]), 0)
+
+        # Changelog-Highlights Test
+        highlights = self.cm.get_recent_changelog()
+        self.assertIsInstance(highlights, list)
 
     def test_theme_palettes(self):
         """Tokyo Night Akzent-Paletten prüfen und anwenden."""
