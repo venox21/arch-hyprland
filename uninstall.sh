@@ -79,6 +79,9 @@ if confirm "Tokyo Night Konfigurationen entfernen?"; then
         "${HOME}/.local/share/applications/tokyo-shot.desktop"
         "${HOME}/.local/share/applications/tokyo-app-installer.desktop"
         "${HOME}/.local/share/applications/tokyo-cleaner.desktop"
+        "${HOME}/.local/share/applications/tokyo-hardware-check.desktop"
+        "${CONFIG_DIR}/hypr/nvidia.conf"
+        "${CONFIG_DIR}/hypr/nvidia.lua"
         "${CONFIG_DIR}/hypr/hyprlock.conf"
         "${CONFIG_DIR}/hypr/hyprpaper.conf"
     )

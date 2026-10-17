@@ -152,6 +152,7 @@ OTHER_FILES=(
     "assets/desktop/tokyo-shot.desktop"
     "assets/desktop/tokyo-app-installer.desktop"
     "assets/desktop/tokyo-cleaner.desktop"
+    "assets/desktop/tokyo-hardware-check.desktop"
 )
 
 for f in "${OTHER_FILES[@]}"; do
@@ -170,6 +171,7 @@ SCRIPTS=(
     screenshot.sh tokyo-shot power-menu.sh clipboard.sh wallpaper.sh
     waybar-restart.sh backup.sh diagnostics.sh settings.sh hotkeys.sh
     control-center.sh autostart.sh app-installer.sh gamemode.sh clean-system.sh
+    hardware-check.sh
 )
 
 for s in "${SCRIPTS[@]}"; do
@@ -232,7 +234,7 @@ done
 echo ""
 echo -e "${BLUE}── Installations-Skripte ──${NC}"
 
-for script in install.sh uninstall.sh restore-backup.sh doctor.sh update.sh install-apps.sh; do
+for script in install.sh uninstall.sh restore-backup.sh doctor.sh update.sh install-apps.sh hardware-check.sh; do
     FILE="${PROJECT_DIR}/${script}"
     if [[ -f "${FILE}" ]]; then
         pass "${script} existiert"

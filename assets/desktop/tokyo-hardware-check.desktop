@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Hardware & Treiber Check
+GenericName=Hardware & Driver Assistant
+Comment=Automatische Erkennung und Treiberkonfiguration für CPU, GPU und Laptop
+Exec=kitty --class tokyo-hardware-check --title "Hardware & Treiber Check" -e bash -c "if [[ -x \"${HOME}/.config/hypr/scripts/hardware-check.sh\" ]]; then \"${HOME}/.config/hypr/scripts/hardware-check.sh\"; else bash \"$(dirname \"$(readlink -f \"$0\" 2>/dev/null || echo \"$HOME\")\")/../scripts/hardware-check.sh\"; fi; echo ''; read -r -p 'Drücke Enter zum Schließen...' _dummy"
+Icon=preferences-system-devices
+Terminal=false
+Type=Application
+Categories=System;Settings;HardwareSettings;Utility;
+Keywords=hardware;driver;treiber;gpu;nvidia;amd;intel;cpu;laptop;battery;hyprland;

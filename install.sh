@@ -279,6 +279,18 @@ else
 fi
 
 # ══════════════════════════════════════════════════════════════
+# Phase 3b: Automatischer Hardware- & Treiber-Check
+# ══════════════════════════════════════════════════════════════
+header "Phase 3b: Automatischer Hardware- & Treiber-Check"
+if confirm "Hardware- & Treiber-Check jetzt durchführen (CPU Microcode, GPU & Akku)?"; then
+    if [[ -f "${SCRIPT_DIR}/scripts/hardware-check.sh" ]]; then
+        bash "${SCRIPT_DIR}/scripts/hardware-check.sh"
+    fi
+else
+    info "Hardware-Check übersprungen. Du kannst ihn jederzeit mit ./hardware-check.sh starten."
+fi
+
+# ══════════════════════════════════════════════════════════════
 # Phase 4: Konfigurationen kopieren
 # ══════════════════════════════════════════════════════════════
 header "Phase 4: Konfigurationen installieren"
@@ -393,7 +405,7 @@ mkdir -p "${HOME}/.local/share/applications"
 if [[ -d "${SCRIPT_DIR}/assets/desktop" ]]; then
     cp -f "${SCRIPT_DIR}/assets/desktop/"*.desktop "${HOME}/.local/share/applications/" 2>/dev/null || true
     update-desktop-database "${HOME}/.local/share/applications" 2>/dev/null || true
-    success "Desktop-Einträge registriert (Tokyo Shot, App Installer)"
+    success "Desktop-Einträge registriert (Tokyo Shot, App Installer, System Cleaner, Hardware-Check)"
 fi
 
 # GTK Theme & Design

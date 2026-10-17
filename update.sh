@@ -147,6 +147,10 @@ if [[ ${#MISSING_PKGS[@]} -gt 0 ]]; then
     echo -e "  Installieren mit: ${BOLD}sudo pacman -S --needed ${MISSING_PKGS[*]}${NC}"
 fi
 
+if [[ -f "${REPO_DIR}/scripts/hardware-check.sh" ]]; then
+    echo -e "  ${BLUE}Tipp:${NC} Hardware- & Treiber-Check jederzeit ausführen mit: ${BOLD}./hardware-check.sh${NC}"
+fi
+
 echo -e "${BLUE}[5/5] Dienste neu laden...${NC}"
 # SwayNC neu laden / starten
 if command -v swaync-client &>/dev/null && pgrep -x swaync &>/dev/null; then

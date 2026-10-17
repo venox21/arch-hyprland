@@ -14,6 +14,7 @@ Ein vollständiges, minimalistisches Hyprland-Desktop-Setup im Tokyo-Night-Stil 
 - 🚀 **Rofi** – App-Launcher und Power-Menü
 - 📋 **Clipboard** – Zwischenablage-Historie mit Suche
 - 📸 **Tokyo Shot (Screenshot-Manager & Editor)** – Eigenes, modernes GTK4/libadwaita Tool mit Live-Editor (Stift, Pfeile, Rechteck, Zensieren, Bild-im-Bild-Pin), Verzögerungstimer und automatischer Zwischenablage
+- 🛠 **Hardware- & Treiber-Check (`./hardware-check.sh`)** – Automatische, idempotente Erkennung von CPU (AMD/Intel Microcode), GPU (NVIDIA DKMS, Wayland-Flags, Mesa/RADV/ANV) und Laptop-Batteriemanagement (`brightnessctl`, `auto-cpufreq`/`tlp`)
 - 🔐 **SDDM** – Anmeldebildschirm im Tokyo Night Design
 - 💾 **Backup & Restore** – Sichere Installation mit Wiederherstellung
 - 🧪 **Automatisierte Tests** – Konfigurations-, Installations- und Einstellungstests
@@ -55,6 +56,9 @@ Das Installationsskript:
 ```bash
 # Diagnose ausführen
 ./doctor.sh
+
+# Hardware- & Treiber-Check ausführen (CPU Microcode, GPU, Laptop-Akku)
+./hardware-check.sh
 
 # Beliebte Programme installieren (optional)
 ./install-apps.sh

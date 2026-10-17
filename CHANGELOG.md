@@ -27,6 +27,13 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
   - Bereinigt Pacman- & yay/AUR-Caches (`paccache -rk2`), entfernt verwaiste Pakete (`pacman -Qtdq`), stutzt Journal-Logs und Thumbnail-Caches
   - Führt Systemd-Gesundheitsprüfung durch und berechnet freigegebenen Speicherplatz
   - Direkt über das Kontrollzentrum oder als App in Rofi startbar
+- **Automatischer Hardware- & Treiber-Check** (`hardware-check.sh`, `scripts/hardware-check.sh`, Rofi):
+  - Idempotente Erkennung und Konfiguration: sowohl bei Erstinstallation (`install.sh`) als auch bei System-Updates (`update.sh`) sicher ausführbar
+  - Visuelles Live-Feedback mit ANSI-Farben / `gum`-Spinnern (`[PRÜFE]`, `[AKTIV]`, `[INSTALLIERE]`, `[FERTIG]`)
+  - CPU-Erkennung (AMD vs. Intel) mit automatischer Microcode-Installation (`amd-ucode`, `intel-ucode`)
+  - GPU-Erkennung via `lspci`: automatische NVIDIA-Konfiguration (`nvidia-dkms`, Kernel-Header, `[multilib]` Aktivierung, `lib32-nvidia-utils`, `libva-nvidia-driver`), Setzen der 4 Hyprland-Env-Variablen ohne Duplikate (in `nvidia.conf` und `nvidia.lua`) sowie Mesa/RADV/ANV-Treiber für AMD/Intel
+  - Laptop- & Akku-Erkennung (`/sys/class/power_supply/`): automatische `brightnessctl`-Bereitstellung und interaktive Auswahl bzw. Status-Check für `auto-cpufreq` / `tlp`
+  - Detaillierter Abschluss-Report mit tabellarischer Zusammenfassung aller Komponenten und Statusänderungen
 
 ### Geändert
 - **SDDM-Anmeldebildschirm komplett neu gestaltet** (`assets/sddm/tokyo-night/Main.qml`): große, dünne Uhr, Avatar mit Benutzername (Benutzerwechsel bei mehreren Konten), Passwortfeld als Pille mit Pfeil-Button, Shake-Animation bei falschem Passwort, Feststelltasten-Warnung, Ladeindikator, sanfter Ein-/Ausblend-Übergang, Sitzungswähler, Tastaturlayout-Umschalter sowie Standby/Neustart/Herunterfahren. Benötigt keine zusätzlichen Qt-Module.
