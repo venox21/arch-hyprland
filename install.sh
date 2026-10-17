@@ -37,10 +37,27 @@ header() {
     echo ""
 }
 
+# Standard-Sprache & Tastaturlayout
+SYSTEM_LANG="de"
+SYSTEM_KB="de"
+LOCALE_CODE="de_DE.UTF-8"
+
+t() {
+    if [[ "${SYSTEM_LANG:-de}" == "en" ]]; then
+        echo "$2"
+    else
+        echo "$1"
+    fi
+}
+
 confirm() {
     local prompt="$1"
     local response
-    echo -en "${YELLOW}${prompt} [j/N] ${NC}"
+    if [[ "${SYSTEM_LANG:-de}" == "en" ]]; then
+        echo -en "${YELLOW}${prompt} [y/N] ${NC}"
+    else
+        echo -en "${YELLOW}${prompt} [j/N] ${NC}"
+    fi
     read -r response
     [[ "${response,,}" =~ ^(j|ja|y|yes)$ ]]
 }
@@ -63,28 +80,70 @@ if [[ "${EUID}" -eq 0 ]]; then
     fatal "Dieses Skript darf NICHT als Root ausgeführt werden.\nVerwende: ./install.sh (ohne sudo)"
 fi
 
+# ── Phase 0: Sprache & Tastatur / Language & Keyboard ────────
+echo ""
+echo -e "${MAGENTA}${BOLD}── Sprachauswahl / Language Selection ──${NC}"
+echo -e "  ${CYAN}1)${NC} Deutsch (Standard / German)"
+echo -e "  ${CYAN}2)${NC} English"
+echo ""
+echo -en "${YELLOW}Wähle Sprache / Select language [1/2] (Standard: 1): ${NC}"
+read -r LANG_INPUT
+LANG_INPUT="${LANG_INPUT:-1}"
+LANG_INPUT="$(echo "${LANG_INPUT}" | tr '[:upper:]' '[:lower:]' | xargs)"
+
+if [[ "${LANG_INPUT}" == "2" || "${LANG_INPUT}" == "en" || "${LANG_INPUT}" == "english" ]]; then
+    SYSTEM_LANG="en"
+    LOCALE_CODE="en_US.UTF-8"
+    DEFAULT_KB="us"
+    info "Selected language: English"
+else
+    SYSTEM_LANG="de"
+    LOCALE_CODE="de_DE.UTF-8"
+    DEFAULT_KB="de"
+    info "Gewählte Sprache: Deutsch"
+fi
+
+if [[ "${SYSTEM_LANG}" == "en" ]]; then
+    echo -en "${YELLOW}Select keyboard layout [us/de] (Default: ${DEFAULT_KB}): ${NC}"
+else
+    echo -en "${YELLOW}Tastaturlayout wählen [de/us] (Standard: ${DEFAULT_KB}): ${NC}"
+fi
+read -r KB_INPUT
+KB_INPUT="${KB_INPUT:-${DEFAULT_KB}}"
+KB_INPUT="$(echo "${KB_INPUT}" | tr '[:upper:]' '[:lower:]' | xargs)"
+if [[ "${KB_INPUT}" != "de" && "${KB_INPUT}" != "us" ]]; then
+    KB_INPUT="${DEFAULT_KB}"
+fi
+SYSTEM_KB="${KB_INPUT}"
+
+if [[ "${SYSTEM_LANG}" == "en" ]]; then
+    success "Keyboard layout set to: ${SYSTEM_KB}"
+else
+    success "Tastaturlayout gesetzt auf: ${SYSTEM_KB}"
+fi
+
 # Arch Linux prüfen
-header "Phase 1: Systemprüfung"
+header "$(t 'Phase 1: Systemprüfung' 'Phase 1: System Verification')"
 
 if [[ ! -f /etc/arch-release ]]; then
-    fatal "Kein Arch Linux erkannt. Dieses Skript ist nur für Arch Linux."
+    fatal "$(t 'Kein Arch Linux erkannt. Dieses Skript ist nur für Arch Linux.' 'Arch Linux not detected. This script is only for Arch Linux.')"
 fi
-success "Arch Linux erkannt"
+success "$(t 'Arch Linux erkannt' 'Arch Linux detected')"
 
 # sudo-Zugriff prüfen
 if ! sudo -v 2>/dev/null; then
-    fatal "sudo-Zugriff erforderlich. Stelle sicher, dass dein Benutzer sudo verwenden kann."
+    fatal "$(t 'sudo-Zugriff erforderlich. Stelle sicher, dass dein Benutzer sudo verwenden kann.' 'sudo access required. Make sure your user has sudo permissions.')"
 fi
-success "sudo-Zugriff verfügbar"
+success "$(t 'sudo-Zugriff verfügbar' 'sudo access available')"
 
 # Internetverbindung prüfen
 if ! ping -c 1 archlinux.org &>/dev/null; then
-    warn "Keine Internetverbindung erkannt. Die Paketinstallation könnte fehlschlagen."
-    if ! confirm "Trotzdem fortfahren?"; then
+    warn "$(t 'Keine Internetverbindung erkannt. Die Paketinstallation könnte fehlschlagen.' 'No internet connection detected. Package installation might fail.')"
+    if ! confirm "$(t 'Trotzdem fortfahren?' 'Continue anyway?')"; then
         exit 0
     fi
 else
-    success "Internetverbindung verfügbar"
+    success "$(t 'Internetverbindung verfügbar' 'Internet connection available')"
 fi
 
 # Bestehende Hyprland-Installation prüfen
@@ -92,9 +151,9 @@ HYPRLAND_INSTALLED=false
 if pacman -Qi hyprland &>/dev/null; then
     HYPRLAND_INSTALLED=true
     HYPR_VERSION="$(pacman -Qi hyprland | grep "^Version" | awk '{print $3}')"
-    success "Hyprland bereits installiert: ${HYPR_VERSION}"
+    success "$(t "Hyprland bereits installiert: ${HYPR_VERSION}" "Hyprland already installed: ${HYPR_VERSION}")"
 else
-    info "Hyprland wird installiert"
+    info "$(t 'Hyprland wird installiert' 'Hyprland will be installed')"
 fi
 
 # Bestehenden Display-Manager prüfen
@@ -107,20 +166,20 @@ for dm in sddm gdm lightdm ly greetd; do
 done
 
 if [[ -n "${ACTIVE_DM}" ]] && [[ "${ACTIVE_DM}" != "sddm" ]]; then
-    warn "Aktiver Display-Manager: ${ACTIVE_DM}"
-    warn "SDDM wird als Ersatz konfiguriert."
-    if ! confirm "Soll ${ACTIVE_DM} deaktiviert und SDDM aktiviert werden?"; then
-        warn "SDDM wird nicht aktiviert. Du kannst dies später manuell tun."
+    warn "$(t "Aktiver Display-Manager: ${ACTIVE_DM}" "Active display manager: ${ACTIVE_DM}")"
+    warn "$(t 'SDDM wird als Ersatz konfiguriert.' 'SDDM will be configured as replacement.')"
+    if ! confirm "$(t "Soll ${ACTIVE_DM} deaktiviert und SDDM aktiviert werden?" "Disable ${ACTIVE_DM} and enable SDDM?")"; then
+        warn "$(t 'SDDM wird nicht aktiviert. Du kannst dies später manuell tun.' 'SDDM will not be enabled. You can do this manually later.')"
         SKIP_SDDM_ENABLE=true
     fi
 elif [[ "${ACTIVE_DM}" == "sddm" ]]; then
-    success "SDDM bereits aktiv"
+    success "$(t 'SDDM bereits aktiv' 'SDDM already active')"
 fi
 
 # ══════════════════════════════════════════════════════════════
 # Phase 2: Backup
 # ══════════════════════════════════════════════════════════════
-header "Phase 2: Backup vorhandener Konfigurationen"
+header "$(t 'Phase 2: Backup vorhandener Konfigurationen' 'Phase 2: Backup Existing Configurations')"
 
 mkdir -p "${BACKUP_DIR}"
 
@@ -147,21 +206,21 @@ for target in "${BACKUP_TARGETS[@]}"; do
         BASENAME="$(basename "${target}")"
         cp -a "${target}" "${BACKUP_DIR}/${BASENAME}"
         echo "${target}" >> "${MANIFEST}"
-        success "Gesichert: ${target}"
+        success "$(t "Gesichert: ${target}" "Backed up: ${target}")"
         BACKED_UP=$((BACKED_UP + 1))
     fi
 done
 
 if [[ ${BACKED_UP} -gt 0 ]]; then
-    success "Backup erstellt: ${BACKUP_DIR} (${BACKED_UP} Elemente)"
+    success "$(t "Backup erstellt: ${BACKUP_DIR} (${BACKED_UP} Elemente)" "Backup created: ${BACKUP_DIR} (${BACKED_UP} items)")"
 else
-    info "Keine vorhandenen Konfigurationen zum Sichern"
+    info "$(t 'Keine vorhandenen Konfigurationen zum Sichern' 'No existing configurations to back up')"
 fi
 
 # ══════════════════════════════════════════════════════════════
 # Phase 3: Paketinstallation
 # ══════════════════════════════════════════════════════════════
-header "Phase 3: Paketinstallation"
+header "$(t 'Phase 3: Paketinstallation' 'Phase 3: Package Installation')"
 
 # Paketliste – nur offizielle Arch-Pakete
 PACKAGES=(
@@ -254,46 +313,46 @@ for pkg in "${PACKAGES[@]}"; do
 done
 
 if [[ ${#PACKAGES_TO_INSTALL[@]} -gt 0 ]]; then
-    info "Zu installierende Pakete (${#PACKAGES_TO_INSTALL[@]}):"
+    info "$(t "Zu installierende Pakete (${#PACKAGES_TO_INSTALL[@]}):" "Packages to install (${#PACKAGES_TO_INSTALL[@]}):")"
     for pkg in "${PACKAGES_TO_INSTALL[@]}"; do
         echo "    - ${pkg}"
     done
     echo ""
 
-    if confirm "Pakete installieren?"; then
-        info "Systemaktualisierung und Paketinstallation..."
+    if confirm "$(t 'Pakete installieren?' 'Install packages?')"; then
+        info "$(t 'Systemaktualisierung und Paketinstallation...' 'System update and package installation...')"
         if sudo pacman -Syu --needed --noconfirm "${PACKAGES_TO_INSTALL[@]}" 2>&1 | tee -a "${LOG_FILE}"; then
-            success "Alle Pakete erfolgreich installiert"
+            success "$(t 'Alle Pakete erfolgreich installiert' 'All packages successfully installed')"
         else
-            error "Einige Pakete konnten nicht installiert werden"
-            error "Prüfe ${LOG_FILE} für Details"
-            if ! confirm "Trotz Paketfehler fortfahren?"; then
+            error "$(t 'Einige Pakete konnten nicht installiert werden' 'Some packages could not be installed')"
+            error "$(t "Prüfe ${LOG_FILE} für Details" "Check ${LOG_FILE} for details")"
+            if ! confirm "$(t 'Trotz Paketfehler fortfahren?' 'Continue despite package errors?')"; then
                 exit 1
             fi
         fi
     else
-        warn "Paketinstallation übersprungen"
+        warn "$(t 'Paketinstallation übersprungen' 'Package installation skipped')"
     fi
 else
-    success "Alle Pakete bereits installiert"
+    success "$(t 'Alle Pakete bereits installiert' 'All packages already installed')"
 fi
 
 # ══════════════════════════════════════════════════════════════
 # Phase 3b: Automatischer Hardware- & Treiber-Check
 # ══════════════════════════════════════════════════════════════
-header "Phase 3b: Automatischer Hardware- & Treiber-Check"
-if confirm "Hardware- & Treiber-Check jetzt durchführen (CPU Microcode, GPU & Akku)?"; then
+header "$(t 'Phase 3b: Automatischer Hardware- & Treiber-Check' 'Phase 3b: Automatic Hardware & Driver Check')"
+if confirm "$(t 'Hardware- & Treiber-Check jetzt durchführen (CPU Microcode, GPU & Akku)?' 'Run Hardware & Driver Check now (CPU microcode, GPU & battery)?')"; then
     if [[ -f "${SCRIPT_DIR}/scripts/hardware-check.sh" ]]; then
         bash "${SCRIPT_DIR}/scripts/hardware-check.sh"
     fi
 else
-    info "Hardware-Check übersprungen. Du kannst ihn jederzeit mit ./hardware-check.sh starten."
+    info "$(t 'Hardware-Check übersprungen. Du kannst ihn jederzeit mit ./hardware-check.sh starten.' 'Hardware check skipped. You can run it anytime with ./hardware-check.sh.')"
 fi
 
 # ══════════════════════════════════════════════════════════════
 # Phase 4: Konfigurationen kopieren
 # ══════════════════════════════════════════════════════════════
-header "Phase 4: Konfigurationen installieren"
+header "$(t 'Phase 4: Konfigurationen installieren' 'Phase 4: Install Configurations')"
 
 install_config() {
     local src="$1"
@@ -444,11 +503,60 @@ if [[ -d "${SCRIPT_DIR}/settings" ]]; then
     success "Einstellungs-App & Version v$(cat "${SCRIPT_DIR}/VERSION" 2>/dev/null || echo "1.0") installiert"
 fi
 
+# Tastaturlayout & Sprache auf installierte Konfiguration anwenden
+info "$(t 'Wende gewählte Sprache und Tastaturlayout an...' 'Applying selected language and keyboard layout...')"
+if [[ -f "${CONFIG_DIR}/hypr/input.lua" ]]; then
+    sed -i "s/kb_layout\s*=\s*\"[^\"]*\"/kb_layout  = \"${SYSTEM_KB}\"/" "${CONFIG_DIR}/hypr/input.lua" 2>/dev/null || true
+fi
+
+# Einstellungen initialisieren via Python ConfigManager
+if python3 -c "import sys; sys.path.insert(0, '${CONFIG_DIR}/hypr/settings'); from config_manager import ConfigManager; cm = ConfigManager(); cm.set_language('${SYSTEM_LANG}'); cm.update_setting('input', 'kb_layout', '${SYSTEM_KB}'); cm.save_input_settings({'kb_layout': '${SYSTEM_KB}'}, reload=False)" 2>/dev/null; then
+    success "$(t "Sprache (${SYSTEM_LANG}) und Tastaturlayout (${SYSTEM_KB}) erfolgreich angewendet" "Language (${SYSTEM_LANG}) and keyboard layout (${SYSTEM_KB}) successfully applied")"
+else
+    # Fallback für minimale Arch-Umgebungen
+    mkdir -p "${CONFIG_DIR}/hypr"
+    USER_SETTINGS_FILE="${CONFIG_DIR}/hypr/user_settings.json"
+    if [[ ! -f "${USER_SETTINGS_FILE}" ]]; then
+        cat <<EOF > "${USER_SETTINGS_FILE}"
+{
+  "general": {
+    "language": "${SYSTEM_LANG}"
+  },
+  "input": {
+    "kb_layout": "${SYSTEM_KB}"
+  }
+}
+EOF
+    fi
+    if [[ "${SYSTEM_LANG}" == "en" ]]; then
+        if [[ -f "${CONFIG_DIR}/swaync/config.json" ]]; then
+            sed -i 's/"text": "Kontrollzentrum"/"text": "Control Center"/g' "${CONFIG_DIR}/swaync/config.json" 2>/dev/null || true
+            sed -i 's/"button-text": "✕ Schließen"/"button-text": "✕ Close"/g' "${CONFIG_DIR}/swaync/config.json" 2>/dev/null || true
+            sed -i 's/"text": "Benachrichtigungen"/"text": "Notifications"/g' "${CONFIG_DIR}/swaync/config.json" 2>/dev/null || true
+            sed -i 's/󰖩  WLAN\\nGetrennt/󰖩  Wi-Fi\\nDisconnected/g' "${CONFIG_DIR}/swaync/config.json" 2>/dev/null || true
+            sed -i 's/󰂯  Bluetooth\\nGetrennt/󰂯  Bluetooth\\nDisconnected/g' "${CONFIG_DIR}/swaync/config.json" 2>/dev/null || true
+            sed -i 's/󰖔\\nNachtmodus/󰖔\\nNight Light/g' "${CONFIG_DIR}/swaync/config.json" 2>/dev/null || true
+            sed -i 's/󰂛\\nNicht stören/󰂛\\nDo Not Disturb/g' "${CONFIG_DIR}/swaync/config.json" 2>/dev/null || true
+            sed -i 's/󰀝\\nFlugmodus/󰀝\\nAirplane Mode/g' "${CONFIG_DIR}/swaync/config.json" 2>/dev/null || true
+            sed -i 's/󰔎\\nDunkelmodus/󰔎\\nDark Mode/g' "${CONFIG_DIR}/swaync/config.json" 2>/dev/null || true
+        fi
+        if [[ -f "${CONFIG_DIR}/waybar/config.jsonc" ]]; then
+            sed -i 's/"format-linked": "󰌷  Verbunden"/"format-linked": "󰌷  Connected"/g' "${CONFIG_DIR}/waybar/config.jsonc" 2>/dev/null || true
+            sed -i 's/"format-disconnected": "󰤭  Getrennt"/"format-disconnected": "󰤭  Disconnected"/g' "${CONFIG_DIR}/waybar/config.jsonc" 2>/dev/null || true
+            sed -i 's/"format-muted": "󰝟 Stumm"/"format-muted": "󰝟 Muted"/g' "${CONFIG_DIR}/waybar/config.jsonc" 2>/dev/null || true
+            sed -i 's/"format-source-muted": "󰍭 Stumm"/"format-source-muted": "󰍭 Muted"/g' "${CONFIG_DIR}/waybar/config.jsonc" 2>/dev/null || true
+            sed -i 's/"tooltip-format": "Einstellungen öffnen"/"tooltip-format": "Open Settings"/g' "${CONFIG_DIR}/waybar/config.jsonc" 2>/dev/null || true
+            sed -i 's/"tooltip-format": "Tastenkürzel anzeigen"/"tooltip-format": "View Shortcuts"/g' "${CONFIG_DIR}/waybar/config.jsonc" 2>/dev/null || true
+            sed -i 's/"tooltip-format": "Power-Menü"/"tooltip-format": "Power Menu"/g' "${CONFIG_DIR}/waybar/config.jsonc" 2>/dev/null || true
+        fi
+    fi
+fi
+
 # ══════════════════════════════════════════════════════════════
 # ══════════════════════════════════════════════════════════════
 # Phase 5: Wallpaper & JaKooLit Wallpaper-Bank
 # ══════════════════════════════════════════════════════════════
-header "Phase 5: Wallpaper & JaKooLit Wallpaper-Bank"
+header "$(t 'Phase 5: Wallpaper & JaKooLit Wallpaper-Bank' 'Phase 5: Wallpaper & JaKooLit Wallpaper Bank')"
 
 WALLPAPER_DIR="${CONFIG_DIR}/hypr/wallpapers"
 mkdir -p "${WALLPAPER_DIR}"
@@ -465,15 +573,15 @@ fi
 
 # JaKooLit Wallpaper-Bank Download
 if [[ ! -d "${WALLPAPER_DIR}/Wallpaper-Bank" ]]; then
-    if confirm "Möchtest du die JaKooLit Wallpaper-Bank herunterladen? (https://github.com/JaKooLit/Wallpaper-Bank, ~150+ Hintergründe)"; then
-        info "Lade JaKooLit Wallpaper-Bank herunter (git clone --depth 1)..."
+    if confirm "$(t 'Möchtest du die JaKooLit Wallpaper-Bank herunterladen? (https://github.com/JaKooLit/Wallpaper-Bank, ~150+ Hintergründe)' 'Would you like to download the JaKooLit Wallpaper Bank? (https://github.com/JaKooLit/Wallpaper-Bank, ~150+ wallpapers)')"; then
+        info "$(t 'Lade JaKooLit Wallpaper-Bank herunter (git clone --depth 1)...' 'Downloading JaKooLit Wallpaper Bank (git clone --depth 1)...')"
         if git clone --depth 1 https://github.com/JaKooLit/Wallpaper-Bank.git "${WALLPAPER_DIR}/Wallpaper-Bank" 2>/dev/null; then
-            success "JaKooLit Wallpaper-Bank erfolgreich installiert"
+            success "$(t 'JaKooLit Wallpaper-Bank erfolgreich installiert' 'JaKooLit Wallpaper Bank successfully installed')"
         else
-            warn "Download fehlgeschlagen. Du kannst sie jederzeit über SUPER+W nachladen."
+            warn "$(t 'Download fehlgeschlagen. Du kannst sie jederzeit über SUPER+W nachladen.' 'Download failed. You can load it anytime via SUPER+W.')"
         fi
     else
-        info "Wallpaper-Bank übersprungen. Du kannst sie jederzeit über SUPER+W oder Einstellungen nachladen."
+        info "$(t 'Wallpaper-Bank übersprungen. Du kannst sie jederzeit über SUPER+W oder Einstellungen nachladen.' 'Wallpaper Bank skipped. You can load it anytime via SUPER+W or Settings.')"
     fi
 else
     success "JaKooLit Wallpaper-Bank bereits vorhanden"
@@ -499,7 +607,7 @@ fi
 # ══════════════════════════════════════════════════════════════
 # Phase 6: SDDM-Theme
 # ══════════════════════════════════════════════════════════════
-header "Phase 6: SDDM-Theme"
+header "$(t 'Phase 6: SDDM-Theme' 'Phase 6: SDDM Theme')"
 
 SDDM_THEME_DIR="/usr/share/sddm/themes/tokyo-night"
 
@@ -532,9 +640,9 @@ else
 fi
 
 # ══════════════════════════════════════════════════════════════
-# Phase 7: Systemdienste
+# Phase 7: Systemdienste & Lokalisierung
 # ══════════════════════════════════════════════════════════════
-header "Phase 7: Systemdienste"
+header "$(t 'Phase 7: Systemdienste & Lokalisierung' 'Phase 7: System Services & Localization')"
 
 # SDDM aktivieren
 if [[ "${SKIP_SDDM_ENABLE:-false}" != "true" ]]; then
@@ -584,23 +692,56 @@ if [[ -f "${SCRIPT_DIR}/assets/sudoers/10-tokyo-timedate" ]]; then
 fi
 success "Berechtigungen für Uhrzeit & Zeitzone eingerichtet"
 
+# ── System-Locale & Tastaturlayout (Deutsch / Englisch) ───────
+info "$(t "Konfiguriere System-Locale (${LOCALE_CODE}) und Konsole (${SYSTEM_KB})..." "Configuring system locale (${LOCALE_CODE}) and console (${SYSTEM_KB})...")"
+
+# 1. /etc/locale.gen
+if [[ -f /etc/locale.gen ]]; then
+    if [[ "${SYSTEM_LANG}" == "de" ]]; then
+        sudo sed -i 's/^#\s*\(de_DE\.UTF-8 UTF-8\)/\1/' /etc/locale.gen 2>/dev/null || true
+        sudo sed -i 's/^#\s*\(en_US\.UTF-8 UTF-8\)/\1/' /etc/locale.gen 2>/dev/null || true
+    else
+        sudo sed -i 's/^#\s*\(en_US\.UTF-8 UTF-8\)/\1/' /etc/locale.gen 2>/dev/null || true
+        sudo sed -i 's/^#\s*\(de_DE\.UTF-8 UTF-8\)/\1/' /etc/locale.gen 2>/dev/null || true
+    fi
+    if command -v locale-gen &>/dev/null; then
+        sudo locale-gen 2>&1 | tee -a "${LOG_FILE}" || true
+    fi
+fi
+
+# 2. /etc/locale.conf & localectl
+if command -v localectl &>/dev/null; then
+    sudo localectl set-locale LANG="${LOCALE_CODE}" LC_COLLATE=C 2>/dev/null || true
+    sudo localectl set-keymap "${SYSTEM_KB}" 2>/dev/null || true
+fi
+
+# Fallback: /etc/locale.conf direkt schreiben
+echo -e "LANG=${LOCALE_CODE}\nLC_COLLATE=C" | sudo tee /etc/locale.conf > /dev/null
+
+# 3. User-Locale in ~/.config/locale.conf
+cat <<EOF > "${CONFIG_DIR}/locale.conf"
+LANG=${LOCALE_CODE}
+LC_ALL=${LOCALE_CODE}
+EOF
+success "$(t "System-Locale auf ${LOCALE_CODE} gesetzt" "System locale set to ${LOCALE_CODE}")"
+
 # Zsh als Standard-Shell setzen
 if [[ "$(basename "${SHELL}")" != "zsh" ]]; then
     ZSH_PATH="$(command -v zsh)"
     if [[ -n "${ZSH_PATH}" ]]; then
-        if confirm "Zsh als Standard-Shell setzen?"; then
+        if confirm "$(t 'Zsh als Standard-Shell setzen?' 'Set Zsh as default shell?')"; then
             chsh -s "${ZSH_PATH}"
-            success "Zsh als Standard-Shell gesetzt"
+            success "$(t 'Zsh als Standard-Shell gesetzt' 'Zsh set as default shell')"
         fi
     fi
 else
-    success "Zsh ist bereits die Standard-Shell"
+    success "$(t 'Zsh ist bereits die Standard-Shell' 'Zsh is already the default shell')"
 fi
 
 # ══════════════════════════════════════════════════════════════
 # Phase 8: Validierung
 # ══════════════════════════════════════════════════════════════
-header "Phase 8: Validierung"
+header "$(t 'Phase 8: Validierung' 'Phase 8: Validation')"
 
 ERRORS=0
 WARNINGS=0
@@ -672,14 +813,14 @@ done
 # ══════════════════════════════════════════════════════════════
 # Phase 9: Finaler Backup-Punkt
 # ══════════════════════════════════════════════════════════════
-header "Phase 9: Abschluss"
+header "$(t 'Phase 9: Abschluss' 'Phase 9: Completion')"
 
 # Finalen Installations-Backup-Punkt erstellen
 FINAL_BACKUP="${BACKUP_BASE}/post-install_${TIMESTAMP}"
 mkdir -p "${FINAL_BACKUP}"
 cp -a "${CONFIG_DIR}/hypr" "${FINAL_BACKUP}/" 2>/dev/null || true
 cp -a "${CONFIG_DIR}/waybar" "${FINAL_BACKUP}/" 2>/dev/null || true
-success "Finaler Backup-Punkt erstellt: ${FINAL_BACKUP}"
+success "$(t "Finaler Backup-Punkt erstellt: ${FINAL_BACKUP}" "Final backup point created: ${FINAL_BACKUP}")"
 
 # ══════════════════════════════════════════════════════════════
 # Zusammenfassung
@@ -687,50 +828,64 @@ success "Finaler Backup-Punkt erstellt: ${FINAL_BACKUP}"
 echo ""
 echo -e "${MAGENTA}${BOLD}"
 echo "╔══════════════════════════════════════════════════════════╗"
-echo "║  Installation abgeschlossen                              ║"
+if [[ "${SYSTEM_LANG}" == "en" ]]; then
+    echo "║  Installation Complete                                   ║"
+else
+    echo "║  Installation abgeschlossen                              ║"
+fi
 echo "╚══════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
-echo -e "  ${GREEN}Backup:${NC}       ${BACKUP_DIR}"
-echo -e "  ${GREEN}Log:${NC}          ${LOG_FILE}"
-echo -e "  ${GREEN}Konfiguration:${NC} ${CONFIG_DIR}/hypr/"
+echo -e "  ${GREEN}$(t 'Sprache:' 'Language:')${NC}      $([[ "${SYSTEM_LANG}" == "en" ]] && echo "English (${SYSTEM_KB})" || echo "Deutsch (${SYSTEM_KB})")"
+echo -e "  ${GREEN}Backup:${NC}          ${BACKUP_DIR}"
+echo -e "  ${GREEN}Log:${NC}             ${LOG_FILE}"
+echo -e "  ${GREEN}$(t 'Konfiguration:' 'Configuration:')${NC} ${CONFIG_DIR}/hypr/"
 echo ""
 
 if [[ ${ERRORS} -gt 0 ]]; then
-    echo -e "  ${RED}Fehler: ${ERRORS}${NC}"
+    echo -e "  ${RED}$(t 'Fehler:' 'Errors:')${NC} ${ERRORS}"
 fi
 if [[ ${WARNINGS} -gt 0 ]]; then
-    echo -e "  ${YELLOW}Warnungen: ${WARNINGS}${NC}"
+    echo -e "  ${YELLOW}$(t 'Warnungen:' 'Warnings:')${NC} ${WARNINGS}"
 fi
 
 # Warnungen zu fehlenden Funktionen
 if [[ ! -f "${WALLPAPER_DIR}/current.jpg" ]] || [[ ! -s "${WALLPAPER_DIR}/current.jpg" ]]; then
-    warn "Kein Hintergrundbild vorhanden."
-    warn "Lege Bilder in ~/.config/hypr/wallpapers/ ab und benenne eines als current.jpg"
+    warn "$(t 'Kein Hintergrundbild vorhanden.' 'No wallpaper set.')"
+    warn "$(t 'Lege Bilder in ~/.config/hypr/wallpapers/ ab und benenne eines als current.jpg' 'Place images in ~/.config/hypr/wallpapers/ and name one current.jpg')"
 fi
 
 echo ""
-echo -e "${CYAN}Nächste Schritte:${NC}"
-echo "  1. Lege ein Hintergrundbild in ~/.config/hypr/wallpapers/ ab"
-echo "  2. Passe ~/.config/hypr/monitors.lua an deine Monitore an"
-echo "  3. Beliebte Apps (Chrome, VSCode, Spotify, Steam, etc.) installieren: ./install-apps.sh"
-echo "  4. Führe nach dem Neustart ./doctor.sh aus"
+echo -e "${CYAN}$(t 'Nächste Schritte:' 'Next Steps:')${NC}"
+if [[ "${SYSTEM_LANG}" == "en" ]]; then
+    echo "  1. Add a wallpaper to ~/.config/hypr/wallpapers/ or switch with SUPER+W"
+    echo "  2. Customize ~/.config/hypr/monitors.lua for your display setup"
+    echo "  3. Open Settings app with SUPER+I or via Waybar to adjust shortcuts & look"
+    echo "  4. Install popular apps (Chrome, VSCode, Spotify, Steam): ./install-apps.sh"
+    echo "  5. Run ./doctor.sh after rebooting"
+else
+    echo "  1. Lege ein Hintergrundbild in ~/.config/hypr/wallpapers/ ab (oder SUPER+W)"
+    echo "  2. Passe ~/.config/hypr/monitors.lua an deine Monitore an"
+    echo "  3. Öffne Einstellungen mit SUPER+I oder über Waybar"
+    echo "  4. Beliebte Apps (Chrome, VSCode, Spotify, Steam, etc.) installieren: ./install-apps.sh"
+    echo "  5. Führe nach dem Neustart ./doctor.sh aus"
+fi
 echo ""
 
 # Optionale App-Installation
 if [[ -f "${SCRIPT_DIR}/install-apps.sh" ]]; then
-    if confirm "Möchtest du jetzt zusätzliche Anwendungen installieren (Chrome, VSCode, Spotify, Steam, etc.)?"; then
+    if confirm "$(t 'Möchtest du jetzt zusätzliche Anwendungen installieren (Chrome, VSCode, Spotify, Steam, etc.)?' 'Would you like to install additional applications now (Chrome, VSCode, Spotify, Steam, etc.)?')"; then
         bash "${SCRIPT_DIR}/install-apps.sh" || true
     fi
 fi
 
 # ── Neustart-Frage ────────────────────────────────────────────
-if confirm "Soll das System jetzt neu gestartet werden?"; then
-    info "Neustart in 5 Sekunden... (Ctrl+C zum Abbrechen)"
+if confirm "$(t 'Soll das System jetzt neu gestartet werden?' 'Reboot the system now?')"; then
+    info "$(t 'Neustart in 5 Sekunden... (Ctrl+C zum Abbrechen)' 'Rebooting in 5 seconds... (Ctrl+C to abort)')"
     sleep 5
     systemctl reboot
 else
     echo ""
-    info "Kein Neustart. Starte Hyprland manuell oder melde dich ab und wieder an."
+    info "$(t 'Kein Neustart. Starte Hyprland manuell oder melde dich ab und wieder an.' 'No reboot. Start Hyprland manually or log out and log back in.')"
     echo ""
 fi

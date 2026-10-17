@@ -89,6 +89,11 @@ export XDG_CACHE_HOME="$HOME/.cache"
 # Pfad erweitern
 export PATH="$HOME/.local/bin:$PATH"
 
+# Sprache & Lokalisierung (automatisch synchronisiert mit Tokyo Settings)
+if [[ -f "$HOME/.config/locale.conf" ]]; then
+    source "$HOME/.config/locale.conf"
+fi
+
 # ── Starship Prompt ──────────────────────────────────────────
 if command -v starship &>/dev/null; then
     eval "$(starship init zsh)"

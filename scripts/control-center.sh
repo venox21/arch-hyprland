@@ -512,12 +512,29 @@ sync_swaync_labels() {
     local config_file="${HOME}/.config/swaync/config.json"
     [[ ! -f "${config_file}" ]] && return 0
 
-    local wifi_label="Getrennt"
+    local lang="de"
+    local settings_file="${HOME}/.config/hypr/settings/user_settings.json"
+    if [[ -f "${settings_file}" ]]; then
+        lang="$(grep -o '"language"[[:space:]]*:[[:space:]]*"[^"]*"' "${settings_file}" | cut -d'"' -f4 || echo 'de')"
+    elif [[ "${LANG:-}" =~ ^en ]]; then
+        lang="en"
+    fi
+    local is_de=1
+    [[ "${lang}" =~ ^en ]] && is_de=0
+
+    local disconnected_text="Getrennt"
+    local disabled_text="Deaktiviert"
+    if [[ "${is_de}" -eq 0 ]]; then
+        disconnected_text="Disconnected"
+        disabled_text="Disabled"
+    fi
+
+    local wifi_label="${disconnected_text}"
     if command -v nmcli &>/dev/null; then
         local radio
         radio="$(nmcli radio wifi 2>/dev/null || echo 'disabled')"
         if [[ ! "${radio}" =~ enabled ]]; then
-            wifi_label="Deaktiviert"
+            wifi_label="${disabled_text}"
         else
             local active_ssid
             active_ssid="$(nmcli -t -f active,ssid dev wifi 2>/dev/null | grep '^yes:' | cut -d: -f2- | head -n 1 || true)"
@@ -528,15 +545,15 @@ sync_swaync_labels() {
                     wifi_label="${active_ssid}"
                 fi
             else
-                wifi_label="Getrennt"
+                wifi_label="${disconnected_text}"
             fi
         fi
     fi
 
-    local bt_label="Getrennt"
+    local bt_label="${disconnected_text}"
     if command -v bluetoothctl &>/dev/null; then
         if ! bluetoothctl show 2>/dev/null | grep -q "Powered: yes"; then
-            bt_label="Deaktiviert"
+            bt_label="${disabled_text}"
         else
             local bt_dev=""
             bt_dev="$(bluetoothctl devices Connected 2>/dev/null | head -n 1 | cut -d' ' -f3- || true)"
@@ -550,7 +567,7 @@ sync_swaync_labels() {
                     bt_label="${bt_dev}"
                 fi
             else
-                bt_label="Getrennt"
+                bt_label="${disconnected_text}"
             fi
         fi
     fi
@@ -563,13 +580,15 @@ import json, sys
 cfg = sys.argv[1]
 wifi = sys.argv[2]
 bt = sys.argv[3]
+is_de = (sys.argv[4] == '1')
 try:
     with open(cfg, 'r', encoding='utf-8') as f:
         data = json.load(f)
     actions = data.get('widget-config', {}).get('buttons-grid#quick-top', {}).get('actions', [])
     changed = False
     if len(actions) >= 2:
-        w_text = f'󰖩  WLAN\n{wifi}'
+        w_title = 'WLAN' if is_de else 'Wi-Fi'
+        w_text = f'󰖩  {w_title}\n{wifi}'
         b_text = f'󰂯  Bluetooth\n{bt}'
         if actions[0].get('label') != w_text:
             actions[0]['label'] = w_text
@@ -584,7 +603,7 @@ try:
         print('1')
 except Exception:
     pass
-" "${config_file}" "${wifi_label}" "${bt_label}" 2>/dev/null || true)"
+" "${config_file}" "${wifi_label}" "${bt_label}" "${is_de}" 2>/dev/null || true)"
 
         if [[ "${reload_needed}" == "1" ]] && command -v swaync-client &>/dev/null; then
             swaync-client --reload-config 2>/dev/null || true

@@ -1596,6 +1596,15 @@ return M
                 except Exception as e:
                     results["input_error"] = str(e)
 
+        # 5. Sprache (general.language) für SwayNC & Waybar beibehalten
+        lang = settings.get("general", {}).get("language")
+        if lang:
+            try:
+                self.apply_language_to_system(lang)
+                results["language"] = lang
+            except Exception as e:
+                results["language_error"] = str(e)
+
         results["applied"] = True
         return results
 
@@ -1620,6 +1629,9 @@ return M
     def _default_settings(self) -> dict:
         """Gibt die Standard-Einstellungen zurück."""
         return {
+            "general": {
+                "language": "de",
+            },
             "clock": {
                 "format_24h": True,
                 "show_date": False,
@@ -1934,5 +1946,98 @@ return M
             return items
         except Exception:
             return []
+
+    # ── Sprachverwaltung (Deutsch / Englisch) ──────────────────
+
+    def get_language(self) -> str:
+        """Gibt die konfigurierte Sprache zurück ('de' oder 'en')."""
+        settings = self.load_settings()
+        lang = settings.get("general", {}).get("language")
+        if not lang:
+            env_lang = os.environ.get("LANG", "").lower()
+            lang = "de" if "de" in env_lang else "en"
+        return "de" if str(lang).lower().startswith("de") else "en"
+
+    def set_language(self, lang: str) -> bool:
+        """Setzt die Sprache ('de' oder 'en') und synchronisiert Waybar & SwayNC."""
+        lang_code = "de" if str(lang).lower().startswith("de") else "en"
+        self.update_setting("general", "language", lang_code)
+        self.apply_language_to_system(lang_code)
+        return True
+
+    def apply_language_to_system(self, lang: str) -> bool:
+        """Passt SwayNC, Waybar und Lokalisierungsdateien an die gewählte Sprache an."""
+        is_de = str(lang).lower().startswith("de")
+
+        # 1. SwayNC anpassen
+        swaync_file = self.config_dir / "swaync" / "config.json"
+        if swaync_file.is_file():
+            try:
+                with open(swaync_file, "r", encoding="utf-8") as f:
+                    sdata = json.load(f)
+
+                cfg = sdata.get("widget-config", {})
+                if "title" in cfg:
+                    cfg["title"]["text"] = "Kontrollzentrum" if is_de else "Control Center"
+                    cfg["title"]["button-text"] = "✕ Schließen" if is_de else "✕ Close"
+                if "label#notif-header" in cfg:
+                    cfg["label#notif-header"]["text"] = "Benachrichtigungen" if is_de else "Notifications"
+
+                # quick-top
+                qtop = cfg.get("buttons-grid#quick-top", {}).get("actions", [])
+                if len(qtop) >= 3:
+                    wifi_status = "Getrennt" if is_de else "Disconnected"
+                    bt_status = "Getrennt" if is_de else "Disconnected"
+                    qtop[0]["label"] = f"󰖩  {'WLAN' if is_de else 'Wi-Fi'}\n{wifi_status}"
+                    qtop[1]["label"] = f"󰂯  Bluetooth\n{bt_status}"
+                    qtop[2]["label"] = f"󰖔\n{'Nachtmodus' if is_de else 'Night Light'}"
+
+                # quick-sub
+                qsub = cfg.get("buttons-grid#quick-sub", {}).get("actions", [])
+                if len(qsub) >= 3:
+                    qsub[0]["label"] = f"󰂛\n{'Nicht stören' if is_de else 'Do Not Disturb'}"
+                    qsub[1]["label"] = f"󰀝\n{'Flugmodus' if is_de else 'Airplane Mode'}"
+                    qsub[2]["label"] = f"󰔎\n{'Dunkelmodus' if is_de else 'Dark Mode'}"
+
+                with open(swaync_file, "w", encoding="utf-8") as f:
+                    json.dump(sdata, f, indent=2, ensure_ascii=False)
+            except Exception as e:
+                print(f"Warnung beim Anpassen von SwayNC: {e}")
+
+        # 2. Waybar anpassen
+        wb_file = self.waybar_dir / "config.jsonc"
+        if wb_file.is_file():
+            try:
+                content = wb_file.read_text(encoding="utf-8")
+                if is_de:
+                    content = content.replace('"format-linked": "󰌷  Connected"', '"format-linked": "󰌷  Verbunden"')
+                    content = content.replace('"format-disconnected": "󰤭  Disconnected"', '"format-disconnected": "󰤭  Getrennt"')
+                    content = content.replace('"format-muted": "󰝟 Muted"', '"format-muted": "󰝟 Stumm"')
+                    content = content.replace('"format-source-muted": "󰍭 Muted"', '"format-source-muted": "󰍭 Stumm"')
+                    content = content.replace('"tooltip-format": "Open Settings"', '"tooltip-format": "Einstellungen öffnen"')
+                    content = content.replace('"tooltip-format": "View Shortcuts"', '"tooltip-format": "Tastenkürzel anzeigen"')
+                    content = content.replace('"tooltip-format": "Power Menu"', '"tooltip-format": "Power-Menü"')
+                else:
+                    content = content.replace('"format-linked": "󰌷  Verbunden"', '"format-linked": "󰌷  Connected"')
+                    content = content.replace('"format-disconnected": "󰤭  Getrennt"', '"format-disconnected": "󰤭  Disconnected"')
+                    content = content.replace('"format-muted": "󰝟 Stumm"', '"format-muted": "󰝟 Muted"')
+                    content = content.replace('"format-source-muted": "󰍭 Stumm"', '"format-source-muted": "󰍭 Muted"')
+                    content = content.replace('"tooltip-format": "Einstellungen öffnen"', '"tooltip-format": "Open Settings"')
+                    content = content.replace('"tooltip-format": "Tastenkürzel anzeigen"', '"tooltip-format": "View Shortcuts"')
+                    content = content.replace('"tooltip-format": "Power-Menü"', '"tooltip-format": "Power Menu"')
+                wb_file.write_text(content, encoding="utf-8")
+            except Exception as e:
+                print(f"Warnung beim Anpassen von Waybar: {e}")
+
+        # 3. Locale-Datei für Shells aktualisieren
+        locale_file = self.config_dir / "locale.conf"
+        try:
+            target_locale = "de_DE.UTF-8" if is_de else "en_US.UTF-8"
+            locale_file.write_text(f"LANG={target_locale}\nLC_ALL={target_locale}\n", encoding="utf-8")
+        except Exception:
+            pass
+
+        return True
+
 
 

@@ -41,6 +41,20 @@ else
     check_warn "Keine Wayland-Sitzung erkannt (normal außerhalb von Hyprland)"
 fi
 
+# Lokalisierung & Tastaturlayout
+if [[ -f "${HOME}/.config/locale.conf" ]]; then
+    loc="$(grep -E '^LANG=' "${HOME}/.config/locale.conf" 2>/dev/null | cut -d= -f2 || true)"
+    [[ -n "${loc}" ]] && check_pass "Lokalisierung (locale.conf): ${loc}"
+elif [[ -f /etc/locale.conf ]]; then
+    loc="$(grep -E '^LANG=' /etc/locale.conf 2>/dev/null | cut -d= -f2 || true)"
+    [[ -n "${loc}" ]] && check_pass "Lokalisierung (/etc/locale.conf): ${loc}"
+fi
+
+if [[ -f "${HOME}/.config/hypr/input.lua" ]]; then
+    kb="$(grep -E 'kb_layout\s*=' "${HOME}/.config/hypr/input.lua" 2>/dev/null | sed -E 's/.*"([^"]+)".*/\1/' || true)"
+    [[ -n "${kb}" ]] && check_pass "Tastaturlayout (input.lua): ${kb}"
+fi
+
 # ── Pakete ────────────────────────────────────────────────────
 section "Installierte Pakete"
 REQUIRED_PKGS=(

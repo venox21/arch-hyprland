@@ -523,6 +523,41 @@ class TestConfigManager(unittest.TestCase):
         self.assertTrue(style_file.exists())
         self.assertIn("0.45", style_file.read_text(encoding="utf-8"))
 
+    def test_language_switch(self):
+        """Sprachauswahl zwischen Deutsch und Englisch prüfen."""
+        self.cm.config_dir = Path(self.temp_dir)
+        self.cm.waybar_dir = Path(self.temp_dir) / "waybar"
+        self.cm.hypr_dir = Path(self.temp_dir) / "hypr"
+        self.cm.waybar_dir.mkdir(parents=True, exist_ok=True)
+        swaync_dir = self.cm.config_dir / "swaync"
+        swaync_dir.mkdir(parents=True, exist_ok=True)
+
+        # SwayNC Testdatei
+        (swaync_dir / "config.json").write_text(json.dumps({
+            "widget-config": {
+                "title": {"text": "Kontrollzentrum", "button-text": "✕ Schließen"},
+                "buttons-grid#quick-top": {"actions": [{"label": "󰖩  WLAN\nGetrennt"}, {"label": "󰂯  Bluetooth\nGetrennt"}, {"label": "󰖔\nNachtmodus"}]}
+            }
+        }), encoding="utf-8")
+
+        # Standard ist 'de'
+        self.assertEqual(self.cm.get_language(), "de")
+
+        # Zu Englisch wechseln
+        self.assertTrue(self.cm.set_language("en"))
+        self.assertEqual(self.cm.get_language(), "en")
+
+        # Prüfen ob SwayNC angepasst wurde
+        with open(swaync_dir / "config.json", encoding="utf-8") as f:
+            sdata = json.load(f)
+        self.assertEqual(sdata["widget-config"]["title"]["text"], "Control Center")
+
+        # Zu Deutsch zurückwechseln
+        self.assertTrue(self.cm.set_language("de"))
+        self.assertEqual(self.cm.get_language(), "de")
+        with open(swaync_dir / "config.json", encoding="utf-8") as f:
+            sdata = json.load(f)
+        self.assertEqual(sdata["widget-config"]["title"]["text"], "Kontrollzentrum")
 
 
 class TestKeybindParser(unittest.TestCase):

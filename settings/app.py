@@ -190,7 +190,10 @@ class SettingsWindow(Adw.ApplicationWindow):
         except Exception:
             pass
 
-        self.set_title("Tokyo Night – Einstellungen")
+        self.lang = self.config.get_language()
+        self.is_de = (self.lang == "de")
+
+        self.set_title("Tokyo Night – Einstellungen" if self.is_de else "Tokyo Night – Settings")
         self.set_default_size(1020, 720)
         self.set_resizable(True)
 
@@ -219,11 +222,11 @@ class SettingsWindow(Adw.ApplicationWindow):
         footer_box.set_margin_top(4)
         footer_box.add_css_class("settings-footer-bar")
 
-        shutdown_btn = Gtk.Button(label="⏻ Ausschalten")
+        shutdown_btn = Gtk.Button(label="⏻ Ausschalten" if self.is_de else "⏻ Shut Down")
         shutdown_btn.add_css_class("pill-action-btn")
         shutdown_btn.connect("clicked", lambda _: subprocess.Popen(["systemctl", "poweroff"]))
 
-        reboot_btn = Gtk.Button(label="⟳ Neustart")
+        reboot_btn = Gtk.Button(label="⟳ Neustart" if self.is_de else "⟳ Restart")
         reboot_btn.add_css_class("pill-action-btn")
         reboot_btn.connect("clicked", lambda _: subprocess.Popen(["systemctl", "reboot"]))
 
@@ -234,7 +237,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         self.set_content(root_box)
 
         # Sidebar erstellen
-        sidebar_page = Adw.NavigationPage(title="Einstellungen")
+        sidebar_page = Adw.NavigationPage(title="Einstellungen" if self.is_de else "Settings")
         sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         sidebar_box.set_size_request(240, -1)
         sidebar_page.set_child(sidebar_box)
@@ -250,7 +253,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         sidebar_brand.append(arch_icon_lbl)
 
         settings_title_lbl = Gtk.Label()
-        settings_title_lbl.set_markup('<span font="18" weight="heavy" foreground="#ffffff">Einstellungen</span>')
+        settings_title_lbl.set_markup(f'<span font="18" weight="heavy" foreground="#ffffff">{"Einstellungen" if self.is_de else "Settings"}</span>')
         sidebar_brand.append(settings_title_lbl)
 
         sidebar_box.append(sidebar_brand)
@@ -263,7 +266,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         search_box.set_margin_bottom(6)
 
         self.search_entry = Gtk.SearchEntry()
-        self.search_entry.set_placeholder_text("Einstellungen durchsuchen...")
+        self.search_entry.set_placeholder_text("Einstellungen durchsuchen..." if self.is_de else "Search settings...")
         self.search_entry.connect("search-changed", self._on_search_changed)
         search_box.append(self.search_entry)
         sidebar_box.append(search_box)
@@ -296,100 +299,96 @@ class SettingsWindow(Adw.ApplicationWindow):
                 pass
             return candidates[0] if candidates else "dialog-information-symbolic"
 
-        # ── Alle 18 Einstellungs-Kategorien vollständig verfügbar ──
+        # ── Alle 18 Einstellungs-Kategorien vollständig verfügbar (Zweisprachig) ──
+        is_de = self.is_de
         self.pages = [
-            ("Übersicht & Dashboard", [
+            ("Übersicht & Dashboard" if is_de else "Dashboard & Overview", [
+                "preferences-system-symbolic",
                 "view-app-grid-symbolic",
                 "view-grid-symbolic",
-                "preferences-system-symbolic",
                 "org.gnome.Settings-symbolic",
             ], self._page_general),
-            ("Hyprland Effekte", [
+            ("Hyprland Effekte" if is_de else "Hyprland Effects", [
                 "preferences-desktop-theme-symbolic",
-                "video-display-symbolic",
                 "preferences-color-symbolic",
-            ], self._page_hyprland_fx),
-            ("Fenster & Animationen", [
-                "preferences-desktop-display-symbolic",
                 "video-display-symbolic",
-                "display-symbolic",
+            ], self._page_hyprland_fx),
+            ("Fenster & Animationen" if is_de else "Windows & Animations", [
+                "preferences-desktop-display-symbolic",
                 "preferences-desktop-theme-symbolic",
+                "display-symbolic",
             ], self._page_appearance),
-            ("Leisten-Stil & Waybar", [
-                "view-app-grid-symbolic",
-                "view-grid-symbolic",
-                "open-menu-symbolic",
+            ("Leisten-Stil & Waybar" if is_de else "Bar Style & Waybar", [
                 "view-list-symbolic",
+                "open-menu-symbolic",
+                "view-app-grid-symbolic",
             ], self._page_waybar),
-            ("Farben & Tokyo Night", [
+            ("Farben & Tokyo Night" if is_de else "Colors & Tokyo Night", [
                 "preferences-color-symbolic",
                 "format-color-fill-symbolic",
                 "color-select-symbolic",
-                "applications-graphics-symbolic",
             ], self._page_colors),
-            ("Hintergrundbilder & SDDM", [
+            ("Hintergrundbilder & SDDM" if is_de else "Wallpapers & SDDM", [
                 "preferences-desktop-wallpaper-symbolic",
                 "image-x-generic-symbolic",
-                "emblem-photos-symbolic",
                 "folder-pictures-symbolic",
             ], self._page_wallpaper),
-            ("Bildschirme & Monitore", [
+            ("Bildschirme & Monitore" if is_de else "Displays & Monitors", [
                 "video-display-symbolic",
                 "preferences-desktop-display-symbolic",
                 "display-symbolic",
             ], self._page_monitors),
-            ("Eingabegeräte", [
-                "input-mouse-symbolic",
+            ("Eingabegeräte" if is_de else "Input Devices", [
                 "input-keyboard-symbolic",
+                "input-mouse-symbolic",
                 "preferences-desktop-peripherals-symbolic",
             ], self._page_input),
-            ("Audio & Klang", [
+            ("Audio & Klang" if is_de else "Audio & Sound", [
                 "audio-volume-high-symbolic",
                 "audio-speakers-symbolic",
                 "multimedia-volume-control-symbolic",
             ], self._page_audio),
-            ("Netzwerk & WLAN", [
+            ("Netzwerk & WLAN" if is_de else "Network & Wi-Fi", [
                 "network-wireless-symbolic",
                 "network-wireless-signal-excellent-symbolic",
                 "network-wired-symbolic",
             ], self._page_network),
-            ("Tastenkürzel & Bindings", [
+            ("Tastenkürzel & Bindings" if is_de else "Shortcuts & Keybinds", [
                 "input-keyboard-symbolic",
                 "accessories-keyboard-shortcut-symbolic",
                 "preferences-desktop-keyboard-shortcuts-symbolic",
             ], self._page_keybinds),
-            ("Uhr und Datum", [
+            ("Uhr und Datum" if is_de else "Clock & Date", [
                 "preferences-system-time-symbolic",
                 "alarm-symbolic",
                 "x-office-calendar-symbolic",
-                "appointment-soon-symbolic",
             ], self._page_clock),
-            ("Systemleistung & Tuning", [
-                "utilities-system-monitor-symbolic",
+            ("Systemleistung & Tuning" if is_de else "Performance & Tuning", [
                 "speedometer-symbolic",
+                "utilities-system-monitor-symbolic",
                 "applications-system-symbolic",
             ], self._page_performance),
-            ("Autostart & Anwendungen", [
+            ("Autostart & Anwendungen" if is_de else "Autostart & Apps", [
                 "media-playback-start-symbolic",
                 "system-run-symbolic",
                 "applications-system-symbolic",
             ], self._page_autostart),
-            ("Hardware & Treiber", [
+            ("Hardware & Treiber" if is_de else "Hardware & Drivers", [
                 "preferences-system-devices-symbolic",
                 "computer-symbolic",
                 "applications-system-symbolic",
             ], self._page_hardware),
-            ("Datensicherung & Backup", [
+            ("Datensicherung & Backup" if is_de else "Backup & Restore", [
                 "drive-harddisk-symbolic",
                 "document-save-symbolic",
                 "system-software-update-symbolic",
             ], self._page_backup),
-            ("Systemdiagnostik & Logs", [
+            ("Systemdiagnostik & Logs" if is_de else "Diagnostics & Logs", [
                 "dialog-information-symbolic",
                 "help-browser-symbolic",
                 "utilities-terminal-symbolic",
             ], self._page_diagnostics),
-            ("Version & Updates", [
+            ("Version & Updates" if is_de else "Version & Updates", [
                 "system-software-update-symbolic",
                 "software-update-available-symbolic",
                 "system-software-install-symbolic",
@@ -1073,10 +1072,12 @@ class SettingsWindow(Adw.ApplicationWindow):
             if (
                 target_lower in t_lower
                 or t_lower in target_lower
-                or ("monitor" in target_lower and "bildschirm" in t_lower)
-                or ("waybar" in target_lower and "leiste" in t_lower)
-                or ("keybind" in target_lower and "tasten" in t_lower)
-                or ("wallpaper" in target_lower and "hintergrund" in t_lower)
+                or ("monitor" in target_lower and ("bildschirm" in t_lower or "display" in t_lower))
+                or ("waybar" in target_lower and ("leiste" in t_lower or "bar" in t_lower))
+                or ("keybind" in target_lower and ("tasten" in t_lower or "shortcut" in t_lower))
+                or ("wallpaper" in target_lower and ("hintergrund" in t_lower or "wallpaper" in t_lower))
+                or ("effect" in target_lower and ("effekt" in t_lower or "effect" in t_lower))
+                or ("appearance" in target_lower and ("fenster" in t_lower or "animation" in t_lower))
             ):
                 row = self.nav_list.get_row_at_index(idx)
                 if row:
@@ -1580,9 +1581,37 @@ class SettingsWindow(Adw.ApplicationWindow):
         box.append(hero_box)
 
         # ── Systeminformationen ──────────────────────────────────
-        group = Adw.PreferencesGroup(title="System & Hardware", description="Wichtige Desktop- und Hyprland-Metriken")
+        is_de = (self.config.get_language() == "de")
+        group = Adw.PreferencesGroup(
+            title="System & Hardware" if is_de else "System & Hardware",
+            description="Wichtige Desktop- und Hyprland-Metriken" if is_de else "Important desktop and Hyprland metrics"
+        )
 
-        version_row = Adw.ActionRow(title="Hyprland-Version", subtitle="Wayland Compositor")
+        # Spracheinstellung (Deutsch / Englisch)
+        lang_row = Adw.ComboRow(
+            title="Systemsprache / Language" if is_de else "System Language / Sprache",
+            subtitle="Wähle zwischen Deutsch und Englisch für das gesamte System" if is_de else "Choose between English and German for the entire system",
+        )
+        lang_options = ["Deutsch (German)", "English (Englisch)"]
+        lang_row.set_model(Gtk.StringList.new(lang_options))
+        lang_row.set_selected(0 if is_de else 1)
+
+        def on_lang_changed(row, _):
+            new_code = "de" if row.get_selected() == 0 else "en"
+            if new_code != self.config.get_language():
+                self.config.set_language(new_code)
+                self._show_info(
+                    "Sprache geändert" if new_code == "de" else "Language Changed",
+                    "Die Sprache wurde erfolgreich aktualisiert. Bitte starte die Einstellungen neu, um die Seitenleiste und alle Beschriftungen zu aktualisieren." if new_code == "de" else "Language updated successfully. Please restart settings to update the sidebar and all interface labels."
+                )
+
+        lang_row.connect("notify::selected", on_lang_changed)
+        group.add(lang_row)
+
+        version_row = Adw.ActionRow(
+            title="Hyprland-Version" if is_de else "Hyprland Version",
+            subtitle="Wayland Compositor"
+        )
         version_badge = Gtk.Label(label=hypr_ver)
         version_badge.add_css_class("hero-badge")
         version_row.add_suffix(version_badge)
