@@ -869,6 +869,12 @@ class SettingsWindow(Adw.ApplicationWindow):
             font-weight: 500;
         }
 
+        .fx-slider-sublabel {
+            color: #787c99;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
         .fx-value-label {
             color: #c0caf5;
             font-size: 13px;
@@ -1183,13 +1189,24 @@ class SettingsWindow(Adw.ApplicationWindow):
         sec1_title.set_halign(Gtk.Align.START)
         sec1_box.append(sec1_title)
 
-        def _make_slider_row(label_text, min_v, max_v, step, initial_v, unit="%", callback=None):
+        def _make_slider_row(label_text, min_v, max_v, step, initial_v, unit="%", callback=None, subtitle=None):
             row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+            title_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            title_vbox.set_size_request(210, -1)
+            title_vbox.set_valign(Gtk.Align.CENTER)
+
             lbl = Gtk.Label(label=label_text)
             lbl.set_halign(Gtk.Align.START)
-            lbl.set_size_request(200, -1)
             lbl.add_css_class("fx-slider-label")
-            row.append(lbl)
+            title_vbox.append(lbl)
+
+            if subtitle:
+                sub_lbl = Gtk.Label(label=subtitle)
+                sub_lbl.set_halign(Gtk.Align.START)
+                sub_lbl.add_css_class("fx-slider-sublabel")
+                title_vbox.append(sub_lbl)
+
+            row.append(title_vbox)
 
             adj = Gtk.Adjustment(
                 value=initial_v,
@@ -1223,14 +1240,16 @@ class SettingsWindow(Adw.ApplicationWindow):
         blur_val = 80
         sec1_box.append(_make_slider_row(
             "Aktiver Fenster-Blur", 0, 100, 1, blur_val, "%",
-            lambda v: self._update_setting("appearance", "blur_size", max(1, int(v / 10)))
+            lambda v: self._update_setting("appearance", "blur_size", max(1, int(v / 10))),
+            subtitle="Kawase Dual-Filter Weichzeichnung",
         ))
 
         # Inaktive Fenster-Deckkraft: 50%
         inact_val = int(app.get("inactive_opacity", 0.5) * 100) if "inactive_opacity" in app else 50
         sec1_box.append(_make_slider_row(
             "Inaktive Fenster-Deckkraft", 10, 100, 1, inact_val, "%",
-            lambda v: self._update_setting("appearance", "inactive_opacity", round(v / 100.0, 2))
+            lambda v: self._update_setting("appearance", "inactive_opacity", round(v / 100.0, 2)),
+            subtitle="Transparenz für Hintergrundfenster",
         ))
 
         main_box.append(sec1_box)
@@ -1253,19 +1272,22 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         sec2_box.append(_make_slider_row(
             "Rahmen-Leuchtintensität", 0, 100, 1, 70, "%",
-            lambda v: self._update_setting("appearance", "glow_intensity", round(v / 100.0, 2))
+            lambda v: self._update_setting("appearance", "glow_intensity", round(v / 100.0, 2)),
+            subtitle="Glow- und Leuchtkraft des Randes",
         ))
 
         border_w = app.get("border_size", 2)
         sec2_box.append(_make_slider_row(
             "Rahmenbreite", 1, 10, 1, border_w, "px",
-            lambda v: self._update_setting("appearance", "border_size", int(v))
+            lambda v: self._update_setting("appearance", "border_size", int(v)),
+            subtitle="Dicke der leuchtenden Linien",
         ))
 
         round_w = app.get("rounding", 18)
         sec2_box.append(_make_slider_row(
             "Eckenrundung", 0, 30, 1, round_w, "px",
-            lambda v: self._update_setting("appearance", "rounding", int(v))
+            lambda v: self._update_setting("appearance", "rounding", int(v)),
+            subtitle="Radius der abgerundeten Fensterecken",
         ))
         left_col.append(sec2_box)
 
@@ -1289,11 +1311,17 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         # Schadensverfolgung (Damage Tracking) Switch Row
         dmg_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        dmg_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        dmg_vbox.set_hexpand(True)
         dmg_lbl = Gtk.Label(label="Schadensverfolgung (Damage Tracking)")
-        dmg_lbl.set_hexpand(True)
         dmg_lbl.set_halign(Gtk.Align.START)
         dmg_lbl.add_css_class("fx-slider-label")
-        dmg_row.append(dmg_lbl)
+        dmg_sub = Gtk.Label(label="Rendert nur veränderte Bildbereiche (spart Strom)")
+        dmg_sub.set_halign(Gtk.Align.START)
+        dmg_sub.add_css_class("fx-slider-sublabel")
+        dmg_vbox.append(dmg_lbl)
+        dmg_vbox.append(dmg_sub)
+        dmg_row.append(dmg_vbox)
 
         dmg_switch = Gtk.Switch()
         dmg_switch.set_active(perf.get("damage_tracking", True))
@@ -1313,16 +1341,23 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         sec3_box.append(_make_slider_row(
             "Animationsgeschwindigkeit", 10, 100, 1, 50, "%",
-            lambda v: self._update_setting("appearance", "animation_speed", round(v / 50.0, 2))
+            lambda v: self._update_setting("appearance", "animation_speed", round(v / 50.0, 2)),
+            subtitle="Tempo für Workspace- & Fensterübergänge",
         ))
 
         # Bézier-Kurven
         bezier_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        bezier_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        bezier_vbox.set_size_request(210, -1)
         bezier_lbl = Gtk.Label(label="Bézier-Kurven")
         bezier_lbl.set_halign(Gtk.Align.START)
-        bezier_lbl.set_size_request(200, -1)
         bezier_lbl.add_css_class("fx-slider-label")
-        bezier_row.append(bezier_lbl)
+        bezier_sub = Gtk.Label(label="S-Kurven-Beschleunigungsprofil")
+        bezier_sub.set_halign(Gtk.Align.START)
+        bezier_sub.add_css_class("fx-slider-sublabel")
+        bezier_vbox.append(bezier_lbl)
+        bezier_vbox.append(bezier_sub)
+        bezier_row.append(bezier_vbox)
 
         bezier_frame = Gtk.Box()
         bezier_frame.add_css_class("bezier-frame")
@@ -1365,11 +1400,17 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         # V-Sync Switch Row
         vsync_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        vsync_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        vsync_vbox.set_hexpand(True)
         vsync_lbl = Gtk.Label(label="V-Sync (Bildsynchronisation)")
-        vsync_lbl.set_hexpand(True)
         vsync_lbl.set_halign(Gtk.Align.START)
         vsync_lbl.add_css_class("fx-slider-label")
-        vsync_row.append(vsync_lbl)
+        vsync_sub = Gtk.Label(label="Verhindert Tearing bei schnellen Bewegungen")
+        vsync_sub.set_halign(Gtk.Align.START)
+        vsync_sub.add_css_class("fx-slider-sublabel")
+        vsync_vbox.append(vsync_lbl)
+        vsync_vbox.append(vsync_sub)
+        vsync_row.append(vsync_vbox)
 
         vsync_switch = Gtk.Switch()
         vsync_switch.set_active(perf.get("vsync", True))
@@ -1380,11 +1421,17 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         # System-Auslastung Row
         auslast_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        auslast_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        auslast_vbox.set_hexpand(True)
         auslast_lbl = Gtk.Label(label="System-Auslastung")
-        auslast_lbl.set_hexpand(True)
         auslast_lbl.set_halign(Gtk.Align.START)
         auslast_lbl.add_css_class("fx-slider-label")
-        auslast_row.append(auslast_lbl)
+        auslast_sub = Gtk.Label(label="Aktuelle Prozessor- & Compositor-Last")
+        auslast_sub.set_halign(Gtk.Align.START)
+        auslast_sub.add_css_class("fx-slider-sublabel")
+        auslast_vbox.append(auslast_lbl)
+        auslast_vbox.append(auslast_sub)
+        auslast_row.append(auslast_vbox)
 
         auslast_val = Gtk.Label(label="30.2%")
         auslast_val.add_css_class("fx-value-label")
@@ -1619,7 +1666,10 @@ class SettingsWindow(Adw.ApplicationWindow):
         )
 
         # Position
-        pos_row = Adw.ComboRow(title="Position")
+        pos_row = Adw.ComboRow(
+            title="Position",
+            subtitle="Platzierung der Statusleiste am oberen oder unteren Bildschirmrand",
+        )
         pos_model = Gtk.StringList.new(["Oben", "Unten"])
         pos_row.set_model(pos_model)
         pos_row.set_selected(0 if wb.get("position", "top") == "top" else 1)
@@ -1630,6 +1680,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         # Höhe
         height_row = Adw.SpinRow.new_with_range(20, 60, 2)
         height_row.set_title("Leistenhöhe (px)")
+        height_row.set_subtitle("Vertikale Gesamthöhe der Waybar-Statusleiste in Pixeln (Standard: 36px)")
         height_row.set_value(wb.get("height", 36))
         height_row.connect("notify::value", lambda r, _: self._update_waybar_setting(
             "height", int(r.get_value())))
@@ -1638,13 +1689,17 @@ class SettingsWindow(Adw.ApplicationWindow):
         # Schriftgröße
         font_row = Adw.SpinRow.new_with_range(9, 18, 1)
         font_row.set_title("Schriftgröße (pt)")
+        font_row.set_subtitle("Größe der System-Schriftart und Nerd-Font-Icons in der Leiste (Standard: 13pt)")
         font_row.set_value(wb.get("font_size", 13))
         font_row.connect("notify::value", lambda r, _: self._update_waybar_setting(
             "font_size", int(r.get_value())))
         group.add(font_row)
 
         # Tray
-        tray_row = Adw.SwitchRow(title="System-Tray anzeigen", subtitle="Hintergrundprogramme und Tray-Icons einblenden")
+        tray_row = Adw.SwitchRow(
+            title="System-Tray anzeigen",
+            subtitle="Hintergrundprogramme, Benachrichtigungssymbole und Applets in der Leiste einblenden",
+        )
         tray_row.set_active(wb.get("show_tray", True))
         tray_row.connect("notify::active", lambda r, _: self._update_waybar_setting(
             "show_tray", r.get_active()))
@@ -1806,17 +1861,26 @@ class SettingsWindow(Adw.ApplicationWindow):
         clock = self.settings.get("clock", {})
         group = Adw.PreferencesGroup(title="Anzeige in der Waybar", description="Format der Uhr in der Statusleiste")
 
-        fmt_row = Adw.SwitchRow(title="24-Stunden-Format")
+        fmt_row = Adw.SwitchRow(
+            title="24-Stunden-Format",
+            subtitle="Umschalten zwischen 24-Stunden-Anzeige (z.B. 14:30) und 12-Stunden-Modus (2:30 PM)",
+        )
         fmt_row.set_active(clock.get("format_24h", True))
         fmt_row.connect("notify::active", lambda r, _: self._update_setting("clock", "format_24h", r.get_active()))
         group.add(fmt_row)
 
-        date_row = Adw.SwitchRow(title="Datum anzeigen")
+        date_row = Adw.SwitchRow(
+            title="Datum anzeigen",
+            subtitle="Blendet den aktuellen Wochentag und das Datum neben der Uhrzeit in der Leiste ein",
+        )
         date_row.set_active(clock.get("show_date", False))
         date_row.connect("notify::active", lambda r, _: self._update_setting("clock", "show_date", r.get_active()))
         group.add(date_row)
 
-        datefmt_row = Adw.ComboRow(title="Datumsformat")
+        datefmt_row = Adw.ComboRow(
+            title="Datumsformat",
+            subtitle="Muster für die Datumsanzeige (z.B. Tag.Monat.Jahr oder internationales ISO-Format)",
+        )
         formats = Gtk.StringList.new(["%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d", "%d. %B %Y"])
         datefmt_row.set_model(formats)
         current_fmt = clock.get("date_format", "%d.%m.%Y")
@@ -1826,17 +1890,26 @@ class SettingsWindow(Adw.ApplicationWindow):
             "clock", "date_format", fmt_list[r.get_selected()] if r.get_selected() < len(fmt_list) else fmt_list[0]))
         group.add(datefmt_row)
 
-        sec_row = Adw.SwitchRow(title="Sekunden anzeigen")
+        sec_row = Adw.SwitchRow(
+            title="Sekunden anzeigen",
+            subtitle="Sekundengenaue Aktualisierung der Uhrzeit in der Leiste (z.B. 14:30:45)",
+        )
         sec_row.set_active(clock.get("show_seconds", False))
         sec_row.connect("notify::active", lambda r, _: self._update_setting("clock", "show_seconds", r.get_active()))
         group.add(sec_row)
 
-        tz_disp_row = Adw.SwitchRow(title="Zeitzone anzeigen")
+        tz_disp_row = Adw.SwitchRow(
+            title="Zeitzone anzeigen",
+            subtitle="Kürzel der aktuellen Zeitzone (z.B. MEZ / CEST) neben der Uhrzeit einblenden",
+        )
         tz_disp_row.set_active(clock.get("show_timezone", False))
         tz_disp_row.connect("notify::active", lambda r, _: self._update_setting("clock", "show_timezone", r.get_active()))
         group.add(tz_disp_row)
 
-        tip_row = Adw.SwitchRow(title="Tooltip aktivieren")
+        tip_row = Adw.SwitchRow(
+            title="Tooltip aktivieren",
+            subtitle="Interaktiver Monatskalender beim Bewegen des Mauszeigers über das Uhrenmodul",
+        )
         tip_row.set_active(clock.get("tooltip_enabled", True))
         tip_row.connect("notify::active", lambda r, _: self._update_setting("clock", "tooltip_enabled", r.get_active()))
         group.add(tip_row)
@@ -2472,14 +2545,15 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         group = Adw.PreferencesGroup(title="Leistungsanzeige", description="Systemmetriken in der Leiste")
 
-        for key, label in [
-            ("show_cpu", "CPU-Auslastung anzeigen"),
-            ("show_ram", "RAM-Auslastung anzeigen"),
-            ("show_gpu", "GPU-Auslastung anzeigen"),
-            ("show_temperature", "Temperaturen anzeigen"),
-            ("show_network_speed", "Netzwerkgeschwindigkeit anzeigen"),
-        ]:
-            row = Adw.SwitchRow(title=label)
+        perf_metrics = [
+            ("show_cpu", "CPU-Auslastung anzeigen", "Echtzeit-Prozessorlast aller Kerne in der Waybar einblenden"),
+            ("show_ram", "RAM-Auslastung anzeigen", "Verbrauchten Arbeitsspeicher und Swap-Nutzung anzeigen"),
+            ("show_gpu", "GPU-Auslastung anzeigen", "NVIDIA / AMD / Intel Grafikprozessor-Auslastung überwachen"),
+            ("show_temperature", "Temperaturen anzeigen", "Höchste gemessene Hardware-Temperatur zur Überhitzungs-Warnung anzeigen"),
+            ("show_network_speed", "Netzwerkgeschwindigkeit anzeigen", "Live Download- und Upload-Übertragungsraten (KB/s oder MB/s)"),
+        ]
+        for key, label, desc in perf_metrics:
+            row = Adw.SwitchRow(title=label, subtitle=desc)
             row.set_active(perf.get(key, key != "show_gpu"))
             row.connect("notify::active", lambda r, _, k=key: self._update_setting("performance", k, r.get_active()))
             group.add(row)
@@ -2487,13 +2561,17 @@ class SettingsWindow(Adw.ApplicationWindow):
         # Aktualisierungsintervall
         interval_row = Adw.SpinRow.new_with_range(1, 30, 1)
         interval_row.set_title("Aktualisierungsintervall (Sekunden)")
+        interval_row.set_subtitle("Messabstand für Auslastungsdaten (kürzer = feinfühliger, länger = energiesparender)")
         interval_row.set_value(perf.get("update_interval", 5))
         interval_row.connect("notify::value", lambda r, _: self._update_setting(
             "performance", "update_interval", int(r.get_value())))
         group.add(interval_row)
 
         # Kompaktmodus
-        compact_row = Adw.SwitchRow(title="Kompaktes Format")
+        compact_row = Adw.SwitchRow(
+            title="Kompaktes Format",
+            subtitle="Platzsparende Darstellung mit minimalistischen Symbolen statt Textlabels",
+        )
         compact_row.set_active(perf.get("compact_mode", False))
         compact_row.connect("notify::active", lambda r, _: self._update_setting(
             "performance", "compact_mode", r.get_active()))
@@ -2504,13 +2582,15 @@ class SettingsWindow(Adw.ApplicationWindow):
         # Schwellenwerte
         thresholds = Adw.PreferencesGroup(title="Warnschwellen", description="Ab diesen Werten wird Rot angezeigt")
 
-        for key, label, default in [
-            ("warning_cpu_threshold", "CPU-Warnschwelle (%)", 80),
-            ("warning_ram_threshold", "RAM-Warnschwelle (%)", 85),
-            ("warning_temp_threshold", "Temperatur-Warnschwelle (°C)", 85),
-        ]:
+        threshold_items = [
+            ("warning_cpu_threshold", "CPU-Warnschwelle (%)", 80, "Farbliche Warnhervorhebung bei Überschreiten dieser CPU-Last (Standard: 80%)"),
+            ("warning_ram_threshold", "RAM-Warnschwelle (%)", 85, "Warnanzeige bei hoher Speicherauslastung zur Vermeidung von Engpässen (Standard: 85%)"),
+            ("warning_temp_threshold", "Temperatur-Warnschwelle (°C)", 85, "Kritische Temperaturschwelle zur Warnung vor Hardware-Überhitzung (Standard: 85°C)"),
+        ]
+        for key, label, default, desc in threshold_items:
             row = Adw.SpinRow.new_with_range(50, 100, 5)
             row.set_title(label)
+            row.set_subtitle(desc)
             row.set_value(perf.get(key, default))
             row.connect("notify::value", lambda r, _, k=key: self._update_setting("performance", k, int(r.get_value())))
             thresholds.add(row)
@@ -2634,12 +2714,18 @@ class SettingsWindow(Adw.ApplicationWindow):
         )
         net_cfg = self.settings.get("network", {})
 
-        speed_row = Adw.SwitchRow(title="Geschwindigkeit anzeigen")
+        speed_row = Adw.SwitchRow(
+            title="Geschwindigkeit anzeigen",
+            subtitle="Echtzeit-Übertragungsrate (Upload/Download) im Netzwerk-Modul der Leiste anzeigen",
+        )
         speed_row.set_active(net_cfg.get("show_speed", True))
         speed_row.connect("notify::active", lambda r, _: self._update_setting("network", "show_speed", r.get_active()))
         waybar_group.add(speed_row)
 
-        ip_row = Adw.SwitchRow(title="IP-Adresse anzeigen")
+        ip_row = Adw.SwitchRow(
+            title="IP-Adresse anzeigen",
+            subtitle="Lokale IPv4/IPv6-Netzwerkadresse direkt in der Statusleiste einblenden",
+        )
         ip_row.set_active(net_cfg.get("show_ip", False))
         ip_row.connect("notify::active", lambda r, _: self._update_setting("network", "show_ip", r.get_active()))
         waybar_group.add(ip_row)
@@ -2659,23 +2745,41 @@ class SettingsWindow(Adw.ApplicationWindow):
         box.set_margin_bottom(16)
 
         audio = self.settings.get("audio", {})
-        group = Adw.PreferencesGroup(title="Audio", description="Lautstärke und Mikrofon")
+        group = Adw.PreferencesGroup(title="Audio & Statusleiste", description="Lautstärke, Mikrofon-Indikatoren und Pegelsteuerung")
 
-        vol_row = Adw.SwitchRow(title="Lautstärke anzeigen")
+        vol_row = Adw.SwitchRow(
+            title="Lautstärke anzeigen",
+            subtitle="Lautstärke-Symbol und aktuellen Prozentpegel in der Statusleiste einblenden",
+        )
         vol_row.set_active(audio.get("show_volume", True))
         vol_row.connect("notify::active", lambda r, _: self._update_setting("audio", "show_volume", r.get_active()))
         group.add(vol_row)
 
-        mic_row = Adw.SwitchRow(title="Mikrofon anzeigen")
+        mic_row = Adw.SwitchRow(
+            title="Mikrofon anzeigen",
+            subtitle="Mikrofon-Status und Stummschaltungs-Indikator in der Leiste anzeigen",
+        )
         mic_row.set_active(audio.get("show_microphone", True))
         mic_row.connect("notify::active", lambda r, _: self._update_setting("audio", "show_microphone", r.get_active()))
         group.add(mic_row)
 
         step_row = Adw.SpinRow.new_with_range(1, 15, 1)
         step_row.set_title("Lautstärke-Schrittgröße (%)")
+        step_row.set_subtitle("Änderung der Lautstärke in Prozent pro Druck auf die Multimedia-Tasten (Standard: 5%)")
         step_row.set_value(audio.get("step_size", 5))
         step_row.connect("notify::value", lambda r, _: self._update_setting("audio", "step_size", int(r.get_value())))
         group.add(step_row)
+
+        pavu_row = Adw.ActionRow(
+            title="Erweitertes Audio-Mischpult (Pavucontrol)",
+            subtitle="Eingänge, Ausgänge, Audioprofile und App-Lautstärken konfigurieren",
+        )
+        pavu_btn = Gtk.Button(label="Mischpult öffnen", valign=Gtk.Align.CENTER)
+        pavu_btn.add_css_class("suggested-action")
+        pavu_btn.connect("clicked", lambda _: os.system("pavucontrol &"))
+        pavu_row.add_suffix(pavu_btn)
+        pavu_row.set_activatable_widget(pavu_btn)
+        group.add(pavu_row)
 
         box.append(group)
         return box
@@ -2688,28 +2792,32 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         app = self.settings.get("appearance", {})
 
-        group = Adw.PreferencesGroup(title="Fenster", description="Abstände und Rahmen")
+        group = Adw.PreferencesGroup(title="Fenster & Rahmen", description="Abstände, Lücken und Eckenrundung anpassen")
 
         gaps_in = Adw.SpinRow.new_with_range(0, 20, 1)
         gaps_in.set_title("Innere Abstände (gaps_in)")
+        gaps_in.set_subtitle("Abstand in Pixeln zwischen Fenstern auf derselben Arbeitsfläche (Standard: 4px)")
         gaps_in.set_value(app.get("gaps_in", 4))
         gaps_in.connect("notify::value", lambda r, _: self._update_setting("appearance", "gaps_in", int(r.get_value())))
         group.add(gaps_in)
 
         gaps_out = Adw.SpinRow.new_with_range(0, 40, 2)
         gaps_out.set_title("Äußere Abstände (gaps_out)")
+        gaps_out.set_subtitle("Abstand in Pixeln zwischen Fenstern und dem Bildschirmrand bzw. der Waybar (Standard: 8px)")
         gaps_out.set_value(app.get("gaps_out", 8))
         gaps_out.connect("notify::value", lambda r, _: self._update_setting("appearance", "gaps_out", int(r.get_value())))
         group.add(gaps_out)
 
         border_row = Adw.SpinRow.new_with_range(0, 6, 1)
         border_row.set_title("Rahmenstärke")
+        border_row.set_subtitle("Breite des leuchtenden Fensterrahmens in Pixeln (Standard: 2px)")
         border_row.set_value(app.get("border_size", 2))
         border_row.connect("notify::value", lambda r, _: self._update_setting("appearance", "border_size", int(r.get_value())))
         group.add(border_row)
 
         round_row = Adw.SpinRow.new_with_range(0, 20, 1)
         round_row.set_title("Eckenrundung")
+        round_row.set_subtitle("Radius der abgerundeten Ecken aller Anwendungsfenster (Standard: 8px)")
         round_row.set_value(app.get("rounding", 8))
         round_row.connect("notify::value", lambda r, _: self._update_setting("appearance", "rounding", int(r.get_value())))
         group.add(round_row)
@@ -2717,9 +2825,12 @@ class SettingsWindow(Adw.ApplicationWindow):
         box.append(group)
 
         # Animationen
-        anim_group = Adw.PreferencesGroup(title="Animationen")
+        anim_group = Adw.PreferencesGroup(title="Animationen", description="Fensterbewegungen und Workspace-Übergänge")
 
-        anim_row = Adw.SwitchRow(title="Animationen aktivieren")
+        anim_row = Adw.SwitchRow(
+            title="Animationen aktivieren",
+            subtitle="Flüssige Übergänge beim Öffnen, Schließen, Verschieben und Wechseln von Workspaces",
+        )
         anim_row.set_active(app.get("animations_enabled", True))
         anim_row.connect("notify::active", lambda r, _: self._update_setting("appearance", "animations_enabled", r.get_active()))
         anim_group.add(anim_row)
@@ -2727,9 +2838,12 @@ class SettingsWindow(Adw.ApplicationWindow):
         box.append(anim_group)
 
         # Blur
-        blur_group = Adw.PreferencesGroup(title="Unschärfe (Blur)")
+        blur_group = Adw.PreferencesGroup(title="Unschärfe (Blur)", description="Kawase Dual-Filter Weichzeichnung")
 
-        blur_row = Adw.SwitchRow(title="Blur aktivieren")
+        blur_row = Adw.SwitchRow(
+            title="Blur aktivieren",
+            subtitle="Hintergrund-Weichzeichnung hinter transparenten Fenstern, Terminals und Menüs",
+        )
         blur_row.set_active(app.get("blur_enabled", True))
         blur_row.connect("notify::active", lambda r, _: self._update_setting("appearance", "blur_enabled", r.get_active()))
         blur_group.add(blur_row)
@@ -2737,9 +2851,12 @@ class SettingsWindow(Adw.ApplicationWindow):
         box.append(blur_group)
 
         # Schatten
-        shadow_group = Adw.PreferencesGroup(title="Schatten")
+        shadow_group = Adw.PreferencesGroup(title="Schatten", description="Tiefeneffekte für schwebende und aktive Fenster")
 
-        shadow_row = Adw.SwitchRow(title="Schatten aktivieren")
+        shadow_row = Adw.SwitchRow(
+            title="Schatten aktivieren",
+            subtitle="Weiche Tiefenschatten hinter Fenstern zur optischen Abgrenzung auf dunklen Hintergründen",
+        )
         shadow_row.set_active(app.get("shadow_enabled", True))
         shadow_row.connect("notify::active", lambda r, _: self._update_setting("appearance", "shadow_enabled", r.get_active()))
         shadow_group.add(shadow_row)
@@ -2803,6 +2920,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         # Aktive Fenster-Transparenz (als Prozent)
         active_row = Adw.SpinRow.new_with_range(50, 100, 5)
         active_row.set_title("Aktives Fenster (%)")
+        active_row.set_subtitle("Deckkraft des aktuell im Fokus stehenden Fensters (100% = voll deckend)")
         active_row.set_value(int(app.get("active_opacity", 1.0) * 100))
         active_row.connect("notify::value", lambda r, _: self._update_setting(
             "appearance", "active_opacity", r.get_value() / 100.0))
@@ -2810,6 +2928,7 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         inactive_row = Adw.SpinRow.new_with_range(50, 100, 5)
         inactive_row.set_title("Inaktives Fenster (%)")
+        inactive_row.set_subtitle("Transparenz aller Hintergrundfenster zur optischen Hervorhebung des aktiven Fensters (Standard: 92%)")
         inactive_row.set_value(int(app.get("inactive_opacity", 0.92) * 100))
         inactive_row.connect("notify::value", lambda r, _: self._update_setting(
             "appearance", "inactive_opacity", r.get_value() / 100.0))
@@ -2997,12 +3116,15 @@ class SettingsWindow(Adw.ApplicationWindow):
         box.set_margin_end(16)
 
         group = Adw.PreferencesGroup(
-            title="Tastenkürzel",
-            description="Verwende den Hotkey-Manager für die vollständige Tastenkürzel-Verwaltung"
+            title="Tastenkürzel & Hotkeys",
+            description="Verwende den interaktiven Hotkey-Manager für die vollständige Tastenkürzel-Verwaltung"
         )
 
-        open_row = Adw.ActionRow(title="Hotkey-Manager öffnen", subtitle="Tastenkürzel anzeigen und bearbeiten")
-        open_btn = Gtk.Button(label="Öffnen", valign=Gtk.Align.CENTER)
+        open_row = Adw.ActionRow(
+            title="Grafischen Hotkey-Manager öffnen",
+            subtitle="Tastenkürzel interaktiv aufnehmen, ändern, nach Kategorien filtern und Konflikte prüfen",
+        )
+        open_btn = Gtk.Button(label="Manager öffnen", valign=Gtk.Align.CENTER)
         open_btn.add_css_class("suggested-action")
         open_btn.connect("clicked", lambda _: self._open_hotkey_manager())
         open_row.add_suffix(open_btn)
@@ -3012,22 +3134,25 @@ class SettingsWindow(Adw.ApplicationWindow):
         box.append(group)
 
         # Kurzinfo
-        info_group = Adw.PreferencesGroup(title="Wichtige Tastenkürzel")
+        info_group = Adw.PreferencesGroup(
+            title="Wichtige Standard-Tastenkürzel",
+            description="Die essenziellen Hyprland Tastenkombinationen für den täglichen Gebrauch",
+        )
         shortcuts = [
-            ("SUPER + Return", "Terminal öffnen"),
-            ("SUPER + D", "App-Launcher"),
-            ("SUPER + Q", "Fenster schließen"),
-            ("SUPER + E", "Dateimanager"),
-            ("SUPER + V", "Fenster schwebend"),
-            ("SUPER + F", "Fenster maximieren"),
-            ("SUPER + SHIFT + S", "Screenshot (Bereich)"),
-            ("SUPER + ALT + S", "Tokyo Shot (Screenshot-Hub)"),
-            ("SUPER + SHIFT + X", "Bildschirm sperren"),
-            ("SUPER + SHIFT + E", "Power-Menü"),
-            ("SUPER + I", "Einstellungen"),
+            ("SUPER + Return", "Kitty Terminal", "Startet das blitzschnelle GPU-beschleunigte Terminal"),
+            ("SUPER + D", "App-Launcher (Rofi)", "Öffnet das zentrierte Schnellstart-Suchmenü für alle Anwendungen"),
+            ("SUPER + Q", "Aktives Fenster schließen", "Schließt das aktuell fokussierte Anwendungsfenster sauber"),
+            ("SUPER + E", "Dateimanager (Thunar)", "Öffnet den grafischen Dateimanager direkt im persönlichen Ordner"),
+            ("SUPER + V", "Fenster schweben lassen", "Schaltet für das aktive Fenster zwischen Tiling- und Schwebemodus um"),
+            ("SUPER + F", "Vollbildmodus (Fullscreen)", "Schaltet das fokussierte Fenster in den echten Vollbildmodus um"),
+            ("SUPER + SHIFT + S", "Screenshot-Bereich", "Interaktive Bereichsauswahl mit Slurp und Grim für Sofort-Screenshots"),
+            ("SUPER + ALT + S", "Tokyo Shot (Screenshot-Hub)", "Grafischer Hub für Vollbild-, Fenster- und verzögerte Aufnahmen"),
+            ("SUPER + SHIFT + X", "Bildschirm sperren", "Sperrt die aktuelle Sitzung sofort mit Hyprlock / SDDM"),
+            ("SUPER + SHIFT + E", "Power-Menü", "Abmelden, Neustarten, Herunterfahren oder Ruhezustand auswählen"),
+            ("SUPER + I", "Einstellungen öffnen", "Startet diese grafische Tokyo Night Desktop-Steuerzentrale"),
         ]
-        for combo, desc in shortcuts:
-            row = Adw.ActionRow(title=desc, subtitle=combo)
+        for combo, title_str, desc in shortcuts:
+            row = Adw.ActionRow(title=f"{title_str}  •  {combo}", subtitle=desc)
             info_group.add(row)
 
         box.append(info_group)
@@ -3040,16 +3165,16 @@ class SettingsWindow(Adw.ApplicationWindow):
         box.set_margin_bottom(16)
 
         group = Adw.PreferencesGroup(
-            title="Autostart",
-            description="Programme, die mit Hyprland gestartet werden.\nBearbeite ~/.config/hypr/autostart.lua für Änderungen."
+            title="Autostart-Dienste & Hintergrundprogramme",
+            description="Dienste und Hintergrundprozesse, die automatisch beim Start von Hyprland geladen werden"
         )
 
         programs = [
-            ("Hyprpaper", "Hintergrundbilder", True),
-            ("Waybar", "Statusleiste", True),
-            ("Mako", "Benachrichtigungen", True),
-            ("Hyprpolkitagent", "Polkit-Agent", True),
-            ("Clipboard-Daemon", "wl-paste + cliphist", True),
+            ("Hyprpaper", "Hintergrundbild-Dienst: Lädt und synchronisiert Wallpapers auf allen erkannten Displays", True),
+            ("Waybar", "Statusleiste: Modulare Tokyo Night Leiste mit Workspaces, Uhrzeit und Systemtray", True),
+            ("SwayNC / Benachrichtigungen", "Benachrichtigungszentrale: Speichert Mitteilungen und öffnet das Kontrollzentrum", True),
+            ("Hyprpolkitagent", "Polkit-Agent: Grafische Sicherheitsabfrage für Administrator- und Root-Rechte", True),
+            ("Clipboard-Daemon (cliphist)", "Zwischenablagen-Verlauf: Speichert Texte und Grafiken für den Aufruf mit SUPER + V", True),
         ]
 
         for name, desc, active in programs:
@@ -3061,11 +3186,13 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         box.append(group)
 
-        info_label = Gtk.Label(label="Hinweis: Autostart-Änderungen erfordern eine Bearbeitung von autostart.lua")
-        info_label.set_margin_start(16)
+        info_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        info_box.set_margin_start(16)
+        info_label = Gtk.Label(label="Konfigurationsdatei für Autostart: ~/.config/hypr/autostart.lua")
         info_label.set_halign(Gtk.Align.START)
         info_label.add_css_class("dim-label")
-        box.append(info_label)
+        info_box.append(info_label)
+        box.append(info_box)
 
         return box
 
@@ -3075,11 +3202,17 @@ class SettingsWindow(Adw.ApplicationWindow):
         box.set_margin_top(16)
         box.set_margin_bottom(16)
 
-        group = Adw.PreferencesGroup(title="Backup", description="Konfigurationen sichern und wiederherstellen")
+        group = Adw.PreferencesGroup(
+            title="Datensicherung & System-Snapshots",
+            description="Konfigurationen sichern und frühere Zustände zuverlässig wiederherstellen"
+        )
 
         # Backup erstellen
-        backup_row = Adw.ActionRow(title="Backup erstellen", subtitle="Alle Konfigurationen sichern")
-        backup_btn = Gtk.Button(label="Backup", valign=Gtk.Align.CENTER)
+        backup_row = Adw.ActionRow(
+            title="Neues System-Backup erstellen",
+            subtitle="Sichert alle Dotfiles, Hyprland-, Waybar- und SDDM-Konfigurationen mit Zeitstempel",
+        )
+        backup_btn = Gtk.Button(label="Backup erstellen", valign=Gtk.Align.CENTER)
         backup_btn.add_css_class("suggested-action")
         backup_btn.connect("clicked", self._do_backup)
         backup_row.add_suffix(backup_btn)
@@ -3088,8 +3221,8 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         # Wiederherstellen
         restore_row = Adw.ActionRow(
-            title="Wiederherstellen",
-            subtitle="Starte restore-backup.sh im Terminal"
+            title="Backup wiederherstellen",
+            subtitle="Startet den interaktiven Wiederherstellungsassistenten für frühere Sicherungspunkte",
         )
         restore_btn = Gtk.Button(label="Terminal öffnen", valign=Gtk.Align.CENTER)
         restore_btn.connect("clicked", lambda _: os.system("kitty --title 'Backup' bash -c '~/.config/hypr/scripts/../../../tokyo-hypr-dots/restore-backup.sh; read -p \"Drücke Enter...\"' &"))
@@ -3101,12 +3234,18 @@ class SettingsWindow(Adw.ApplicationWindow):
         # Vorhandene Backups
         backup_base = os.path.expanduser("~/.config/tokyo-hypr-backup")
         if os.path.isdir(backup_base):
-            backups_group = Adw.PreferencesGroup(title="Vorhandene Backups")
+            backups_group = Adw.PreferencesGroup(
+                title="Vorhandene Sicherungspunkte",
+                description=f"Gespeichert im Verzeichnis {backup_base}",
+            )
             try:
                 entries = sorted(os.listdir(backup_base), reverse=True)
                 for entry in entries[:10]:  # Maximal 10 anzeigen
                     if os.path.isdir(os.path.join(backup_base, entry)):
-                        row = Adw.ActionRow(title=entry)
+                        row = Adw.ActionRow(
+                            title=entry,
+                            subtitle=f"Vollständiger Snapshot in {backup_base}/{entry}",
+                        )
                         backups_group.add(row)
             except OSError:
                 pass
@@ -3158,7 +3297,10 @@ class SettingsWindow(Adw.ApplicationWindow):
         )
 
         for gpu in hw.get("gpus", []):
-            gpu_row = Adw.ActionRow(title=gpu)
+            gpu_row = Adw.ActionRow(
+                title=gpu,
+                subtitle="Erkannter Grafikbeschleuniger (Treiber für Wayland-Rendering und Hardware-Beschleunigung)",
+            )
             gpu_group.add(gpu_row)
 
         nvidia_conf = Path.home() / ".config" / "hypr" / "nvidia.conf"
