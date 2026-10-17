@@ -23,10 +23,10 @@ import shot_core
 # GTK4 / libadwaita sicher importieren (mit Fallback für Headless/Tests)
 HAS_GTK = False
 try:
-    import gi
+    import gi  # pyrefly: ignore[missing-import] # type: ignore
     gi.require_version("Gtk", "4.0")
     gi.require_version("Adw", "1")
-    from gi.repository import Gtk, Adw, Gio, GLib, Gdk, GdkPixbuf
+    from gi.repository import Gtk, Adw, Gio, GLib, Gdk, GdkPixbuf  # pyrefly: ignore[missing-import] # type: ignore
     HAS_GTK = True
 except (ImportError, ValueError):
     HAS_GTK = False
@@ -34,7 +34,7 @@ except (ImportError, ValueError):
 # Cairo importieren
 HAS_CAIRO = False
 try:
-    import cairo
+    import cairo  # pyrefly: ignore[missing-import] # type: ignore
     HAS_CAIRO = True
 except ImportError:
     HAS_CAIRO = False
