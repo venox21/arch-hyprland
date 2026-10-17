@@ -1268,6 +1268,14 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         # ── Zustand pro Monitor ──
         rows: dict = {}
+        # Versatz entlang der berührten Kante pro Monitor (durch Ziehen gesetzt)
+        offsets: dict = {n: int((anchors.get(n) or {}).get("offset", 0) or 0) for n in names}
+        state = {"suppress": False}
+        # Drag & Drop Zustand der Vorschau
+        drag: dict = {"name": None, "grab": (0.0, 0.0), "desired": None, "snap": None,
+                      "positions": {}, "sizes": {}, "visible": []}
+        # Umrechnung logisch → Bildschirm (während des Ziehens eingefroren)
+        view = {"factor": 1.0, "bx": 0.0, "by": 0.0, "ox": 0.0, "oy": 0.0}
         scale_base = [1.0, 1.25, 1.5, 1.75, 2.0]
         preview = Gtk.DrawingArea()
 
@@ -1347,13 +1355,13 @@ class SettingsWindow(Adw.ApplicationWindow):
             pos_row = None
             pos_opts = pos_options_for(name)
             if multi:
-                pos_row = Adw.ComboRow(title="Anordnung", subtitle="Position relativ zu einem anderen Monitor")
+                pos_row = Adw.ComboRow(title="Anordnung", subtitle="Position relativ zu einem anderen Monitor (oder in der Vorschau ziehen)")
                 pos_row.set_model(Gtk.StringList.new([clean(label) for label, _ in pos_opts]))
                 anchor = anchors.get(name)
                 sel = 0
                 if anchor:
                     for i, (_, opt) in enumerate(pos_opts):
-                        if opt == anchor:
+                        if opt["ref"] == anchor["ref"] and opt["side"] == anchor["side"]:
                             sel = i
                             break
                 pos_row.set_selected(sel)
@@ -1363,11 +1371,17 @@ class SettingsWindow(Adw.ApplicationWindow):
                 fill_hz(False)
                 redraw()
 
+            def on_pos_changed(*_):
+                # Manuelle Auswahl im Dropdown setzt den Versatz zurück
+                if not state["suppress"]:
+                    offsets[name] = 0
+                redraw()
+
             res_row.connect("notify::selected", on_res_changed)
             hz_row.connect("notify::selected", redraw)
             scale_row.connect("notify::selected", redraw)
             if pos_row is not None:
-                pos_row.connect("notify::selected", redraw)
+                pos_row.connect("notify::selected", on_pos_changed)
 
             rows[name] = {
                 "monitor": m, "modes": modes, "res_list": res_list,
@@ -1379,7 +1393,10 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         # ── Anordnung: Hauptmonitor + Vorschau ──
         if multi:
-            arr_group = Adw.PreferencesGroup(title="Monitor-Anordnung", description="Lege fest, wie deine Monitore zueinander stehen")
+            arr_group = Adw.PreferencesGroup(
+                title="Monitor-Anordnung",
+                description="Ziehe die Monitore in der Vorschau an die gewünschte Position – sie rasten an den Kanten ein",
+            )
             arr_group.add(main_row)
             arr_group.add(preview)
             box.append(arr_group)
@@ -1388,10 +1405,12 @@ class SettingsWindow(Adw.ApplicationWindow):
             prev_group.add(preview)
             box.append(prev_group)
 
-        preview.set_content_height(190)
+        preview.set_content_height(300 if multi else 190)
         preview.set_hexpand(True)
         preview.set_margin_top(8)
         preview.set_margin_bottom(8)
+        if multi:
+            preview.set_cursor_from_name("grab")
 
         # ── Einzelne Monitor-Einstellungen ──
         group_widgets = [make_monitor_group(m, i) for i, m in enumerate(monitors)]
@@ -1427,7 +1446,9 @@ class SettingsWindow(Adw.ApplicationWindow):
                 if multi and name != main and r["pos_row"] is not None:
                     idx = r["pos_row"].get_selected()
                     if idx < len(r["pos_opts"]):
-                        anchor = r["pos_opts"][idx][1]
+                        anchor = dict(r["pos_opts"][idx][1])
+                        if anchor["side"] != "mirror" and offsets.get(name):
+                            anchor["offset"] = offsets[name]
                 w, h = selected_resolution(name)
                 entries.append({
                     "name": name,
@@ -1457,9 +1478,8 @@ class SettingsWindow(Adw.ApplicationWindow):
         def hex_rgb(value: str):
             return tuple(int(value[i:i + 2], 16) / 255 for i in (1, 3, 5))
 
-        def draw_preview(area, cr, width, height, *_):
-            if len(rows) != len(names):
-                return
+        def layout_info():
+            """Aktuelle Anordnung: Einträge, Positionen, Größen, sichtbare/gespiegelte Monitore."""
             entries = collect_entries()
             positions = cm.compute_monitor_positions(entries)
             sizes = {e["name"]: cm._logical_size(e) for e in entries}
@@ -1485,15 +1505,77 @@ class SettingsWindow(Adw.ApplicationWindow):
                     visible.append(e)
                 else:
                     mirrors.setdefault(target, []).append(e["name"])
+            return entries, positions, sizes, visible, mirrors, main
 
+        def to_screen(x: float, y: float) -> tuple:
+            return (view["ox"] + (x - view["bx"]) * view["factor"],
+                    view["oy"] + (y - view["by"]) * view["factor"])
+
+        def to_logical(sx: float, sy: float) -> tuple:
+            return ((sx - view["ox"]) / view["factor"] + view["bx"],
+                    (sy - view["oy"]) / view["factor"] + view["by"])
+
+        def update_view(width, height, positions, sizes, visible):
+            """Skalierung so wählen, dass alle Monitore samt Spielraum zum Ziehen passen."""
+            names_v = [e["name"] for e in visible]
+            min_x = min(positions[n][0] for n in names_v)
+            min_y = min(positions[n][1] for n in names_v)
+            max_x = max(positions[n][0] + sizes[n][0] for n in names_v)
+            max_y = max(positions[n][1] + sizes[n][1] for n in names_v)
+            if multi:
+                margin_x = 0.5 * max(sizes[n][0] for n in names_v)
+                margin_y = 0.5 * max(sizes[n][1] for n in names_v)
+            else:
+                margin_x = margin_y = 0
+            bx, by = min_x - margin_x, min_y - margin_y
+            total_w = max(max_x - min_x + 2 * margin_x, 1)
+            total_h = max(max_y - min_y + 2 * margin_y, 1)
+            pad = 14
+            factor = min((width - 2 * pad) / total_w, (height - 2 * pad) / total_h)
+            view.update(
+                factor=factor, bx=bx, by=by,
+                ox=(width - total_w * factor) / 2,
+                oy=(height - total_h * factor) / 2,
+            )
+
+        def draw_monitor(cr, e, x, y, w, h, is_main, mirrors, alpha=1.0, accent=None):
+            """Zeichnet einen Monitor (logische Koordinaten x, y, w, h)."""
+            sx, sy = to_screen(x, y)
+            rx, ry = sx + 1.5, sy + 1.5
+            rw, rh = max(w * view["factor"] - 3, 4), max(h * view["factor"] - 3, 4)
+            name = e["name"]
+            cr.rectangle(rx, ry, rw, rh)
+            fill = hex_rgb("#2f3549" if is_main else "#24283b")
+            cr.set_source_rgba(*fill, alpha)
+            cr.fill_preserve()
+            cr.set_source_rgba(*hex_rgb(accent or ("#7aa2f7" if is_main else "#bb9af7")), alpha)
+            cr.set_line_width(2)
+            cr.stroke()
+
+            title = name + (" ★" if is_main else "")
+            if mirrors.get(name):
+                title += "  ⧉ " + ", ".join(mirrors[name])
+            detail = f"{e['width']}x{e['height']} @ {cm.format_hz(e['hz'])} Hz"
+            cr.set_source_rgba(*hex_rgb("#c0caf5"), alpha)
+            cr.set_font_size(max(9, min(15, rh / 5)))
+            ext = cr.text_extents(title)
+            cr.move_to(rx + (rw - ext.width) / 2, ry + rh / 2 - 2)
+            cr.show_text(title)
+            cr.set_source_rgba(*hex_rgb("#9aa5ce"), alpha)
+            cr.set_font_size(max(8, min(12, rh / 7)))
+            ext = cr.text_extents(detail)
+            cr.move_to(rx + (rw - ext.width) / 2, ry + rh / 2 + max(12, min(18, rh / 5)))
+            cr.show_text(detail)
+
+        def draw_preview(area, cr, width, height, *_):
+            if len(rows) != len(names):
+                return
+            entries, positions, sizes, visible, mirrors, main = layout_info()
             if not visible:
                 return
-            total_w = max(positions[e["name"]][0] + sizes[e["name"]][0] for e in visible)
-            total_h = max(positions[e["name"]][1] + sizes[e["name"]][1] for e in visible)
-            pad = 14
-            factor = min((width - 2 * pad) / max(total_w, 1), (height - 2 * pad) / max(total_h, 1))
-            off_x = (width - total_w * factor) / 2
-            off_y = (height - total_h * factor) / 2
+            dragging = drag["name"]
+            if dragging is None:
+                update_view(width, height, positions, sizes, visible)
 
             cr.set_source_rgb(*hex_rgb("#1a1b26"))
             cr.paint()
@@ -1501,34 +1583,111 @@ class SettingsWindow(Adw.ApplicationWindow):
 
             for e in visible:
                 name = e["name"]
+                if name == dragging:
+                    continue
                 x, y = positions[name]
                 w, h = sizes[name]
-                rx, ry = off_x + x * factor + 1.5, off_y + y * factor + 1.5
-                rw, rh = max(w * factor - 3, 4), max(h * factor - 3, 4)
-                is_main = name == main
-                cr.rectangle(rx, ry, rw, rh)
-                cr.set_source_rgb(*hex_rgb("#2f3549" if is_main else "#24283b"))
-                cr.fill_preserve()
-                cr.set_source_rgb(*hex_rgb("#7aa2f7" if is_main else "#bb9af7"))
-                cr.set_line_width(2)
-                cr.stroke()
+                draw_monitor(cr, e, x, y, w, h, name == main, mirrors)
 
-                title = name + (" ★" if is_main else "")
-                if mirrors.get(name):
-                    title += "  ⧉ " + ", ".join(mirrors[name])
-                detail = f"{e['width']}x{e['height']} @ {cm.format_hz(e['hz'])} Hz"
-                cr.set_source_rgb(*hex_rgb("#c0caf5"))
-                cr.set_font_size(max(9, min(15, rh / 5)))
-                ext = cr.text_extents(title)
-                cr.move_to(rx + (rw - ext.width) / 2, ry + rh / 2 - 2)
-                cr.show_text(title)
-                cr.set_source_rgb(*hex_rgb("#9aa5ce"))
-                cr.set_font_size(max(8, min(12, rh / 7)))
-                ext = cr.text_extents(detail)
-                cr.move_to(rx + (rw - ext.width) / 2, ry + rh / 2 + max(12, min(18, rh / 5)))
-                cr.show_text(detail)
+            if dragging is not None:
+                e = next((v for v in visible if v["name"] == dragging), None)
+                if e is not None:
+                    w, h = sizes[dragging]
+                    snap = drag["snap"]
+                    if snap is not None:
+                        # Zielposition (rastet beim Loslassen dort ein)
+                        sx, sy = to_screen(*snap)
+                        cr.rectangle(sx + 1.5, sy + 1.5, max(w * view["factor"] - 3, 4), max(h * view["factor"] - 3, 4))
+                        cr.set_source_rgba(*hex_rgb("#9ece6a"), 0.18)
+                        cr.fill_preserve()
+                        cr.set_source_rgba(*hex_rgb("#9ece6a"), 0.9)
+                        cr.set_line_width(2)
+                        cr.set_dash([6.0, 4.0])
+                        cr.stroke()
+                        cr.set_dash([])
+                    dx, dy = drag["desired"] or positions[dragging]
+                    draw_monitor(cr, e, dx, dy, w, h, dragging == main, mirrors, alpha=0.8, accent="#e0af68")
 
         preview.set_draw_func(draw_preview)
+
+        # ── Drag & Drop in der Vorschau ──
+        def apply_anchors(new_anchors: dict):
+            """Neu berechnete Anker in die Dropdowns und Versätze übernehmen."""
+            state["suppress"] = True
+            try:
+                for name, anchor in new_anchors.items():
+                    r = rows.get(name)
+                    if not anchor or r is None or r["pos_row"] is None:
+                        continue
+                    for i, (_, opt) in enumerate(r["pos_opts"]):
+                        if opt["ref"] == anchor["ref"] and opt["side"] == anchor["side"]:
+                            r["pos_row"].set_selected(i)
+                            break
+                    offsets[name] = 0 if anchor["side"] == "mirror" else int(anchor.get("offset", 0) or 0)
+            finally:
+                state["suppress"] = False
+
+        def on_drag_begin(gesture, start_x, start_y):
+            _, positions, sizes, visible, _, _ = layout_info()
+            px, py = to_logical(start_x, start_y)
+            hit = None
+            for e in reversed(visible):
+                n = e["name"]
+                x, y = positions[n]
+                w, h = sizes[n]
+                if x <= px <= x + w and y <= py <= y + h:
+                    hit = n
+                    break
+            if hit is None:
+                gesture.set_state(Gtk.EventSequenceState.DENIED)
+                return
+            gesture.set_state(Gtk.EventSequenceState.CLAIMED)
+            drag.update(
+                name=hit, grab=(px - positions[hit][0], py - positions[hit][1]),
+                desired=positions[hit], snap=None,
+                positions=dict(positions), sizes=dict(sizes),
+                visible=[e["name"] for e in visible],
+            )
+            preview.set_cursor_from_name("grabbing")
+            redraw()
+
+        def on_drag_update(gesture, off_x, off_y):
+            name = drag["name"]
+            if name is None:
+                return
+            ok, start_x, start_y = gesture.get_start_point()
+            if not ok:
+                return
+            px, py = to_logical(start_x + off_x, start_y + off_y)
+            desired = (px - drag["grab"][0], py - drag["grab"][1])
+            drag["desired"] = desired
+            drag["snap"] = cm.snap_position(
+                drag["sizes"], drag["positions"], name, desired,
+                [n for n in drag["visible"] if n != name],
+            )
+            redraw()
+
+        def on_drag_end(gesture, off_x, off_y):
+            name = drag["name"]
+            if name is None:
+                return
+            snap = drag["snap"]
+            drag.update(name=None, desired=None, snap=None)
+            preview.set_cursor_from_name("grab")
+            if snap is not None:
+                entries = collect_entries()
+                positions = dict(cm.compute_monitor_positions(entries))
+                positions[name] = snap
+                apply_anchors(cm.relayout_anchors(entries, positions))
+            redraw()
+
+        if multi:
+            drag_gesture = Gtk.GestureDrag()
+            drag_gesture.set_button(1)
+            drag_gesture.connect("drag-begin", on_drag_begin)
+            drag_gesture.connect("drag-update", on_drag_update)
+            drag_gesture.connect("drag-end", on_drag_end)
+            preview.add_controller(drag_gesture)
 
         # ── Schnellaktionen ──
         quick_group = Adw.PreferencesGroup(title="Schnellaktionen", description="Maximale Werte aller Monitore auf einmal wählen")

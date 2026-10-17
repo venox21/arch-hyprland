@@ -265,6 +265,69 @@ class TestConfigManager(unittest.TestCase):
         self.assertEqual(pos["DP-1"], (0, 720))
         self.assertEqual(pos["HDMI-A-1"], (0, 0))
 
+    def test_anchor_offset_positions(self):
+        """Versatz entlang der Kante wird in Positionen und lua übernommen."""
+        entries = [
+            {"name": "DP-1", "width": 2560, "height": 1440, "scale": 1.0, "anchor": None},
+            {"name": "HDMI-A-1", "width": 1920, "height": 1080, "scale": 1.0,
+             "anchor": {"ref": "DP-1", "side": "right", "offset": 360}},
+        ]
+        pos = self.cm.compute_monitor_positions(entries)
+        self.assertEqual(pos["HDMI-A-1"], (2560, 360))
+
+    def test_snap_and_relayout(self):
+        """Gezogene Monitore rasten an Kanten ein, Anker werden neu abgeleitet."""
+        entries = [
+            {"name": "DP-1", "width": 2560, "height": 1440, "scale": 1.0, "anchor": None},
+            {"name": "HDMI-A-1", "width": 1920, "height": 1080, "scale": 1.0,
+             "anchor": {"ref": "DP-1", "side": "right"}},
+        ]
+        sizes = {"DP-1": (2560, 1440), "HDMI-A-1": (1920, 1080)}
+        pos = self.cm.compute_monitor_positions(entries)
+
+        # Knapp neben der linken Kante von DP-1 → bündig links, Oberkante ausgerichtet
+        snap = self.cm.snap_position(sizes, pos, "HDMI-A-1", (-1900, 20), ["DP-1"])
+        self.assertEqual(snap, (-1920, 0))
+
+        # Frei unter DP-1, deutlich versetzt → "below" mit Versatz
+        snap = self.cm.snap_position(sizes, pos, "HDMI-A-1", (1000, 1500), ["DP-1"])
+        self.assertEqual(snap, (1000, 1440))
+
+        new_pos = dict(pos)
+        new_pos["HDMI-A-1"] = snap
+        anchors = self.cm.relayout_anchors(entries, new_pos)
+        self.assertIsNone(anchors["DP-1"])
+        self.assertEqual(anchors["HDMI-A-1"], {"ref": "DP-1", "side": "below", "offset": 1000})
+
+        # Rückweg: berechnete Position entspricht der gezogenen
+        entries[1]["anchor"] = anchors["HDMI-A-1"]
+        self.assertEqual(self.cm.compute_monitor_positions(entries)["HDMI-A-1"], (1000, 1440))
+
+    def test_relayout_reattaches_detached_and_moves_main(self):
+        """Verwaiste Monitore werden angesetzt; der Hauptmonitor kann verschoben werden."""
+        entries = [
+            {"name": "A", "width": 1920, "height": 1080, "scale": 1.0, "anchor": None},
+            {"name": "B", "width": 1920, "height": 1080, "scale": 1.0, "anchor": {"ref": "A", "side": "right"}},
+            {"name": "C", "width": 1920, "height": 1080, "scale": 1.0, "anchor": {"ref": "B", "side": "right"}},
+        ]
+        sizes = {n: (1920, 1080) for n in "ABC"}
+        pos = self.cm.compute_monitor_positions(entries)
+
+        # A hinter C ziehen: A bleibt Wurzel, B/C werden relativ zu A neu verkettet
+        pos["A"] = self.cm.snap_position(sizes, pos, "A", (5800, 0), ["B", "C"])
+        self.assertEqual(pos["A"], (5760, 0))
+        anchors = self.cm.relayout_anchors(entries, pos)
+        self.assertIsNone(anchors["A"])
+        self.assertEqual(anchors["C"], {"ref": "A", "side": "left"})
+        self.assertEqual(anchors["B"], {"ref": "C", "side": "left"})
+
+        # Monitor ohne Kantenkontakt (B frei schwebend) wird an die Gruppe angesetzt
+        pos = self.cm.compute_monitor_positions(entries)
+        pos["B"] = (4000, 3000)
+        anchors = self.cm.relayout_anchors(entries, pos)
+        self.assertIn(anchors["B"]["side"], ("below", "right", "left", "above"))
+        self.assertNotEqual(anchors["B"]["ref"], "B")
+
     def test_save_monitors_config_multi(self):
         """Mehrere Monitore inkl. Hz, Position und Spiegelung schreiben."""
         self.cm.hypr_dir = Path(self.temp_dir)

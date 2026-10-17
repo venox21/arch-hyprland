@@ -440,7 +440,9 @@ class ConfigManager:
         """Berechnet absolute Positionen aus relativen Anordnungen.
 
         Jeder Eintrag: {name, width, height, scale, size?, transform?,
-        anchor: None | {"ref": name, "side": right|left|above|below|mirror}}.
+        anchor: None | {"ref": name, "side": right|left|above|below|mirror,
+        "offset"?: px}}. Der Versatz (offset) verschiebt den Monitor entlang
+        der berührten Kante (bei links/rechts vertikal, bei über/unter horizontal).
         Der erste Eintrag ohne Anker ist der Hauptmonitor (0x0).
         Rückgabe: {name: (x, y)}; gespiegelte Monitore erhalten die Position
         ihres Referenzmonitors.
@@ -456,15 +458,16 @@ class ConfigManager:
             rx, ry = pos[ref_name]
             rw, rh = sizes[ref_name]
             w, h = sizes[entry["name"]]
+            off = int((entry.get("anchor") or {}).get("offset", 0) or 0)
             if side == "left":
-                return (rx - w, ry)
+                return (rx - w, ry + off)
             if side == "above":
-                return (rx, ry - h)
+                return (rx + off, ry - h)
             if side == "below":
-                return (rx, ry + rh)
+                return (rx + off, ry + rh)
             if side == "mirror":
                 return (rx, ry)
-            return (rx + rw, ry)
+            return (rx + rw, ry + off)
 
         progressed = True
         while pending and progressed:
@@ -529,19 +532,153 @@ class ConfigManager:
                 if r is e:
                     continue
                 rw, rh = cls._logical_size(r)
-                v_overlap = e["y"] < r["y"] + rh and r["y"] < e["y"] + h
-                h_overlap = e["x"] < r["x"] + rw and r["x"] < e["x"] + w
-                if e["x"] == r["x"] + rw and v_overlap:
-                    found = {"ref": r["name"], "side": "right"}
-                elif e["x"] + w == r["x"] and v_overlap:
-                    found = {"ref": r["name"], "side": "left"}
-                elif e["y"] == r["y"] + rh and h_overlap:
-                    found = {"ref": r["name"], "side": "below"}
-                elif e["y"] + h == r["y"] and h_overlap:
-                    found = {"ref": r["name"], "side": "above"}
-                if found:
+                adj = cls._adjacency((e["x"], e["y"]), (w, h), (r["x"], r["y"]), (rw, rh))
+                if adj:
+                    found = cls._make_anchor(r["name"], adj[0], adj[1])
                     break
             anchors[e["name"]] = found or {"ref": main["name"], "side": "right"}
+        return anchors
+
+    @staticmethod
+    def _make_anchor(ref: str, side: str, offset: int = 0) -> dict:
+        """Anker-Dict erzeugen; der Versatz wird nur gespeichert, wenn er != 0 ist."""
+        anchor = {"ref": ref, "side": side}
+        if offset:
+            anchor["offset"] = int(offset)
+        return anchor
+
+    @staticmethod
+    def _adjacency(pos: tuple, size: tuple, ref_pos: tuple, ref_size: tuple):
+        """Prüft, ob ein Monitor die Kante eines Referenzmonitors berührt.
+
+        Rückgabe: (side, offset) oder None.
+        """
+        x, y = pos
+        w, h = size
+        rx, ry = ref_pos
+        rw, rh = ref_size
+        v_overlap = y < ry + rh and ry < y + h
+        h_overlap = x < rx + rw and rx < x + w
+        if x == rx + rw and v_overlap:
+            return ("right", y - ry)
+        if x + w == rx and v_overlap:
+            return ("left", y - ry)
+        if y == ry + rh and h_overlap:
+            return ("below", x - rx)
+        if y + h == ry and h_overlap:
+            return ("above", x - rx)
+        return None
+
+    @staticmethod
+    def _snap_axis(value: float, size: float, ref_pos: float, ref_size: float, align: float) -> int:
+        """Position entlang einer Kante begrenzen und an Ausrichtungen einrasten.
+
+        Der Monitor muss die Kante mindestens ein Viertel seiner Länge überlappen
+        und rastet bündig am Anfang, Ende oder in der Mitte des Referenzmonitors ein.
+        """
+        min_overlap = max(1.0, min(size, ref_size) / 4)
+        lo = ref_pos - size + min_overlap
+        hi = ref_pos + ref_size - min_overlap
+        value = min(max(value, lo), hi)
+        targets = (ref_pos, ref_pos + ref_size - size, ref_pos + (ref_size - size) / 2)
+        nearest = min(targets, key=lambda t: abs(t - value))
+        if abs(nearest - value) <= align:
+            value = nearest
+        return int(round(value))
+
+    @classmethod
+    def snap_position(cls, sizes: dict, positions: dict, name: str, desired: tuple,
+                      others: list, align: float = 40) -> Optional[tuple]:
+        """Rastet einen gezogenen Monitor an die nächstgelegene Kante eines anderen ein.
+
+        sizes/positions: {name: (w, h)} / {name: (x, y)} in logischen Pixeln.
+        desired: gewünschte linke obere Ecke. others: Namen möglicher Referenzmonitore.
+        Überlappungen mit anderen Monitoren werden vermieden, solange möglich.
+        Rückgabe: (x, y) oder None, falls es keinen Referenzmonitor gibt.
+        """
+        w, h = sizes[name]
+        dx, dy = desired
+        refs = [o for o in others if o != name]
+        candidates = []
+        for o in refs:
+            ox, oy = positions[o]
+            ow, oh = sizes[o]
+            for x in (ox + ow, ox - w):
+                candidates.append((x, cls._snap_axis(dy, h, oy, oh, align)))
+            for y in (oy + oh, oy - h):
+                candidates.append((cls._snap_axis(dx, w, ox, ow, align), y))
+
+        def overlaps(cx: int, cy: int) -> bool:
+            for o in refs:
+                ox, oy = positions[o]
+                ow, oh = sizes[o]
+                if cx < ox + ow and ox < cx + w and cy < oy + oh and oy < cy + h:
+                    return True
+            return False
+
+        def dist(c: tuple) -> float:
+            return (c[0] - dx) ** 2 + (c[1] - dy) ** 2
+
+        free = [c for c in candidates if not overlaps(*c)]
+        pool = free or candidates
+        if not pool:
+            return None
+        best = min(pool, key=dist)
+        return (int(best[0]), int(best[1]))
+
+    @classmethod
+    def relayout_anchors(cls, entries: list, positions: dict) -> dict:
+        """Leitet Anker (inkl. Versatz) aus absoluten Positionen neu ab.
+
+        Wird nach dem Verschieben eines Monitors per Drag & Drop genutzt. Der
+        Hauptmonitor (Eintrag ohne Anker bzw. erster Eintrag) bleibt die Wurzel,
+        gespiegelte Monitore behalten ihren Anker. Monitore, die nach dem
+        Verschieben keine Kante mehr berühren, werden an den nächsten Monitor
+        angesetzt. Rückgabe: {name: None | Anker-Dict}.
+        """
+        if not entries:
+            return {}
+        sizes = {e["name"]: cls._logical_size(e) for e in entries}
+        root = next((e["name"] for e in entries if not e.get("anchor")), entries[0]["name"])
+        pos = {n: tuple(p) for n, p in positions.items()}
+        anchors: dict = {root: None}
+        for e in entries:
+            anchor = e.get("anchor") or {}
+            if e["name"] != root and anchor.get("side") == "mirror":
+                anchors[e["name"]] = dict(anchor)
+
+        placed = [root]
+        remaining = [e["name"] for e in entries if e["name"] not in anchors]
+        while remaining:
+            found = None
+            for n in remaining:
+                for r in placed:
+                    adj = cls._adjacency(pos[n], sizes[n], pos[r], sizes[r])
+                    if adj:
+                        found = (n, r, adj)
+                        break
+                if found:
+                    break
+            if not found:
+                # Nichts berührt die bisherige Gruppe → nächstgelegenen Monitor einrasten
+                best = None
+                for n in remaining:
+                    snapped = cls.snap_position(sizes, pos, n, pos[n], placed)
+                    if snapped is None:
+                        continue
+                    d = (snapped[0] - pos[n][0]) ** 2 + (snapped[1] - pos[n][1]) ** 2
+                    if best is None or d < best[0]:
+                        best = (d, n, snapped)
+                if best is None:
+                    for n in remaining:
+                        anchors[n] = cls._make_anchor(root, "right")
+                    break
+                _, n, pos[n] = best
+                continue
+            n, r, (side, offset) = found
+            anchors[n] = cls._make_anchor(r, side, offset)
+            placed.append(n)
+            remaining.remove(n)
         return anchors
 
     # ── Wallpaper-Verwaltung ─────────────────────────────────
