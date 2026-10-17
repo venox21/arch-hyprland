@@ -119,11 +119,17 @@ echo ""
 info "Starte interaktives Auswahlmenü..."
 
 OPT_CHROME="Google Chrome"
+OPT_ZEN="Zen Browser (Tokyo/Modern Firefox)"
 OPT_VSCODE="Visual Studio Code"
+OPT_DISCORD="Discord (Offizieller Client)"
+OPT_VESKTOP="Vesktop (Discord Wayland mit Screenshare)"
 OPT_SPOTIFY_ONLY="Spotify (Nur Client)"
-OPT_SPOTIFY_SPICE="Spotify + Spicetify"
+OPT_SPOTIFY_SPICE="Spotify + Spicetify (Tokyo Themes)"
 OPT_STEAM="Steam"
-OPT_OBSIDIAN="Obsidian"
+OPT_HEROIC="Heroic Games Launcher (Epic, GOG & Amazon)"
+OPT_OBSIDIAN="Obsidian (Notizen & Wiki)"
+OPT_BTOP="Btop (Moderner Terminal-Monitor)"
+OPT_VLC="VLC Media Player"
 
 SELECTED=()
 
@@ -138,11 +144,17 @@ if command -v gum &>/dev/null; then
         --selected.foreground="117" \
         --header.foreground="141" \
         "${OPT_CHROME}" \
+        "${OPT_ZEN}" \
         "${OPT_VSCODE}" \
+        "${OPT_DISCORD}" \
+        "${OPT_VESKTOP}" \
         "${OPT_SPOTIFY_ONLY}" \
         "${OPT_SPOTIFY_SPICE}" \
         "${OPT_STEAM}" \
-        "${OPT_OBSIDIAN}") || true
+        "${OPT_HEROIC}" \
+        "${OPT_OBSIDIAN}" \
+        "${OPT_BTOP}" \
+        "${OPT_VLC}") || true
 
     while IFS= read -r line; do
         [[ -n "${line}" ]] && SELECTED+=("${line}")
@@ -151,30 +163,46 @@ if command -v gum &>/dev/null; then
 elif command -v whiptail &>/dev/null || command -v dialog &>/dev/null; then
     TUI_BIN="$(command -v whiptail || command -v dialog)"
     CHOICES=$("${TUI_BIN}" --title "Tokyo Night – App-Installer" \
-        --checklist "Navigiere mit [Pfeiltasten], wähle mit [Leertaste], bestätige mit [Enter]:" 18 68 6 \
+        --checklist "Navigiere mit [Pfeiltasten], wähle mit [Leertaste], bestätige mit [Enter]:" 22 74 12 \
         "chrome"    "Google Chrome (AUR: google-chrome)" OFF \
+        "zen"       "Zen Browser - Tokyo/Modern Firefox (AUR)" OFF \
         "vscode"    "Visual Studio Code (AUR: visual-studio-code-bin)" OFF \
+        "discord"   "Discord - Offizieller Client (pacman)" OFF \
+        "vesktop"   "Vesktop - Wayland Discord mit Screenshare (AUR)" OFF \
         "spotify"   "Spotify - Nur Client (AUR: spotify)" OFF \
-        "spicetify" "Spotify + Spicetify (Marketplace & CLI)" OFF \
-        "steam"     "Steam (Gaming-Plattform, multilib)" OFF \
-        "obsidian"  "Obsidian (Markdown Notizen & Wiki)" OFF \
+        "spicetify" "Spotify + Spicetify Theme Engine (AUR)" OFF \
+        "steam"     "Steam - Gaming-Plattform (multilib)" OFF \
+        "heroic"    "Heroic Games Launcher - Epic & GOG (AUR)" OFF \
+        "obsidian"  "Obsidian - Markdown Notizen & Wiki (pacman)" OFF \
+        "btop"      "Btop - Moderner System-Monitor (pacman)" OFF \
+        "vlc"       "VLC - Universeller Media Player (pacman)" OFF \
         3>&1 1>&2 2>&3) || true
 
     for item in ${CHOICES}; do
         clean_item=$(echo "${item}" | tr -d '"')
         case "${clean_item}" in
             chrome)    SELECTED+=("${OPT_CHROME}") ;;
+            zen)       SELECTED+=("${OPT_ZEN}") ;;
             vscode)    SELECTED+=("${OPT_VSCODE}") ;;
+            discord)   SELECTED+=("${OPT_DISCORD}") ;;
+            vesktop)   SELECTED+=("${OPT_VESKTOP}") ;;
             spotify)   SELECTED+=("${OPT_SPOTIFY_ONLY}") ;;
             spicetify) SELECTED+=("${OPT_SPOTIFY_SPICE}") ;;
             steam)     SELECTED+=("${OPT_STEAM}") ;;
+            heroic)    SELECTED+=("${OPT_HEROIC}") ;;
             obsidian)  SELECTED+=("${OPT_OBSIDIAN}") ;;
+            btop)      SELECTED+=("${OPT_BTOP}") ;;
+            vlc)       SELECTED+=("${OPT_VLC}") ;;
         esac
     done
 else
     # Reine Bash-Fallback-Abfrage
     echo -e "${YELLOW}Kein TUI-Frontend gefunden. Bitte wähle manuell:${NC}"
-    ALL_OPTS=("${OPT_CHROME}" "${OPT_VSCODE}" "${OPT_SPOTIFY_ONLY}" "${OPT_SPOTIFY_SPICE}" "${OPT_STEAM}" "${OPT_OBSIDIAN}")
+    ALL_OPTS=(
+        "${OPT_CHROME}" "${OPT_ZEN}" "${OPT_VSCODE}" "${OPT_DISCORD}" "${OPT_VESKTOP}"
+        "${OPT_SPOTIFY_ONLY}" "${OPT_SPOTIFY_SPICE}" "${OPT_STEAM}" "${OPT_HEROIC}"
+        "${OPT_OBSIDIAN}" "${OPT_BTOP}" "${OPT_VLC}"
+    )
     for opt in "${ALL_OPTS[@]}"; do
         read -r -p "Möchtest du '${opt}' installieren? [j/N]: " resp
         if [[ "${resp,,}" =~ ^(j|ja|y|yes)$ ]]; then
@@ -208,8 +236,17 @@ for item in "${SELECTED[@]}"; do
         "${OPT_CHROME}")
             INSTALL_PACKAGES+=("google-chrome")
             ;;
+        "${OPT_ZEN}")
+            INSTALL_PACKAGES+=("zen-browser-bin")
+            ;;
         "${OPT_VSCODE}")
             INSTALL_PACKAGES+=("visual-studio-code-bin")
+            ;;
+        "${OPT_DISCORD}")
+            INSTALL_PACKAGES+=("discord")
+            ;;
+        "${OPT_VESKTOP}")
+            INSTALL_PACKAGES+=("vesktop-bin")
             ;;
         "${OPT_SPOTIFY_ONLY}")
             INSTALL_PACKAGES+=("spotify")
@@ -222,8 +259,18 @@ for item in "${SELECTED[@]}"; do
             INSTALL_PACKAGES+=("steam")
             WANT_STEAM=true
             ;;
+        "${OPT_HEROIC}")
+            INSTALL_PACKAGES+=("heroic-games-launcher-bin")
+            WANT_STEAM=true
+            ;;
         "${OPT_OBSIDIAN}")
             INSTALL_PACKAGES+=("obsidian")
+            ;;
+        "${OPT_BTOP}")
+            INSTALL_PACKAGES+=("btop")
+            ;;
+        "${OPT_VLC}")
+            INSTALL_PACKAGES+=("vlc")
             ;;
     esac
 done

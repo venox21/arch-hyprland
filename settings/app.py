@@ -2630,7 +2630,7 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         app_action = Adw.ActionRow(
             title="TUI App-Installer öffnen",
-            subtitle="Installiert Chrome, VS Code, Spotify, Spicetify oder Steam"
+            subtitle="Installiert Discord, Steam, Heroic, Chrome, Zen, VS Code, Spotify & mehr"
         )
         app_btn = Gtk.Button(label="Installer starten", valign=Gtk.Align.CENTER)
         app_btn.connect("clicked", lambda _: os.system(
