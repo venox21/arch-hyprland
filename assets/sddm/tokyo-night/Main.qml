@@ -163,8 +163,11 @@ Rectangle {
         // Die gefrostete Glaskarte (Glass Card)
         Rectangle {
             id: loginCard
-            anchors.fill: parent
-            x: loginCardWrapper.shakeX
+            width: parent.width
+            height: parent.height
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.horizontalCenterOffset: loginCardWrapper.shakeX
+            anchors.verticalCenter: parent.verticalCenter
             radius: 26
             clip: false
 
@@ -406,10 +409,10 @@ Rectangle {
                     anchors.right: submitButton.visible ? submitButton.left : parent.right
                     anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: (typeof keyboard !== "undefined") && keyboard.capsLock
-                    text: "\uf023"
+                    visible: (typeof keyboard !== "undefined" && keyboard && keyboard.capsLock) ? true : false
+                    text: "\uf062"
                     font.family: root.uiFont
-                    font.pixelSize: 13
+                    font.pixelSize: 12
                     color: root.yellow
                     opacity: 0.9
                 }
@@ -469,7 +472,7 @@ Rectangle {
                 font.pixelSize: 12
                 renderType: Text.NativeRendering
 
-                readonly property bool capsOn: (typeof keyboard !== "undefined") && keyboard.capsLock
+                readonly property bool capsOn: (typeof keyboard !== "undefined" && keyboard && keyboard.capsLock) ? true : false
 
                 text: root.busy ? "Anmelden …"
                     : root.errorText !== "" ? root.errorText
@@ -521,22 +524,14 @@ Rectangle {
             Behavior on color { ColorAnimation { duration: 150 } }
         }
 
-        contentItem: Row {
-            leftPadding: 16
-            spacing: 10
-            anchors.verticalCenter: parent.verticalCenter
-
+        contentItem: Item {
             Text {
+                anchors.left: parent.left
+                anchors.leftMargin: 16
+                anchors.right: parent.right
+                anchors.rightMargin: 32
                 anchors.verticalCenter: parent.verticalCenter
-                text: "\uf108"
-                font.family: root.uiFont
-                font.pixelSize: 13
-                color: root.blue
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: sessionSelector.displayText
+                text: "\uf108  " + sessionSelector.displayText
                 font: sessionSelector.font
                 color: root.fg
                 elide: Text.ElideRight
@@ -545,7 +540,7 @@ Rectangle {
 
         indicator: Text {
             x: sessionSelector.width - width - 16
-            anchors.verticalCenter: sessionSelector.verticalCenter
+            y: (sessionSelector.height - height) / 2
             text: "\uf077"
             font.family: root.uiFont
             font.pixelSize: 10
@@ -602,7 +597,7 @@ Rectangle {
         width: layoutRow.width + 32
         radius: 20
         opacity: root.intro
-        visible: (typeof keyboard !== "undefined" && keyboard.layouts && keyboard.layouts.length > 0)
+        visible: (typeof keyboard !== "undefined" && keyboard && keyboard.layouts && keyboard.layouts.length > 0)
         color: layoutArea.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.08)
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.14)
@@ -627,8 +622,8 @@ Rectangle {
                 font.pixelSize: 12
                 font.bold: true
                 color: layoutArea.containsMouse ? root.fg : root.fgMuted
-                text: (typeof keyboard !== "undefined" && keyboard.layouts && keyboard.layouts.length > keyboard.currentLayout)
-                      ? keyboard.layouts[keyboard.currentLayout].shortName.toUpperCase() : "DE"
+                text: (typeof keyboard !== "undefined" && keyboard && keyboard.layouts && keyboard.layouts.length > 0 && keyboard.currentLayout >= 0 && keyboard.currentLayout < keyboard.layouts.length && keyboard.layouts[keyboard.currentLayout])
+                      ? (keyboard.layouts[keyboard.currentLayout].shortName || "DE").toUpperCase() : "DE"
             }
         }
 
@@ -638,7 +633,7 @@ Rectangle {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: {
-                if (typeof keyboard !== "undefined" && keyboard.layouts && keyboard.layouts.length > 1) {
+                if (typeof keyboard !== "undefined" && keyboard && keyboard.layouts && keyboard.layouts.length > 1) {
                     keyboard.currentLayout = (keyboard.currentLayout + 1) % keyboard.layouts.length
                 }
             }
@@ -665,7 +660,7 @@ Rectangle {
 
         Rectangle {
             height: 40
-            width: powerRow.width + 12
+            width: 130
             radius: 20
             color: Qt.rgba(1, 1, 1, 0.08)
             border.width: 1

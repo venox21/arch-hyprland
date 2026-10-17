@@ -288,8 +288,8 @@ if command -v gsettings &>/dev/null; then
     fi
 fi
 
-# Polkit & Sudoers-Regeln für Systemzeit (erlaubt Ändern von Uhrzeit & Zeitzone in den GUI-Einstellungen)
-if sudo -n true 2>/dev/null || sudo -v 2>/dev/null; then
+# Polkit & Sudoers-Regeln & SDDM Theme (erfordert Administrator-Rechte)
+if sudo -n true 2>/dev/null || sudo -v; then
     if [[ -f "${REPO_DIR}/assets/polkit/10-tokyo-timedate.rules" ]]; then
         sudo mkdir -p /etc/polkit-1/rules.d
         sudo cp -f "${REPO_DIR}/assets/polkit/10-tokyo-timedate.rules" /etc/polkit-1/rules.d/10-tokyo-timedate.rules 2>/dev/null || true
@@ -300,12 +300,26 @@ if sudo -n true 2>/dev/null || sudo -v 2>/dev/null; then
         sudo cp -f "${REPO_DIR}/assets/sudoers/10-tokyo-timedate" /etc/sudoers.d/10-tokyo-timedate 2>/dev/null || true
         sudo chmod 0440 /etc/sudoers.d/10-tokyo-timedate 2>/dev/null || true
     fi
-    # SDDM Login-Screen Theme aktualisieren (falls eingerichtet)
-    if [[ -d "/usr/share/sddm/themes/tokyo-night" && -d "${REPO_DIR}/assets/sddm/tokyo-night" ]]; then
-        sudo cp -rf "${REPO_DIR}/assets/sddm/tokyo-night/"* /usr/share/sddm/themes/tokyo-night/ 2>/dev/null || true
-        echo -e "  ${GREEN}✓${NC} SDDM Login-Theme aktualisiert"
-    fi
     echo -e "  ${GREEN}✓${NC} Berechtigungen für Uhrzeit & Zeitzone eingerichtet"
+
+    # SDDM Login-Screen Theme aktualisieren & konfigurieren
+    if [[ -d "${REPO_DIR}/assets/sddm/tokyo-night" ]]; then
+        sudo mkdir -p /usr/share/sddm/themes/tokyo-night
+        sudo cp -rf "${REPO_DIR}/assets/sddm/tokyo-night/"* /usr/share/sddm/themes/tokyo-night/ 2>/dev/null || true
+        sudo chmod -R 755 /usr/share/sddm/themes/tokyo-night 2>/dev/null || true
+        sudo mkdir -p /etc/sddm.conf.d
+        echo -e "[Theme]\nCurrent=tokyo-night" | sudo tee /etc/sddm.conf.d/tokyo-night.conf >/dev/null 2>&1 || true
+        # Wallpaper synchronisieren falls vorhanden
+        if [[ -f "${CONFIG_DIR}/hypr/wallpapers/current.jpg" ]]; then
+            sudo cp -f "${CONFIG_DIR}/hypr/wallpapers/current.jpg" /usr/share/sddm/themes/tokyo-night/background.jpg 2>/dev/null || true
+            sudo chmod 644 /usr/share/sddm/themes/tokyo-night/background.jpg 2>/dev/null || true
+        fi
+        # QML-Bytecode Cache leeren
+        sudo rm -rf /var/lib/sddm/.cache 2>/dev/null || true
+        echo -e "  ${GREEN}✓${NC} SDDM Login-Theme aktualisiert & QML-Cache geleert"
+    fi
+else
+    echo -e "  ${YELLOW}Hinweis:${NC} Root-Rechte übersprungen – führe bei Bedarf ${BOLD}sudo ./scripts/setup-sddm.sh${NC} aus, um den SDDM Login-Screen zu aktualisieren."
 fi
 
 echo -e "${BLUE}[4/5] Optionale Pakete & Abhängigkeiten prüfen...${NC}"
