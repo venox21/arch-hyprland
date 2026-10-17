@@ -13,6 +13,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
   - Tokyo-Night-Farbpalette, Undo/Redo (`Strg+Z`/`Strg+Y`), Bild-im-Bild Pin-Funktion
   - Sofortige Zwischenablage, Zeitverzögerungstimer (0s, 3s, 5s, 10s), Desktop-Eintrag für Rofi
   - Vollständig in `install.sh`, `update.sh`, `uninstall.sh` und Tastenkürzel (`SUPER + ALT + S`, `SUPER + SHIFT + S`) integriert.
+- **Interaktiver TUI App-Installer** (`install-apps.sh`, `scripts/app-installer.sh`):
+  - Automatische Erkennung und Installation von `yay` (via `yay-bin.git` mit automatischer `git`/`base-devel`-Bereitstellung und Cleanup) sowie `gum`
+  - Multi-Select Terminal-Menü mit Checkboxen (Leertaste, Pfeiltasten, Enter)
+  - Paketauswahl: Google Chrome, Visual Studio Code, Spotify, Spotify + Spicetify, Steam, Obsidian
+  - Automatische Aktivierung des `[multilib]` Repositories für Steam in `/etc/pacman.conf`
+  - Paket-Deduplizierung und automatische Schreibrechte-Konfiguration für Spicetify (`/opt/spotify`)
 
 ### Geändert
 - **SDDM-Anmeldebildschirm komplett neu gestaltet** (`assets/sddm/tokyo-night/Main.qml`): große, dünne Uhr, Avatar mit Benutzername (Benutzerwechsel bei mehreren Konten), Passwortfeld als Pille mit Pfeil-Button, Shake-Animation bei falschem Passwort, Feststelltasten-Warnung, Ladeindikator, sanfter Ein-/Ausblend-Übergang, Sitzungswähler, Tastaturlayout-Umschalter sowie Standby/Neustart/Herunterfahren. Benötigt keine zusätzlichen Qt-Module.

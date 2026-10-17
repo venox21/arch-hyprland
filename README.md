@@ -55,7 +55,22 @@ Das Installationsskript:
 ```bash
 # Diagnose ausführen
 ./doctor.sh
+
+# Beliebte Programme installieren (optional)
+./install-apps.sh
 ```
+
+## TUI App-Installer
+
+Mit `./install-apps.sh` (oder `~/.config/hypr/scripts/app-installer.sh`) steht ein interaktiver Terminal-Installer zur Verfügung (navigierbar mit Pfeiltasten, Checkbox-Auswahl per Leertaste, Bestätigung per Enter):
+- **Google Chrome** (`google-chrome` via AUR)
+- **Visual Studio Code** (`visual-studio-code-bin` via AUR)
+- **Spotify (Nur Client)** (`spotify` via AUR)
+- **Spotify + Spicetify** (`spotify`, `spicetify-cli`, `spicetify-marketplace-bin` inkl. automatischer Schreibrechte-Konfiguration)
+- **Steam** (`steam` inkl. automatischer Aktivierung des `[multilib]` Repositories)
+- **Obsidian** (`obsidian`)
+
+Automatischer Check und Setup von `yay` und `gum` bei Bedarf.
 
 ## Aktualisierung & Synchronisation
 

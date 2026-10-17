@@ -685,8 +685,16 @@ echo ""
 echo -e "${CYAN}Nächste Schritte:${NC}"
 echo "  1. Lege ein Hintergrundbild in ~/.config/hypr/wallpapers/ ab"
 echo "  2. Passe ~/.config/hypr/monitors.lua an deine Monitore an"
-echo "  3. Führe nach dem Neustart ./doctor.sh aus"
+echo "  3. Beliebte Apps (Chrome, VSCode, Spotify, Steam, etc.) installieren: ./install-apps.sh"
+echo "  4. Führe nach dem Neustart ./doctor.sh aus"
 echo ""
+
+# Optionale App-Installation
+if [[ -f "${SCRIPT_DIR}/install-apps.sh" ]]; then
+    if confirm "Möchtest du jetzt zusätzliche Anwendungen installieren (Chrome, VSCode, Spotify, Steam, etc.)?"; then
+        bash "${SCRIPT_DIR}/install-apps.sh" || true
+    fi
+fi
 
 # ── Neustart-Frage ────────────────────────────────────────────
 if confirm "Soll das System jetzt neu gestartet werden?"; then
