@@ -166,24 +166,23 @@ fi
 # Wallpapers
 [[ -d "${REPO_DIR}/assets/wallpapers" ]] && cp -n "${REPO_DIR}/assets/wallpapers/"* "${CONFIG_DIR}/hypr/wallpapers/" 2>/dev/null || true
 
-# ── Versionsverwaltung: Version nur erhöhen, wenn es WIRKLICH ein Update gab ──
+# ── Versionsverwaltung: Die Version wird zentral über VERSION im Repo gesteuert (aktuell: 1.0) ──
+TARGET_VER="1.0"
+if [[ -f "${VERSION_FILE}" ]]; then
+    TARGET_VER="$(tr -d '[:space:]' < "${VERSION_FILE}" 2>/dev/null || echo "1.0")"
+fi
+if ! [[ "${TARGET_VER}" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    TARGET_VER="1.0"
+fi
+
+NEW_VER="${TARGET_VER}"
+echo "${TARGET_VER}" > "${INSTALLED_VER_FILE}"
+[[ -n "${NEW_HEAD}" ]] && echo "${NEW_HEAD}" > "${LAST_COMMIT_FILE}" 2>/dev/null || true
+
 if [[ "${HAS_REAL_UPDATE}" == "true" ]]; then
-    if [[ -n "${REPO_VER}" && "${REPO_VER}" != "${CURRENT_VER}" && "${REPO_VER}" != "1.0" ]]; then
-        NEW_VER="${REPO_VER}"
-    else
-        NEW_VER="$(awk "BEGIN {printf \"%.1f\", ${CURRENT_VER} + 0.1}" 2>/dev/null || python3 -c "print(f'{float(\"${CURRENT_VER}\") + 0.1:.1f}')" 2>/dev/null || echo "1.1")"
-    fi
-    echo "${NEW_VER}" > "${INSTALLED_VER_FILE}"
-    if [[ -d "${REPO_DIR}" && -w "${REPO_DIR}" ]]; then
-        echo "${NEW_VER}" > "${VERSION_FILE}" 2>/dev/null || true
-    fi
-    [[ -n "${NEW_HEAD}" ]] && echo "${NEW_HEAD}" > "${LAST_COMMIT_FILE}" 2>/dev/null || true
-    echo -e "  ${GREEN}✓${NC} Update erkannt: Version wird auf ${BOLD}v${NEW_VER}${NC} aktualisiert (zuvor: v${CURRENT_VER})"
+    echo -e "  ${GREEN}✓${NC} Aktualisierung auf Version ${BOLD}v${NEW_VER}${NC} erfolgreich übernommen"
 else
-    NEW_VER="${CURRENT_VER}"
-    echo "${CURRENT_VER}" > "${INSTALLED_VER_FILE}" 2>/dev/null || true
-    [[ -n "${NEW_HEAD}" ]] && echo "${NEW_HEAD}" > "${LAST_COMMIT_FILE}" 2>/dev/null || true
-    echo -e "  ${GREEN}✓${NC} Keine neuen Updates vorhanden – Version bleibt unverändert auf ${BOLD}v${CURRENT_VER}${NC}"
+    echo -e "  ${GREEN}✓${NC} System ist auf dem neuesten Stand (Version: ${BOLD}v${NEW_VER}${NC})"
 fi
 
 # Desktop-PC Schutz: Falls kein Backlight vorhanden ist, Widget entfernen
