@@ -365,9 +365,185 @@ class ConfigManager:
                 capture_output=True, text=True, timeout=3
             )
             if result.returncode == 0:
-                return json.loads(result.stdout)
+                data = json.loads(result.stdout)
+                if isinstance(data, list):
+                    return data
         except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError):
             pass
+        return []
+
+    # ── Monitor-Modi (Auflösung / Hz) ─────────────────────────
+
+    _MODE_RE = re.compile(r"^\s*(\d+)x(\d+)@([\d.]+)\s*(?:Hz)?\s*$", re.IGNORECASE)
+
+    @classmethod
+    def parse_monitor_modes(cls, monitor: dict) -> dict:
+        """Liest `availableModes` eines Monitors aus.
+
+        Rückgabe: {(breite, höhe): [hz, ...]} – Hz-Werte absteigend sortiert,
+        Auflösungen absteigend nach Pixelanzahl. Fehlt die Liste, wird nur
+        der aktuelle Modus zurückgegeben.
+        """
+        modes: dict = {}
+        for mode in monitor.get("availableModes") or []:
+            match = cls._MODE_RE.match(str(mode))
+            if not match:
+                continue
+            res = (int(match.group(1)), int(match.group(2)))
+            hz = round(float(match.group(3)), 2)
+            rates = modes.setdefault(res, [])
+            if hz not in rates:
+                rates.append(hz)
+
+        if not modes and monitor.get("width") and monitor.get("height"):
+            modes[(int(monitor["width"]), int(monitor["height"]))] = [
+                round(float(monitor.get("refreshRate", 60)), 2)
+            ]
+
+        for rates in modes.values():
+            rates.sort(reverse=True)
+        return dict(sorted(modes.items(), key=lambda kv: (kv[0][0] * kv[0][1], kv[0][0]), reverse=True))
+
+    @classmethod
+    def get_max_refresh(cls, monitor: dict, resolution: Optional[tuple] = None) -> float:
+        """Höchste verfügbare Bildwiederholrate (optional für eine Auflösung)."""
+        modes = cls.parse_monitor_modes(monitor)
+        if resolution is not None:
+            return max(modes.get(tuple(resolution), [0.0]), default=0.0)
+        return max((max(r) for r in modes.values() if r), default=0.0)
+
+    @staticmethod
+    def format_hz(hz: float) -> str:
+        """Hz-Wert lesbar formatieren (164.99 -> '165', 59.94 -> '59.94')."""
+        if abs(hz - round(hz)) < 0.05:
+            return f"{round(hz)}"
+        return f"{hz:.2f}".rstrip("0").rstrip(".")
+
+    # ── Monitor-Anordnung ────────────────────────────────────
+
+    @staticmethod
+    def _logical_size(entry: dict) -> tuple:
+        """Logische Größe (nach Skalierung/Rotation) eines Monitor-Eintrags."""
+        if entry.get("width", 0) > 0 and entry.get("height", 0) > 0:
+            w, h = entry["width"], entry["height"]
+        else:
+            w, h = entry.get("size", (1920, 1080))
+        scale = float(entry.get("scale") or 1.0)
+        if scale <= 0:
+            scale = 1.0
+        if int(entry.get("transform", 0) or 0) % 2 == 1:
+            w, h = h, w
+        return max(1, round(w / scale)), max(1, round(h / scale))
+
+    @classmethod
+    def compute_monitor_positions(cls, entries: list) -> dict:
+        """Berechnet absolute Positionen aus relativen Anordnungen.
+
+        Jeder Eintrag: {name, width, height, scale, size?, transform?,
+        anchor: None | {"ref": name, "side": right|left|above|below|mirror}}.
+        Der erste Eintrag ohne Anker ist der Hauptmonitor (0x0).
+        Rückgabe: {name: (x, y)}; gespiegelte Monitore erhalten die Position
+        ihres Referenzmonitors.
+        """
+        if not entries:
+            return {}
+        sizes = {e["name"]: cls._logical_size(e) for e in entries}
+        root = next((e for e in entries if not e.get("anchor")), entries[0])
+        pos = {root["name"]: (0, 0)}
+        pending = [e for e in entries if e["name"] != root["name"]]
+
+        def place(entry, ref_name, side):
+            rx, ry = pos[ref_name]
+            rw, rh = sizes[ref_name]
+            w, h = sizes[entry["name"]]
+            if side == "left":
+                return (rx - w, ry)
+            if side == "above":
+                return (rx, ry - h)
+            if side == "below":
+                return (rx, ry + rh)
+            if side == "mirror":
+                return (rx, ry)
+            return (rx + rw, ry)
+
+        progressed = True
+        while pending and progressed:
+            progressed = False
+            for entry in list(pending):
+                anchor = entry.get("anchor")
+                if anchor and anchor.get("ref") in pos and anchor["ref"] != entry["name"]:
+                    pos[entry["name"]] = place(entry, anchor["ref"], anchor.get("side", "right"))
+                    pending.remove(entry)
+                    progressed = True
+
+        # Übrig gebliebene (Zyklen / fehlende Referenzen): rechts anhängen
+        for entry in pending:
+            right_edge = max(pos[n][0] + sizes[n][0] for n in pos)
+            pos[entry["name"]] = (right_edge, 0)
+
+        min_x = min(x for x, _ in pos.values())
+        min_y = min(y for _, y in pos.values())
+        return {n: (x - min_x, y - min_y) for n, (x, y) in pos.items()}
+
+    @classmethod
+    def infer_anchors(cls, monitors: list) -> dict:
+        """Leitet die aktuelle Anordnung aus den Hyprland-Monitordaten ab.
+
+        Rückgabe: {name: None | {"ref": name, "side": ...}}; der Hauptmonitor
+        (bei 0x0) erhält None.
+        """
+        if not monitors:
+            return {}
+        entries = []
+        for m in monitors:
+            entries.append({
+                "name": m.get("name", ""),
+                "width": int(m.get("width", 0) or 0),
+                "height": int(m.get("height", 0) or 0),
+                "scale": m.get("scale", 1.0),
+                "transform": m.get("transform", 0),
+                "x": int(m.get("x", 0) or 0),
+                "y": int(m.get("y", 0) or 0),
+                "mirror": m.get("mirrorOf"),
+                "id": m.get("id"),
+            })
+        by_id = {str(e["id"]): e["name"] for e in entries if e["id"] is not None}
+        names = {e["name"] for e in entries}
+        main = next((e for e in entries if e["x"] == 0 and e["y"] == 0 and e["mirror"] in (None, "none", "", -1)), entries[0])
+
+        anchors: dict = {}
+        for e in entries:
+            if e is main:
+                anchors[e["name"]] = None
+                continue
+            mirror = e["mirror"]
+            if mirror not in (None, "none", "", -1):
+                ref = str(mirror) if str(mirror) in names else by_id.get(str(mirror))
+                if ref and ref != e["name"]:
+                    anchors[e["name"]] = {"ref": ref, "side": "mirror"}
+                    continue
+            w, h = cls._logical_size(e)
+            found = None
+            # Hauptmonitor zuerst prüfen, danach die übrigen
+            for r in [main] + [x for x in entries if x is not main and x is not e]:
+                if r is e:
+                    continue
+                rw, rh = cls._logical_size(r)
+                v_overlap = e["y"] < r["y"] + rh and r["y"] < e["y"] + h
+                h_overlap = e["x"] < r["x"] + rw and r["x"] < e["x"] + w
+                if e["x"] == r["x"] + rw and v_overlap:
+                    found = {"ref": r["name"], "side": "right"}
+                elif e["x"] + w == r["x"] and v_overlap:
+                    found = {"ref": r["name"], "side": "left"}
+                elif e["y"] == r["y"] + rh and h_overlap:
+                    found = {"ref": r["name"], "side": "below"}
+                elif e["y"] + h == r["y"] and h_overlap:
+                    found = {"ref": r["name"], "side": "above"}
+                if found:
+                    break
+            anchors[e["name"]] = found or {"ref": main["name"], "side": "right"}
+        return anchors
+
     # ── Wallpaper-Verwaltung ─────────────────────────────────
 
     def get_wallpaper_dirs(self) -> list[Path]:
@@ -735,6 +911,80 @@ hl.monitor({{
         except OSError as e:
             print(f"Fehler beim Speichern von monitors.lua: {e}")
             return False
+
+    def build_monitors_lua(self, entries: list) -> str:
+        """Erzeugt den Inhalt von monitors.lua für alle Monitore.
+
+        Jeder Eintrag: {name, width, height, hz, scale, size?, transform?, anchor?}
+        (width/height = 0 → bevorzugter Modus, hz = 0 → höchste Rate der Auflösung).
+        """
+        positions = self.compute_monitor_positions(entries)
+        blocks = []
+        for e in entries:
+            name = str(e["name"]).replace('"', "")
+            width, height = int(e.get("width", 0) or 0), int(e.get("height", 0) or 0)
+            hz = float(e.get("hz", 0) or 0)
+            if width > 0 and height > 0:
+                mode = f"{width}x{height}"
+                if hz > 0:
+                    mode += f"@{round(hz)}" if abs(hz - round(hz)) < 0.005 else f"@{hz:.2f}"
+            else:
+                mode = "preferred"
+            scale = float(e.get("scale", 1.0) or 1.0)
+            scale_str = f"{scale:.2f}".rstrip("0").rstrip(".") if scale > 0 else "1"
+            x, y = positions.get(e["name"], (0, 0))
+            lines = [
+                "hl.monitor({",
+                f'    output   = "{name}",',
+                f'    mode     = "{mode}",',
+                f'    position = "{x}x{y}",',
+                f'    scale    = "{scale_str}",',
+            ]
+            anchor = e.get("anchor") or {}
+            if anchor.get("side") == "mirror" and anchor.get("ref"):
+                mirror_ref = str(anchor["ref"]).replace('"', "")
+                lines.append(f'    mirror   = "{mirror_ref}",')
+            transform = int(e.get("transform", 0) or 0)
+            if transform:
+                lines.append(f"    transform = {transform},")
+            lines.append("})")
+            blocks.append("\n".join(lines))
+
+        header = """-- ╔══════════════════════════════════════════════════════════════╗
+-- ║  Monitor-Konfiguration                                      ║
+-- ║  Erzeugt von der Tokyo-Night Einstellungs-App               ║
+-- ╚══════════════════════════════════════════════════════════════╝
+
+-- Fallback für neu angeschlossene Monitore
+hl.monitor({
+    output   = "",
+    mode     = "preferred",
+    position = "auto",
+    scale    = "auto",
+})
+
+"""
+        return header + "\n\n".join(blocks) + "\n"
+
+    def save_monitors_config(self, entries: list) -> bool:
+        """Speichert die Konfiguration aller Monitore in monitors.lua und lädt Hyprland neu."""
+        if not entries:
+            return False
+        mon_file = self.hypr_dir / "monitors.lua"
+        try:
+            content = self.build_monitors_lua(entries)
+            mon_file.parent.mkdir(parents=True, exist_ok=True)
+            self._backup_file(mon_file)
+            mon_file.write_text(content, encoding="utf-8")
+        except (OSError, KeyError, ValueError) as e:
+            print(f"Fehler beim Speichern von monitors.lua: {e}")
+            return False
+
+        try:
+            subprocess.run(["hyprctl", "reload"], capture_output=True, timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        return True
 
     # ── Tokyo Night Farbvarianten ──────────────────────────────
 

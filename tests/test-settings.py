@@ -224,6 +224,65 @@ class TestConfigManager(unittest.TestCase):
         self.assertIn('mode     = "2560x1440@144"', content)
         self.assertIn('scale    = "1.25"', content)
 
+    MONITORS = [
+        {
+            "id": 0, "name": "DP-1", "width": 2560, "height": 1440, "refreshRate": 164.99,
+            "x": 0, "y": 0, "scale": 1.0, "transform": 0, "mirrorOf": "none",
+            "availableModes": ["2560x1440@164.99Hz", "2560x1440@143.91Hz", "2560x1440@59.95Hz", "1920x1080@60.00Hz"],
+        },
+        {
+            "id": 1, "name": "HDMI-A-1", "width": 1920, "height": 1080, "refreshRate": 60.0,
+            "x": 2560, "y": 0, "scale": 1.0, "transform": 0, "mirrorOf": "none",
+            "availableModes": ["1920x1080@120.00Hz", "1920x1080@60.00Hz", "1280x720@60.00Hz"],
+        },
+    ]
+
+    def test_parse_monitor_modes_and_max_hz(self):
+        """Verfügbare Modi und maximale Hz pro Monitor auslesen."""
+        modes = self.cm.parse_monitor_modes(self.MONITORS[0])
+        self.assertEqual(list(modes.keys()), [(2560, 1440), (1920, 1080)])
+        self.assertEqual(modes[(2560, 1440)], [164.99, 143.91, 59.95])
+        self.assertEqual(self.cm.get_max_refresh(self.MONITORS[0]), 164.99)
+        self.assertEqual(self.cm.get_max_refresh(self.MONITORS[1]), 120.0)
+        self.assertEqual(self.cm.get_max_refresh(self.MONITORS[0], (1920, 1080)), 60.0)
+        self.assertEqual(self.cm.format_hz(164.99), "165")
+        self.assertEqual(self.cm.format_hz(59.95), "60")
+        self.assertEqual(self.cm.format_hz(143.5), "143.5")
+
+    def test_infer_anchors_and_positions(self):
+        """Anordnung aus Hyprland-Daten ableiten und Positionen berechnen."""
+        anchors = self.cm.infer_anchors(self.MONITORS)
+        self.assertIsNone(anchors["DP-1"])
+        self.assertEqual(anchors["HDMI-A-1"], {"ref": "DP-1", "side": "right"})
+
+        entries = [
+            {"name": "DP-1", "width": 2560, "height": 1440, "scale": 1.0, "anchor": None},
+            {"name": "HDMI-A-1", "width": 1920, "height": 1080, "scale": 1.5,
+             "anchor": {"ref": "DP-1", "side": "above"}},
+        ]
+        pos = self.cm.compute_monitor_positions(entries)
+        # HDMI skaliert: 1280x720 logisch, liegt über DP-1 → Verschiebung auf 0
+        self.assertEqual(pos["DP-1"], (0, 720))
+        self.assertEqual(pos["HDMI-A-1"], (0, 0))
+
+    def test_save_monitors_config_multi(self):
+        """Mehrere Monitore inkl. Hz, Position und Spiegelung schreiben."""
+        self.cm.hypr_dir = Path(self.temp_dir)
+        entries = [
+            {"name": "DP-1", "width": 2560, "height": 1440, "hz": 164.99, "scale": 1.0, "anchor": None},
+            {"name": "HDMI-A-1", "width": 1920, "height": 1080, "hz": 120.0, "scale": 1.0,
+             "anchor": {"ref": "DP-1", "side": "right"}},
+            {"name": "DP-2", "width": 1920, "height": 1080, "hz": 60.0, "scale": 1.0,
+             "anchor": {"ref": "DP-1", "side": "mirror"}},
+        ]
+        with patch("subprocess.run"):
+            self.assertTrue(self.cm.save_monitors_config(entries))
+        content = (self.cm.hypr_dir / "monitors.lua").read_text(encoding="utf-8")
+        self.assertIn('mode     = "2560x1440@164.99"', content)
+        self.assertIn('mode     = "1920x1080@120"', content)
+        self.assertIn('position = "2560x0"', content)
+        self.assertIn('mirror   = "DP-1"', content)
+
     def test_theme_palettes(self):
         """Tokyo Night Akzent-Paletten prüfen und anwenden."""
         self.cm.hypr_dir = Path(self.temp_dir)

@@ -64,6 +64,11 @@ except ImportError:
         def set_visible(self, *a, **kw): pass
         def set_halign(self, *a, **kw): pass
         def set_valign(self, *a, **kw): pass
+        def set_hexpand(self, *a, **kw): pass
+        def set_sensitive(self, *a, **kw): pass
+        def set_content_height(self, *a, **kw): pass
+        def set_draw_func(self, *a, **kw): pass
+        def queue_draw(self, *a, **kw): pass
         def set_pixel_size(self, *a, **kw): pass
         def get_row_at_index(self, *a, **kw): return self
         @classmethod
@@ -88,6 +93,7 @@ except ImportError:
         Box = _MockBase
         Button = _MockBase
         ListBox = _MockBase
+        DrawingArea = _MockBase
         SelectionMode = type("SelectionMode", (), {"SINGLE": 0})
         Orientation = type("Orientation", (), {"VERTICAL": 0, "HORIZONTAL": 1})
         Align = type("Align", (), {"CENTER": 0, "START": 1, "END": 2})
@@ -1219,74 +1225,342 @@ class SettingsWindow(Adw.ApplicationWindow):
         return box
 
     def _page_monitors(self) -> Gtk.Widget:
-        """Monitore & Bildschirme – Auflösung, Hz und Skalierung."""
+        """Monitore & Bildschirme – Erkennung, Auflösung, Hz (inkl. Maximum), Skalierung und Anordnung."""
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         box.set_margin_top(16)
         box.set_margin_bottom(16)
 
-        # Aktuelle Monitore
-        mon_group = Adw.PreferencesGroup(title="Erkannte Monitore", description="Aktuell an das System angeschlossene Displays")
-        monitors = self.config.get_monitors()
-        primary_name = ""
-        if monitors and isinstance(monitors, list):
-            for m in monitors:
-                name = m.get("name", "Display")
-                if not primary_name:
-                    primary_name = name
-                w = m.get("width", 1920)
-                h = m.get("height", 1080)
-                hz = m.get("refreshRate", 60)
-                scale = m.get("scale", 1.0)
-                row = Adw.ActionRow(
-                    title=f"Monitor: {name}",
-                    subtitle=f"Auflösung: {w}x{h} @ {hz:.0f} Hz  |  Skalierung: {scale:.2f}x",
-                )
-                mon_group.add(row)
-        else:
-            mon_group.add(Adw.ActionRow(title="Keine Monitordaten", subtitle="Hyprland läuft nicht oder kein Display erkannt"))
+        cm = self.config
+        monitors = cm.get_monitors()
+
+        def clean(text) -> str:
+            """Markup-kritische Zeichen aus Anzeigenamen entfernen."""
+            return str(text).replace("&", "+").replace("<", "").replace(">", "")
+
+        if not monitors:
+            empty_group = Adw.PreferencesGroup(title="Erkannte Monitore", description="Aktuell an das System angeschlossene Displays")
+            empty_group.add(Adw.ActionRow(title="Keine Monitordaten", subtitle="Hyprland läuft nicht oder kein Display erkannt"))
+            box.append(empty_group)
+            return box
+
+        names = [m.get("name", f"Display-{i}") for i, m in enumerate(monitors)]
+        anchors = cm.infer_anchors(monitors)
+        multi = len(monitors) > 1
+
+        # ── Erkannte Monitore (Überblick inkl. Maximalwerte) ──
+        mon_group = Adw.PreferencesGroup(
+            title="Erkannte Monitore",
+            description=f"{len(monitors)} Display(s) erkannt – Auflösung, Bildwiederholrate und Maximum",
+        )
+        for m in monitors:
+            name = m.get("name", "Display")
+            w, h = int(m.get("width", 0) or 0), int(m.get("height", 0) or 0)
+            cur_hz = float(m.get("refreshRate", 60) or 60)
+            scale = float(m.get("scale", 1.0) or 1.0)
+            max_hz = cm.get_max_refresh(m)
+            model_name = " ".join(str(x) for x in (m.get("make", ""), m.get("model", "")) if x).strip()
+            title = f"{name}" + (f" – {model_name}" if model_name else "")
+            mon_group.add(Adw.ActionRow(
+                title=clean(title),
+                subtitle=f"Aktuell: {w}x{h} @ {cm.format_hz(cur_hz)} Hz  |  Maximum: {cm.format_hz(max_hz)} Hz  |  Skalierung: {scale:.2f}x",
+            ))
         box.append(mon_group)
 
-        # Bildschirmeinstellungen
-        cfg_group = Adw.PreferencesGroup(title="Bildschirm-Einstellungen", description="Auflösung, Bildwiederholrate (Hz) und Skalierung festlegen")
+        # ── Zustand pro Monitor ──
+        rows: dict = {}
+        scale_base = [1.0, 1.25, 1.5, 1.75, 2.0]
+        preview = Gtk.DrawingArea()
 
-        hz_row = Adw.ComboRow(title="Bildwiederholfrequenz (Hz)", subtitle="Höhere Hz-Werte sorgen für flüssigere Bewegungen")
-        hz_options = [
-            ("Automatisch (Standard)", 0),
-            ("60 Hz (Standard)", 60),
-            ("75 Hz", 75),
-            ("120 Hz", 120),
-            ("144 Hz (Gaming)", 144),
-            ("165 Hz (Gaming)", 165),
-            ("240 Hz (High Refresh)", 240),
-        ]
-        hz_row.set_model(Gtk.StringList.new([opt[0] for opt in hz_options]))
-        hz_row.set_selected(0)
-        cfg_group.add(hz_row)
+        def redraw(*_):
+            preview.queue_draw()
 
-        res_row = Adw.ComboRow(title="Auflösung", subtitle="Native Pixelauflösung des Bildschirms")
-        res_options = [
-            ("Automatisch / Bevorzugt", 0, 0),
-            ("1920 x 1080 (Full HD 1080p)", 1920, 1080),
-            ("2560 x 1440 (2K / WQHD 1440p)", 2560, 1440),
-            ("3840 x 2160 (4K / UHD)", 3840, 2160),
-            ("1366 x 768 (Laptop HD)", 1366, 768),
-        ]
-        res_row.set_model(Gtk.StringList.new([opt[0] for opt in res_options]))
-        res_row.set_selected(0)
-        cfg_group.add(res_row)
+        def pos_options_for(name: str) -> list:
+            opts = []
+            for other in names:
+                if other == name:
+                    continue
+                opts.append((f"Rechts von {other}", {"ref": other, "side": "right"}))
+                opts.append((f"Links von {other}", {"ref": other, "side": "left"}))
+                opts.append((f"Über {other}", {"ref": other, "side": "above"}))
+                opts.append((f"Unter {other}", {"ref": other, "side": "below"}))
+                opts.append((f"Spiegeln von {other}", {"ref": other, "side": "mirror"}))
+            return opts
 
-        scale_row = Adw.ComboRow(title="Skalierung (UI-Größe)", subtitle="Vergrößert Schrift und Fenster auf hochauflösenden Displays")
-        scale_options = [
-            ("100% (1.0x - Normal)", 1.0),
-            ("125% (1.25x)", 1.25),
-            ("150% (1.5x)", 1.5),
-            ("175% (1.75x)", 1.75),
-            ("200% (2.0x - HiDPI)", 2.0),
-        ]
-        scale_row.set_model(Gtk.StringList.new([opt[0] for opt in scale_options]))
-        scale_row.set_selected(0)
-        cfg_group.add(scale_row)
-        box.append(cfg_group)
+        main_row = None
+        if multi:
+            main_row = Adw.ComboRow(title="Hauptmonitor", subtitle="Liegt bei Position 0x0 – alle anderen werden relativ dazu angeordnet")
+            main_row.set_model(Gtk.StringList.new([clean(n) for n in names]))
+            main_idx = next((i for i, n in enumerate(names) if anchors.get(n) is None), 0)
+            main_row.set_selected(main_idx)
+
+        def make_monitor_group(m: dict, index: int):
+            name = names[index]
+            modes = cm.parse_monitor_modes(m)
+            cur_res = (int(m.get("width", 0) or 0), int(m.get("height", 0) or 0))
+            cur_hz = float(m.get("refreshRate", 60) or 60)
+            if cur_res not in modes and cur_res[0] > 0:
+                modes[cur_res] = [round(cur_hz, 2)]
+            res_list = list(modes.keys())
+            max_total = cm.get_max_refresh(m)
+
+            model_name = " ".join(str(x) for x in (m.get("make", ""), m.get("model", "")) if x).strip()
+            group = Adw.PreferencesGroup(
+                title=clean(name),
+                description=clean(model_name or m.get("description", "")) + (f"  •  Maximum: {cm.format_hz(max_total)} Hz" if max_total else ""),
+            )
+
+            res_row = Adw.ComboRow(title="Auflösung", subtitle="Vom Monitor unterstützte Auflösungen (höchste Hz in Klammern)")
+            res_row.set_model(Gtk.StringList.new([
+                f"{w} x {h}  (bis {cm.format_hz(max(modes[(w, h)]))} Hz)" for (w, h) in res_list
+            ]))
+            res_row.set_selected(res_list.index(cur_res) if cur_res in res_list else 0)
+            group.add(res_row)
+
+            hz_row = Adw.ComboRow(title="Bildwiederholrate (Hz)")
+            group.add(hz_row)
+
+            def fill_hz(keep_current: bool):
+                idx = res_row.get_selected()
+                res = res_list[idx] if idx < len(res_list) else res_list[0]
+                rates = modes.get(res, [0.0])
+                hz_row.set_model(Gtk.StringList.new([
+                    f"{cm.format_hz(r)} Hz" + ("  – Maximum" if i == 0 else "") for i, r in enumerate(rates)
+                ]))
+                sel = 0
+                if keep_current and res == cur_res:
+                    sel = min(range(len(rates)), key=lambda i: abs(rates[i] - cur_hz))
+                hz_row.set_selected(sel)
+                hz_row.set_subtitle(f"Maximum für {res[0]}x{res[1]}: {cm.format_hz(rates[0])} Hz")
+
+            fill_hz(True)
+
+            scale_vals = list(scale_base)
+            cur_scale = float(m.get("scale", 1.0) or 1.0)
+            if not any(abs(cur_scale - s) < 0.005 for s in scale_vals):
+                scale_vals.append(round(cur_scale, 2))
+                scale_vals.sort()
+            scale_row = Adw.ComboRow(title="Skalierung (UI-Größe)", subtitle="Vergrößert Schrift und Fenster auf hochauflösenden Displays")
+            scale_row.set_model(Gtk.StringList.new([f"{int(round(s * 100))}%  ({s:g}x)" for s in scale_vals]))
+            scale_row.set_selected(min(range(len(scale_vals)), key=lambda i: abs(scale_vals[i] - cur_scale)))
+            group.add(scale_row)
+
+            pos_row = None
+            pos_opts = pos_options_for(name)
+            if multi:
+                pos_row = Adw.ComboRow(title="Anordnung", subtitle="Position relativ zu einem anderen Monitor")
+                pos_row.set_model(Gtk.StringList.new([clean(label) for label, _ in pos_opts]))
+                anchor = anchors.get(name)
+                sel = 0
+                if anchor:
+                    for i, (_, opt) in enumerate(pos_opts):
+                        if opt == anchor:
+                            sel = i
+                            break
+                pos_row.set_selected(sel)
+                group.add(pos_row)
+
+            def on_res_changed(*_):
+                fill_hz(False)
+                redraw()
+
+            res_row.connect("notify::selected", on_res_changed)
+            hz_row.connect("notify::selected", redraw)
+            scale_row.connect("notify::selected", redraw)
+            if pos_row is not None:
+                pos_row.connect("notify::selected", redraw)
+
+            rows[name] = {
+                "monitor": m, "modes": modes, "res_list": res_list,
+                "res_row": res_row, "hz_row": hz_row, "scale_row": scale_row,
+                "scale_vals": scale_vals, "pos_row": pos_row, "pos_opts": pos_opts,
+                "cur_res": cur_res,
+            }
+            return group
+
+        # ── Anordnung: Hauptmonitor + Vorschau ──
+        if multi:
+            arr_group = Adw.PreferencesGroup(title="Monitor-Anordnung", description="Lege fest, wie deine Monitore zueinander stehen")
+            arr_group.add(main_row)
+            arr_group.add(preview)
+            box.append(arr_group)
+        else:
+            prev_group = Adw.PreferencesGroup(title="Vorschau")
+            prev_group.add(preview)
+            box.append(prev_group)
+
+        preview.set_content_height(190)
+        preview.set_hexpand(True)
+        preview.set_margin_top(8)
+        preview.set_margin_bottom(8)
+
+        # ── Einzelne Monitor-Einstellungen ──
+        group_widgets = [make_monitor_group(m, i) for i, m in enumerate(monitors)]
+
+        def selected_resolution(name: str) -> tuple:
+            r = rows[name]
+            idx = r["res_row"].get_selected()
+            return r["res_list"][idx] if idx < len(r["res_list"]) else r["cur_res"]
+
+        def selected_hz(name: str) -> float:
+            r = rows[name]
+            rates = r["modes"].get(selected_resolution(name), [0.0])
+            idx = r["hz_row"].get_selected()
+            return rates[idx] if idx < len(rates) else rates[0]
+
+        def selected_scale(name: str) -> float:
+            r = rows[name]
+            idx = r["scale_row"].get_selected()
+            return r["scale_vals"][idx] if idx < len(r["scale_vals"]) else 1.0
+
+        def main_name() -> str:
+            if main_row is None:
+                return names[0]
+            idx = main_row.get_selected()
+            return names[idx] if idx < len(names) else names[0]
+
+        def collect_entries() -> list:
+            main = main_name()
+            entries = []
+            for name in names:
+                r = rows[name]
+                anchor = None
+                if multi and name != main and r["pos_row"] is not None:
+                    idx = r["pos_row"].get_selected()
+                    if idx < len(r["pos_opts"]):
+                        anchor = r["pos_opts"][idx][1]
+                w, h = selected_resolution(name)
+                entries.append({
+                    "name": name,
+                    "width": w, "height": h,
+                    "hz": selected_hz(name),
+                    "scale": selected_scale(name),
+                    "transform": r["monitor"].get("transform", 0),
+                    "size": (w, h),
+                    "anchor": anchor,
+                })
+            # Hauptmonitor muss zuerst stehen (Wurzel der Anordnung)
+            entries.sort(key=lambda e: e["name"] != main)
+            return entries
+
+        def update_main_sensitivity(*_):
+            main = main_name()
+            for name, r in rows.items():
+                if r["pos_row"] is not None:
+                    r["pos_row"].set_sensitive(name != main)
+            redraw()
+
+        if main_row is not None:
+            main_row.connect("notify::selected", update_main_sensitivity)
+            update_main_sensitivity()
+
+        # ── Vorschau zeichnen ──
+        def hex_rgb(value: str):
+            return tuple(int(value[i:i + 2], 16) / 255 for i in (1, 3, 5))
+
+        def draw_preview(area, cr, width, height, *_):
+            if len(rows) != len(names):
+                return
+            entries = collect_entries()
+            positions = cm.compute_monitor_positions(entries)
+            sizes = {e["name"]: cm._logical_size(e) for e in entries}
+            by_name = {e["name"]: e for e in entries}
+            main = main_name()
+
+            def final_ref(name: str) -> str:
+                seen = set()
+                while name not in seen:
+                    seen.add(name)
+                    anchor = by_name[name].get("anchor")
+                    if anchor and anchor.get("side") == "mirror" and anchor.get("ref") in by_name and name != main:
+                        name = anchor["ref"]
+                    else:
+                        break
+                return name
+
+            mirrors: dict = {}
+            visible = []
+            for e in entries:
+                target = final_ref(e["name"])
+                if target == e["name"]:
+                    visible.append(e)
+                else:
+                    mirrors.setdefault(target, []).append(e["name"])
+
+            if not visible:
+                return
+            total_w = max(positions[e["name"]][0] + sizes[e["name"]][0] for e in visible)
+            total_h = max(positions[e["name"]][1] + sizes[e["name"]][1] for e in visible)
+            pad = 14
+            factor = min((width - 2 * pad) / max(total_w, 1), (height - 2 * pad) / max(total_h, 1))
+            off_x = (width - total_w * factor) / 2
+            off_y = (height - total_h * factor) / 2
+
+            cr.set_source_rgb(*hex_rgb("#1a1b26"))
+            cr.paint()
+            cr.select_font_face("Sans")
+
+            for e in visible:
+                name = e["name"]
+                x, y = positions[name]
+                w, h = sizes[name]
+                rx, ry = off_x + x * factor + 1.5, off_y + y * factor + 1.5
+                rw, rh = max(w * factor - 3, 4), max(h * factor - 3, 4)
+                is_main = name == main
+                cr.rectangle(rx, ry, rw, rh)
+                cr.set_source_rgb(*hex_rgb("#2f3549" if is_main else "#24283b"))
+                cr.fill_preserve()
+                cr.set_source_rgb(*hex_rgb("#7aa2f7" if is_main else "#bb9af7"))
+                cr.set_line_width(2)
+                cr.stroke()
+
+                title = name + (" ★" if is_main else "")
+                if mirrors.get(name):
+                    title += "  ⧉ " + ", ".join(mirrors[name])
+                detail = f"{e['width']}x{e['height']} @ {cm.format_hz(e['hz'])} Hz"
+                cr.set_source_rgb(*hex_rgb("#c0caf5"))
+                cr.set_font_size(max(9, min(15, rh / 5)))
+                ext = cr.text_extents(title)
+                cr.move_to(rx + (rw - ext.width) / 2, ry + rh / 2 - 2)
+                cr.show_text(title)
+                cr.set_source_rgb(*hex_rgb("#9aa5ce"))
+                cr.set_font_size(max(8, min(12, rh / 7)))
+                ext = cr.text_extents(detail)
+                cr.move_to(rx + (rw - ext.width) / 2, ry + rh / 2 + max(12, min(18, rh / 5)))
+                cr.show_text(detail)
+
+        preview.set_draw_func(draw_preview)
+
+        # ── Schnellaktionen ──
+        quick_group = Adw.PreferencesGroup(title="Schnellaktionen", description="Maximale Werte aller Monitore auf einmal wählen")
+        quick_row = Adw.ActionRow(
+            title="Maximum auswählen",
+            subtitle="Setzt die höchste Bildwiederholrate (oder zusätzlich die höchste Auflösung) für alle Monitore",
+        )
+
+        def set_all_max_hz(_):
+            for r in rows.values():
+                r["hz_row"].set_selected(0)
+            redraw()
+
+        def set_all_max_res(_):
+            for r in rows.values():
+                r["res_row"].set_selected(0)  # Triggert Hz-Neuaufbau mit Maximum
+                r["hz_row"].set_selected(0)
+            redraw()
+
+        hz_btn = Gtk.Button(label="Max. Hz")
+        hz_btn.set_valign(Gtk.Align.CENTER)
+        hz_btn.connect("clicked", set_all_max_hz)
+        res_btn = Gtk.Button(label="Max. Auflösung + Hz")
+        res_btn.set_valign(Gtk.Align.CENTER)
+        res_btn.connect("clicked", set_all_max_res)
+        quick_row.add_suffix(hz_btn)
+        quick_row.add_suffix(res_btn)
+        quick_group.add(quick_row)
+        box.append(quick_group)
+
+        for widget in group_widgets:
+            box.append(widget)
 
         apply_btn = Gtk.Button(label="Monitoreinstellungen speichern & anwenden")
         apply_btn.add_css_class("suggested-action")
@@ -1294,18 +1568,9 @@ class SettingsWindow(Adw.ApplicationWindow):
         apply_btn.set_margin_end(16)
 
         def on_apply_monitor(_):
-            hz_idx = hz_row.get_selected()
-            res_idx = res_row.get_selected()
-            sc_idx = scale_row.get_selected()
-
-            hz_val = hz_options[hz_idx][1] if hz_idx < len(hz_options) else 0
-            w_val = res_options[res_idx][1] if res_idx < len(res_options) else 0
-            h_val = res_options[res_idx][2] if res_idx < len(res_options) else 0
-            sc_val = scale_options[sc_idx][1] if sc_idx < len(scale_options) else 1.0
-
-            ok = self.config.save_monitor_config(primary_name, w_val, h_val, hz_val, sc_val)
+            ok = cm.save_monitors_config(collect_entries())
             if ok:
-                self._show_info("Monitore", "Bildschirmeinstellungen erfolgreich in monitors.lua gespeichert und angewendet!")
+                self._show_info("Monitore", "Bildschirmeinstellungen in monitors.lua gespeichert und Hyprland neu geladen!\nEin Backup der alten Datei wurde angelegt.")
             else:
                 self._show_info("Fehler", "Monitoreinstellungen konnten nicht angewendet werden.")
 
