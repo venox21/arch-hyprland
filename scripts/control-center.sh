@@ -36,6 +36,7 @@ wifi_toggle() {
         nmcli radio wifi on
         notify "WLAN aktiviert" "Suche nach Drahtlosnetzwerken..." "network-wireless"
     fi
+    sync_swaync_labels &
 }
 
 wifi_menu() {
@@ -105,6 +106,7 @@ wifi_menu() {
             "󰖪  WLAN ausschalten")
                 nmcli radio wifi off
                 notify "WLAN deaktiviert" "Drahtlosverbindung ausgeschaltet" "network-wireless-disconnected"
+                sync_swaync_labels &
                 return 0
                 ;;
             "󰑐  Netzwerke neu scannen")
@@ -131,6 +133,7 @@ wifi_menu() {
             if [[ "${disconnect_opt}" == "Verbindung trennen" ]]; then
                 nmcli connection down id "${selected_ssid}" 2>/dev/null || nmcli device disconnect "$(nmcli -t -f DEVICE,TYPE dev 2>/dev/null | grep ':wifi$' | head -n1 | cut -d: -f1)" 2>/dev/null || true
                 notify "WLAN getrennt" "Verbindung zu ${selected_ssid} getrennt" "network-wireless-disconnected"
+                sync_swaync_labels &
             fi
             return 0
         else
@@ -145,6 +148,7 @@ wifi_menu() {
         if nmcli -t -f NAME connection show 2>/dev/null | grep -Fxq "${selected_ssid}"; then
             if nmcli connection up id "${selected_ssid}" 2>/dev/null; then
                 notify "WLAN verbunden" "Erfolgreich mit ${selected_ssid} verbunden" "network-wireless"
+                sync_swaync_labels &
             else
                 notify "WLAN-Fehler" "Verbindung mit ${selected_ssid} fehlgeschlagen" "dialog-error"
             fi
@@ -160,12 +164,14 @@ wifi_menu() {
                 fi
                 if nmcli device wifi connect "${selected_ssid}" password "${pass}" 2>/dev/null; then
                     notify "WLAN verbunden" "Erfolgreich mit ${selected_ssid} verbunden" "network-wireless"
+                    sync_swaync_labels &
                 else
                     notify "WLAN-Fehler" "Passwort falsch oder Verbindung fehlgeschlagen" "dialog-error"
                 fi
             else
                 if nmcli device wifi connect "${selected_ssid}" 2>/dev/null; then
                     notify "WLAN verbunden" "Erfolgreich mit ${selected_ssid} verbunden" "network-wireless"
+                    sync_swaync_labels &
                 else
                     notify "WLAN-Fehler" "Verbindung mit ${selected_ssid} fehlgeschlagen" "dialog-error"
                 fi
@@ -209,6 +215,7 @@ bluetooth_toggle() {
         bluetoothctl power on >/dev/null 2>&1 || true
         notify "Bluetooth aktiviert" "Bereit für Verbindungen" "bluetooth-active"
     fi
+    sync_swaync_labels &
 }
 
 bluetooth_menu() {
@@ -278,6 +285,7 @@ bluetooth_menu() {
             "󰂲  Bluetooth ausschalten")
                 bluetoothctl power off >/dev/null 2>&1 || true
                 notify "Bluetooth deaktiviert" "Bluetooth-Adapter ausgeschaltet" "bluetooth-disabled"
+                sync_swaync_labels &
                 return 0
                 ;;
             "󰑐  Nach neuen Geräten scannen (bluetoothctl)")
@@ -300,10 +308,12 @@ bluetooth_menu() {
         if [[ "${chosen}" =~ \(Verbunden\) ]]; then
             bluetoothctl disconnect "${target_mac}" >/dev/null 2>&1 || true
             notify "Bluetooth getrennt" "${dev_name} wurde getrennt" "bluetooth-disabled"
+            sync_swaync_labels &
         else
             notify "Bluetooth" "Verbinde mit ${dev_name}..." "bluetooth-active"
             if bluetoothctl connect "${target_mac}" >/dev/null 2>&1; then
                 notify "Bluetooth verbunden" "Erfolgreich mit ${dev_name} verbunden" "bluetooth-active"
+                sync_swaync_labels &
             else
                 notify "Bluetooth-Fehler" "Verbindung mit ${dev_name} fehlgeschlagen" "dialog-error"
             fi
@@ -497,8 +507,96 @@ cleaner_launch() {
     fi
 }
 
-# ── 9. SwayNC Panel umschalten ────────────────────────────────
+# ── 9. Dynamische Labels für WLAN und Bluetooth im Kontrollzentrum ─
+sync_swaync_labels() {
+    local config_file="${HOME}/.config/swaync/config.json"
+    [[ ! -f "${config_file}" ]] && return 0
+
+    local wifi_label="Getrennt"
+    if command -v nmcli &>/dev/null; then
+        local radio
+        radio="$(nmcli radio wifi 2>/dev/null || echo 'disabled')"
+        if [[ ! "${radio}" =~ enabled ]]; then
+            wifi_label="Deaktiviert"
+        else
+            local active_ssid
+            active_ssid="$(nmcli -t -f active,ssid dev wifi 2>/dev/null | grep '^yes:' | cut -d: -f2- | head -n 1 || true)"
+            if [[ -n "${active_ssid}" ]]; then
+                if [[ ${#active_ssid} -gt 13 ]]; then
+                    wifi_label="${active_ssid:0:11}…"
+                else
+                    wifi_label="${active_ssid}"
+                fi
+            else
+                wifi_label="Getrennt"
+            fi
+        fi
+    fi
+
+    local bt_label="Getrennt"
+    if command -v bluetoothctl &>/dev/null; then
+        if ! bluetoothctl show 2>/dev/null | grep -q "Powered: yes"; then
+            bt_label="Deaktiviert"
+        else
+            local bt_dev=""
+            bt_dev="$(bluetoothctl devices Connected 2>/dev/null | head -n 1 | cut -d' ' -f3- || true)"
+            if [[ -z "${bt_dev}" ]]; then
+                bt_dev="$(bluetoothctl info 2>/dev/null | grep "Name:" | head -n 1 | sed 's/^[[:space:]]*Name:[[:space:]]*//' || true)"
+            fi
+            if [[ -n "${bt_dev}" ]]; then
+                if [[ ${#bt_dev} -gt 13 ]]; then
+                    bt_label="${bt_dev:0:11}…"
+                else
+                    bt_label="${bt_dev}"
+                fi
+            else
+                bt_label="Getrennt"
+            fi
+        fi
+    fi
+
+    # Config-JSON via Python synchronisieren (sicher & robust)
+    if command -v python3 &>/dev/null; then
+        local reload_needed
+        reload_needed="$(python3 -c "
+import json, sys
+cfg = sys.argv[1]
+wifi = sys.argv[2]
+bt = sys.argv[3]
+try:
+    with open(cfg, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    actions = data.get('widget-config', {}).get('buttons-grid#quick-top', {}).get('actions', [])
+    changed = False
+    if len(actions) >= 2:
+        w_text = f'󰖩  WLAN\n{wifi}'
+        b_text = f'󰂯  Bluetooth\n{bt}'
+        if actions[0].get('label') != w_text:
+            actions[0]['label'] = w_text
+            changed = True
+        if actions[1].get('label') != b_text:
+            actions[1]['label'] = b_text
+            changed = True
+    if changed:
+        with open(cfg, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+            f.write('\n')
+        print('1')
+except Exception:
+    pass
+" "${config_file}" "${wifi_label}" "${bt_label}" 2>/dev/null || true)"
+
+        if [[ "${reload_needed}" == "1" ]] && command -v swaync-client &>/dev/null; then
+            swaync-client --reload-config 2>/dev/null || true
+        fi
+    fi
+}
+
+# ── 10. SwayNC Panel umschalten ───────────────────────────────
 toggle_panel() {
+    # Dynamische Labels für verbundenes WLAN & Bluetooth synchronisieren
+    sync_swaync_labels
+
     # Falls SwayNC noch nicht läuft, zuverlässig initialisieren & starten
     if ! pgrep -x swaync &>/dev/null; then
         pkill -9 -x mako 2>/dev/null || true
@@ -536,6 +634,7 @@ case "${1:-}" in
     --bluetooth-menu|--bluetooth-connect) bluetooth_menu ;;
     --bluetooth-toggle)             bluetooth_toggle ;;
     --bluetooth-status)             bluetooth_status ;;
+    --sync-labels)                  sync_swaync_labels ;;
     --audio-toggle)                 audio_toggle ;;
     --audio-status)                 audio_status ;;
     --nightmode-toggle)             nightmode_toggle ;;
@@ -550,7 +649,7 @@ case "${1:-}" in
     --cleaner|--clean-system)       cleaner_launch ;;
     --toggle|toggle)                toggle_panel ;;
     *)
-        echo "Verwendung: $0 {--wifi-menu|--wifi-toggle|--wifi-status|--bluetooth-menu|--bluetooth-toggle|--bluetooth-status|--audio-toggle|--nightmode-toggle|--nightmode-status|--theme-toggle|--powersave-toggle|--powersave-status|--gamemode-toggle|--gamemode-status|--cleaner|--toggle}"
+        echo "Verwendung: $0 {--wifi-menu|--wifi-toggle|--wifi-status|--bluetooth-menu|--bluetooth-toggle|--bluetooth-status|--sync-labels|--audio-toggle|--nightmode-toggle|--nightmode-status|--theme-toggle|--powersave-toggle|--powersave-status|--gamemode-toggle|--gamemode-status|--cleaner|--toggle}"
         exit 1
         ;;
 esac

@@ -41,14 +41,14 @@
       "buttons-per-row": 3,
       "actions": [
         {
-          "label": "󰖩  WLAN\nHyperNet",
+          "label": "󰖩  WLAN\nGetrennt",
           "type": "toggle",
           "active": true,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --wifi-menu'",
           "update-command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --wifi-status'"
         },
         {
-          "label": "󰂯  Bluetooth\nGeräte",
+          "label": "󰂯  Bluetooth\nGetrennt",
           "type": "toggle",
           "active": false,
           "command": "sh -c '$HOME/.config/hypr/scripts/control-center.sh --bluetooth-menu'",
