@@ -7,4 +7,4 @@ Icon=system-software-install
 Terminal=false
 Type=Application
 Categories=System;Settings;PackageManager;Utility;
-Keywords=apps;app installer;installer;software;install;yay;aur;tokyo;spotify;steam;heroic;discord;vesktop;chrome;zen;vscode;obsidian;btop;vlc;
+Keywords=apps;app installer;installer;software;install;yay;aur;tokyo;spotify;steam;heroic;discord;vesktop;chrome;zen;vscode;obsidian;btop;vlc;nmap;wireshark;burpsuite;metasploit;ghidra;security;cyber;pentest;blackarch;

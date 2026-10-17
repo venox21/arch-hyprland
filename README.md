@@ -67,14 +67,15 @@ Das Installationsskript:
 ## TUI App-Installer
 
 Mit `./install-apps.sh` (oder `~/.config/hypr/scripts/app-installer.sh`) steht ein interaktiver Terminal-Installer zur Verfügung (navigierbar mit Pfeiltasten, Checkbox-Auswahl per Leertaste, Bestätigung per Enter):
-- **Google Chrome** (`google-chrome` via AUR)
-- **Visual Studio Code** (`visual-studio-code-bin` via AUR)
-- **Spotify (Nur Client)** (`spotify` via AUR)
-- **Spotify + Spicetify** (`spotify`, `spicetify-cli`, `spicetify-marketplace-bin` inkl. automatischer Schreibrechte-Konfiguration)
-- **Steam** (`steam` inkl. automatischer Aktivierung des `[multilib]` Repositories)
-- **Obsidian** (`obsidian`)
+- **Browser & Kommunikation**: Google Chrome, Zen Browser, Discord, Vesktop (Wayland Discord mit Screensharing)
+- **Gaming & Media**: Steam, Heroic Games Launcher (Epic, GOG, Amazon), Spotify (+ Spicetify Theme Engine), VLC Media Player
+- **Produktivität**: Visual Studio Code, Obsidian, Btop
+- **Cyber Security & Pentesting**:
+  - *Core-Bundle*: Nmap, Wireshark (GUI + Non-Root Berechtigung), Burp Suite, Gobuster, SQLmap
+  - *Erweiterte Tools*: Metasploit Framework, Ghidra (NSA Reverse-Engineering), Aircrack-ng, Hashcat, John the Ripper, FFUF
+  - *BlackArch Integration*: 1-Klick-Setup des offiziellen BlackArch Repositories (2800+ Hacking-Tools)
 
-Automatischer Check und Setup von `yay` und `gum` bei Bedarf.
+Automatischer Check und Setup von `yay`, `gum` und des `[multilib]` Repositories bei Bedarf.
 
 ## Aktualisierung & Synchronisation
 

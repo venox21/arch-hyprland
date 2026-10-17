@@ -131,6 +131,21 @@ OPT_OBSIDIAN="Obsidian (Notizen & Wiki)"
 OPT_BTOP="Btop (Moderner Terminal-Monitor)"
 OPT_VLC="VLC Media Player"
 
+# Cyber Security & Pentesting
+OPT_SEC_BUNDLE="🛡️  Cyber Security Core-Bundle (Nmap, Wireshark, Burp, Gobuster, SQLmap)"
+OPT_NMAP="Nmap (Port-Scanner & Network Recon)"
+OPT_WIRESHARK="Wireshark (Netzwerk-Paket-Analyzer GUI)"
+OPT_BURPSUITE="Burp Suite (Web-Security & Proxy)"
+OPT_METASPLOIT="Metasploit Framework (Exploitation Suite)"
+OPT_AIRCRACK="Aircrack-ng (WLAN Sicherheits-Audit & WPA)"
+OPT_HASHCAT="Hashcat (GPU Passwort-Cracker)"
+OPT_JOHN="John the Ripper (Passwort & Hash Audit)"
+OPT_SQLMAP="SQLmap (Automatisierte SQL-Injections)"
+OPT_GOBUSTER="Gobuster (Directory, DNS & VHost Fuzzer)"
+OPT_FFUF="FFUF (Fast Web Fuzzer)"
+OPT_GHIDRA="Ghidra (NSA Reverse-Engineering Suite)"
+OPT_BLACKARCH="BlackArch Repo einrichten (2800+ Hacking Tools via pacman)"
+
 SELECTED=()
 
 if command -v gum &>/dev/null; then
@@ -154,7 +169,20 @@ if command -v gum &>/dev/null; then
         "${OPT_HEROIC}" \
         "${OPT_OBSIDIAN}" \
         "${OPT_BTOP}" \
-        "${OPT_VLC}") || true
+        "${OPT_VLC}" \
+        "${OPT_SEC_BUNDLE}" \
+        "${OPT_NMAP}" \
+        "${OPT_WIRESHARK}" \
+        "${OPT_BURPSUITE}" \
+        "${OPT_METASPLOIT}" \
+        "${OPT_AIRCRACK}" \
+        "${OPT_HASHCAT}" \
+        "${OPT_JOHN}" \
+        "${OPT_SQLMAP}" \
+        "${OPT_GOBUSTER}" \
+        "${OPT_FFUF}" \
+        "${OPT_GHIDRA}" \
+        "${OPT_BLACKARCH}") || true
 
     while IFS= read -r line; do
         [[ -n "${line}" ]] && SELECTED+=("${line}")
@@ -162,37 +190,63 @@ if command -v gum &>/dev/null; then
 
 elif command -v whiptail &>/dev/null || command -v dialog &>/dev/null; then
     TUI_BIN="$(command -v whiptail || command -v dialog)"
-    CHOICES=$("${TUI_BIN}" --title "Tokyo Night – App-Installer" \
-        --checklist "Navigiere mit [Pfeiltasten], wähle mit [Leertaste], bestätige mit [Enter]:" 22 74 12 \
-        "chrome"    "Google Chrome (AUR: google-chrome)" OFF \
-        "zen"       "Zen Browser - Tokyo/Modern Firefox (AUR)" OFF \
-        "vscode"    "Visual Studio Code (AUR: visual-studio-code-bin)" OFF \
-        "discord"   "Discord - Offizieller Client (pacman)" OFF \
-        "vesktop"   "Vesktop - Wayland Discord mit Screenshare (AUR)" OFF \
-        "spotify"   "Spotify - Nur Client (AUR: spotify)" OFF \
-        "spicetify" "Spotify + Spicetify Theme Engine (AUR)" OFF \
-        "steam"     "Steam - Gaming-Plattform (multilib)" OFF \
-        "heroic"    "Heroic Games Launcher - Epic & GOG (AUR)" OFF \
-        "obsidian"  "Obsidian - Markdown Notizen & Wiki (pacman)" OFF \
-        "btop"      "Btop - Moderner System-Monitor (pacman)" OFF \
-        "vlc"       "VLC - Universeller Media Player (pacman)" OFF \
+    CHOICES=$("${TUI_BIN}" --title "Tokyo Night – App- & Security-Installer" \
+        --checklist "Navigiere mit [Pfeiltasten], wähle mit [Leertaste], bestätige mit [Enter]:" 26 78 18 \
+        "chrome"     "Google Chrome (AUR: google-chrome)" OFF \
+        "zen"        "Zen Browser - Tokyo/Modern Firefox (AUR)" OFF \
+        "vscode"     "Visual Studio Code (AUR: visual-studio-code-bin)" OFF \
+        "discord"    "Discord - Offizieller Client (pacman)" OFF \
+        "vesktop"    "Vesktop - Wayland Discord mit Screenshare (AUR)" OFF \
+        "spotify"    "Spotify - Nur Client (AUR: spotify)" OFF \
+        "spicetify"  "Spotify + Spicetify Theme Engine (AUR)" OFF \
+        "steam"      "Steam - Gaming-Plattform (multilib)" OFF \
+        "heroic"     "Heroic Games Launcher - Epic & GOG (AUR)" OFF \
+        "obsidian"   "Obsidian - Markdown Notizen & Wiki (pacman)" OFF \
+        "btop"       "Btop - Moderner System-Monitor (pacman)" OFF \
+        "vlc"        "VLC - Universeller Media Player (pacman)" OFF \
+        "secbundle"  "Security Core-Bundle (Nmap, Wireshark, Burp, Gobuster, SQLmap)" OFF \
+        "nmap"       "Nmap - Port-Scanner & Network Audit (pacman)" OFF \
+        "wireshark"  "Wireshark - Paket-Analyzer GUI (pacman)" OFF \
+        "burpsuite"  "Burp Suite Community Edition (AUR)" OFF \
+        "metasploit" "Metasploit Framework (pacman)" OFF \
+        "aircrack"   "Aircrack-ng - WLAN Security Audit (pacman)" OFF \
+        "hashcat"    "Hashcat - GPU Password Cracker (pacman)" OFF \
+        "john"       "John the Ripper - Passwort & Hash Audit (pacman)" OFF \
+        "sqlmap"     "SQLmap - SQL-Injection Automation (pacman)" OFF \
+        "gobuster"   "Gobuster - Directory & DNS Fuzzing (pacman)" OFF \
+        "ffuf"       "FFUF - Fast Web Fuzzer (pacman)" OFF \
+        "ghidra"     "Ghidra - NSA Reverse-Engineering Suite (pacman)" OFF \
+        "blackarch"  "BlackArch Repo - 2800+ Hacking-Tools via pacman" OFF \
         3>&1 1>&2 2>&3) || true
 
     for item in ${CHOICES}; do
         clean_item=$(echo "${item}" | tr -d '"')
         case "${clean_item}" in
-            chrome)    SELECTED+=("${OPT_CHROME}") ;;
-            zen)       SELECTED+=("${OPT_ZEN}") ;;
-            vscode)    SELECTED+=("${OPT_VSCODE}") ;;
-            discord)   SELECTED+=("${OPT_DISCORD}") ;;
-            vesktop)   SELECTED+=("${OPT_VESKTOP}") ;;
-            spotify)   SELECTED+=("${OPT_SPOTIFY_ONLY}") ;;
-            spicetify) SELECTED+=("${OPT_SPOTIFY_SPICE}") ;;
-            steam)     SELECTED+=("${OPT_STEAM}") ;;
-            heroic)    SELECTED+=("${OPT_HEROIC}") ;;
-            obsidian)  SELECTED+=("${OPT_OBSIDIAN}") ;;
-            btop)      SELECTED+=("${OPT_BTOP}") ;;
-            vlc)       SELECTED+=("${OPT_VLC}") ;;
+            chrome)     SELECTED+=("${OPT_CHROME}") ;;
+            zen)        SELECTED+=("${OPT_ZEN}") ;;
+            vscode)     SELECTED+=("${OPT_VSCODE}") ;;
+            discord)    SELECTED+=("${OPT_DISCORD}") ;;
+            vesktop)    SELECTED+=("${OPT_VESKTOP}") ;;
+            spotify)    SELECTED+=("${OPT_SPOTIFY_ONLY}") ;;
+            spicetify)  SELECTED+=("${OPT_SPOTIFY_SPICE}") ;;
+            steam)      SELECTED+=("${OPT_STEAM}") ;;
+            heroic)     SELECTED+=("${OPT_HEROIC}") ;;
+            obsidian)   SELECTED+=("${OPT_OBSIDIAN}") ;;
+            btop)       SELECTED+=("${OPT_BTOP}") ;;
+            vlc)        SELECTED+=("${OPT_VLC}") ;;
+            secbundle)  SELECTED+=("${OPT_SEC_BUNDLE}") ;;
+            nmap)       SELECTED+=("${OPT_NMAP}") ;;
+            wireshark)  SELECTED+=("${OPT_WIRESHARK}") ;;
+            burpsuite)  SELECTED+=("${OPT_BURPSUITE}") ;;
+            metasploit) SELECTED+=("${OPT_METASPLOIT}") ;;
+            aircrack)   SELECTED+=("${OPT_AIRCRACK}") ;;
+            hashcat)    SELECTED+=("${OPT_HASHCAT}") ;;
+            john)       SELECTED+=("${OPT_JOHN}") ;;
+            sqlmap)     SELECTED+=("${OPT_SQLMAP}") ;;
+            gobuster)   SELECTED+=("${OPT_GOBUSTER}") ;;
+            ffuf)       SELECTED+=("${OPT_FFUF}") ;;
+            ghidra)     SELECTED+=("${OPT_GHIDRA}") ;;
+            blackarch)  SELECTED+=("${OPT_BLACKARCH}") ;;
         esac
     done
 else
@@ -202,6 +256,9 @@ else
         "${OPT_CHROME}" "${OPT_ZEN}" "${OPT_VSCODE}" "${OPT_DISCORD}" "${OPT_VESKTOP}"
         "${OPT_SPOTIFY_ONLY}" "${OPT_SPOTIFY_SPICE}" "${OPT_STEAM}" "${OPT_HEROIC}"
         "${OPT_OBSIDIAN}" "${OPT_BTOP}" "${OPT_VLC}"
+        "${OPT_SEC_BUNDLE}" "${OPT_NMAP}" "${OPT_WIRESHARK}" "${OPT_BURPSUITE}"
+        "${OPT_METASPLOIT}" "${OPT_AIRCRACK}" "${OPT_HASHCAT}" "${OPT_JOHN}"
+        "${OPT_SQLMAP}" "${OPT_GOBUSTER}" "${OPT_FFUF}" "${OPT_GHIDRA}" "${OPT_BLACKARCH}"
     )
     for opt in "${ALL_OPTS[@]}"; do
         read -r -p "Möchtest du '${opt}' installieren? [j/N]: " resp
@@ -230,6 +287,8 @@ echo ""
 INSTALL_PACKAGES=()
 WANT_SPICETIFY_SETUP=false
 WANT_STEAM=false
+WANT_WIRESHARK_GROUP=false
+WANT_BLACKARCH=false
 
 for item in "${SELECTED[@]}"; do
     case "${item}" in
@@ -272,12 +331,53 @@ for item in "${SELECTED[@]}"; do
         "${OPT_VLC}")
             INSTALL_PACKAGES+=("vlc")
             ;;
+        "${OPT_SEC_BUNDLE}")
+            INSTALL_PACKAGES+=("nmap" "wireshark-qt" "burpsuite" "gobuster" "sqlmap")
+            WANT_WIRESHARK_GROUP=true
+            ;;
+        "${OPT_NMAP}")
+            INSTALL_PACKAGES+=("nmap")
+            ;;
+        "${OPT_WIRESHARK}")
+            INSTALL_PACKAGES+=("wireshark-qt")
+            WANT_WIRESHARK_GROUP=true
+            ;;
+        "${OPT_BURPSUITE}")
+            INSTALL_PACKAGES+=("burpsuite")
+            ;;
+        "${OPT_METASPLOIT}")
+            INSTALL_PACKAGES+=("metasploit")
+            ;;
+        "${OPT_AIRCRACK}")
+            INSTALL_PACKAGES+=("aircrack-ng")
+            ;;
+        "${OPT_HASHCAT}")
+            INSTALL_PACKAGES+=("hashcat")
+            ;;
+        "${OPT_JOHN}")
+            INSTALL_PACKAGES+=("john")
+            ;;
+        "${OPT_SQLMAP}")
+            INSTALL_PACKAGES+=("sqlmap")
+            ;;
+        "${OPT_GOBUSTER}")
+            INSTALL_PACKAGES+=("gobuster")
+            ;;
+        "${OPT_FFUF}")
+            INSTALL_PACKAGES+=("ffuf")
+            ;;
+        "${OPT_GHIDRA}")
+            INSTALL_PACKAGES+=("ghidra")
+            ;;
+        "${OPT_BLACKARCH}")
+            WANT_BLACKARCH=true
+            ;;
     esac
 done
 
-# Steam: Prüfe und aktiviere multilib-Repository
+# Steam & Heroic: Prüfe und aktiviere multilib-Repository
 if [[ "${WANT_STEAM}" == "true" ]]; then
-    info "Prüfe [multilib] Repository für Steam..."
+    info "Prüfe [multilib] Repository (für Steam / 32-bit Wine Spiele)..."
     if ! pacman -Sl multilib &>/dev/null; then
         warn "[multilib] ist noch nicht in /etc/pacman.conf aktiviert. Aktiviere multilib..."
         
@@ -301,7 +401,28 @@ if [[ "${WANT_STEAM}" == "true" ]]; then
     fi
 fi
 
-# Duplikate sauber entfernen (z. B. wenn "Spotify" und "Spotify + Spicetify" gewählt wurden)
+# BlackArch Repository einrichten (falls ausgewählt)
+if [[ "${WANT_BLACKARCH}" == "true" ]]; then
+    echo ""
+    info "Richte BlackArch Linux Repository ein (2800+ Security-Tools)..."
+    BLACKARCH_TMP="$(mktemp -d /tmp/blackarch.XXXXXX)"
+    if curl -sSL https://blackarch.org/strap.sh -o "${BLACKARCH_TMP}/strap.sh"; then
+        chmod +x "${BLACKARCH_TMP}/strap.sh"
+        (
+            cd "${BLACKARCH_TMP}"
+            sudo ./strap.sh
+        )
+        rm -rf "${BLACKARCH_TMP}"
+        info "Aktualisiere Paketdatenbanken nach BlackArch-Integration..."
+        sudo pacman -Sy
+        success "BlackArch Repository erfolgreich eingerichtet!"
+    else
+        rm -rf "${BLACKARCH_TMP}"
+        error "Fehler beim Herunterladen von https://blackarch.org/strap.sh. Bitte prüfe die Internetverbindung."
+    fi
+fi
+
+# Duplikate sauber entfernen
 UNIQUE_PACKAGES=()
 for pkg in "${INSTALL_PACKAGES[@]}"; do
     already=false
@@ -316,23 +437,36 @@ for pkg in "${INSTALL_PACKAGES[@]}"; do
     fi
 done
 
-info "Zu installierende Pakete via yay (${#UNIQUE_PACKAGES[@]}): ${CYAN}${UNIQUE_PACKAGES[*]}${NC}"
-echo ""
-
 # ══════════════════════════════════════════════════════════════
 # Schritt 4: Installation via yay
 # ══════════════════════════════════════════════════════════════
-info "Starte Installation..."
-if yay -S --needed "${UNIQUE_PACKAGES[@]}"; then
-    success "Paketinstallation abgeschlossen!"
-else
-    error "Bei der Installation ist ein Fehler aufgetreten."
-    exit 1
+if [[ ${#UNIQUE_PACKAGES[@]} -gt 0 ]]; then
+    info "Zu installierende Pakete via yay (${#UNIQUE_PACKAGES[@]}): ${CYAN}${UNIQUE_PACKAGES[*]}${NC}"
+    echo ""
+    info "Starte Installation..."
+    if yay -S --needed "${UNIQUE_PACKAGES[@]}"; then
+        success "Paketinstallation abgeschlossen!"
+    else
+        error "Bei der Installation ist ein Fehler aufgetreten."
+        exit 1
+    fi
 fi
 
 # ══════════════════════════════════════════════════════════════
-# Schritt 5: Post-Install (Spicetify-Berechtigungen)
+# Schritt 5: Post-Install (Rechte & Gruppen)
 # ══════════════════════════════════════════════════════════════
+
+# Wireshark-Gruppe für Non-Root Packet Capture
+if [[ "${WANT_WIRESHARK_GROUP}" == "true" ]]; then
+    echo ""
+    info "Konfiguriere Wireshark-Rechte..."
+    if getent group wireshark &>/dev/null; then
+        sudo usermod -aG wireshark "${USER}" 2>/dev/null || true
+        success "Benutzer '${USER}' wurde zur Gruppe 'wireshark' hinzugefügt."
+    fi
+fi
+
+# Spicetify-Berechtigungen
 if [[ "${WANT_SPICETIFY_SETUP}" == "true" ]]; then
     echo ""
     info "Konfiguriere Schreibrechte für Spicetify..."
@@ -361,6 +495,22 @@ for item in "${SELECTED[@]}"; do
 done
 
 echo ""
+if [[ "${WANT_WIRESHARK_GROUP}" == "true" ]]; then
+    echo -e "${MAGENTA}${BOLD}Wireshark-Tipp:${NC}"
+    echo -e "  Um Pakete ohne 'sudo' aufzuzeichnen, starte deine Sitzung neu oder führe:"
+    echo -e "  ${CYAN}newgrp wireshark${NC}"
+    echo -e "  im aktuellen Terminal aus."
+    echo ""
+fi
+
+if [[ "${WANT_BLACKARCH}" == "true" ]]; then
+    echo -e "${MAGENTA}${BOLD}BlackArch-Repository aktiv:${NC}"
+    echo -e "  Du hast jetzt Zugriff auf über 2800 Hacking- und Security-Tools!"
+    echo -e "  Kategorien anzeigen: ${CYAN}pacman -Sg | grep blackarch${NC}"
+    echo -e "  Tools einer Kategorie anzeigen z.B.: ${CYAN}pacman -Sg blackarch-scanner${NC}"
+    echo ""
+fi
+
 if [[ "${WANT_SPICETIFY_SETUP}" == "true" ]]; then
     echo -e "${MAGENTA}${BOLD}Spicetify-Tipp:${NC}"
     echo -e "  Starte Spotify einmal, schließe es wieder und führe dann aus:"

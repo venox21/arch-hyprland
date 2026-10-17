@@ -16,8 +16,9 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 - **Interaktiver TUI App-Installer** (`install-apps.sh`, `scripts/app-installer.sh`):
   - Automatische Erkennung und Installation von `yay` (via `yay-bin.git` mit automatischer `git`/`base-devel`-Bereitstellung und Cleanup) sowie `gum`
   - Multi-Select Terminal-Menü mit Checkboxen (Leertaste, Pfeiltasten, Enter)
-  - Paketauswahl: Google Chrome, Visual Studio Code, Spotify, Spotify + Spicetify, Steam, Obsidian
-  - Automatische Aktivierung des `[multilib]` Repositories für Steam in `/etc/pacman.conf`
+  - Paketauswahl: Google Chrome, Zen Browser, VS Code, Discord, Vesktop (Wayland Screenshare), Spotify (+ Spicetify), Steam, Heroic Games Launcher, Obsidian, Btop, VLC
+  - Cyber Security Tools & Pentesting: Security Core-Bundle (Nmap, Wireshark, Burp Suite, Gobuster, SQLmap), Metasploit, Ghidra, Aircrack-ng, Hashcat, John the Ripper, FFUF sowie 1-Klick BlackArch Repository-Integration (2800+ Hacking-Tools)
+  - Automatische Konfiguration von Gruppen (z.B. Wireshark ohne Root) und Multilib für Gaming (Steam & Heroic)
   - Paket-Deduplizierung und automatische Schreibrechte-Konfiguration für Spicetify (`/opt/spotify`)
 - **GameMode / Performance-Toggle** (`scripts/gamemode.sh`, Hotkey: `SUPER + F1`, Kontrollzentrum):
   - Schaltet Hyprland-Effekte (Blur, Schatten, Animationen, Gaps) für maximale Gaming-FPS temporär ab
