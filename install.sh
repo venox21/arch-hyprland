@@ -324,6 +324,16 @@ for lua_file in "${SCRIPT_DIR}"/config/hypr/*.lua; do
     fi
 done
 
+# Version und initialen Commit festhalten
+if [[ -f "${SCRIPT_DIR}/VERSION" ]]; then
+    install_config "${SCRIPT_DIR}/VERSION" "${CONFIG_DIR}/hypr/VERSION"
+else
+    echo "1.0" > "${CONFIG_DIR}/hypr/VERSION"
+fi
+if command -v git &>/dev/null && [[ -d "${SCRIPT_DIR}/.git" ]]; then
+    git -C "${SCRIPT_DIR}" rev-parse HEAD > "${CONFIG_DIR}/hypr/.installed_commit" 2>/dev/null || true
+fi
+
 # Waybar
 info "Installiere Waybar-Konfiguration..."
 mkdir -p "${CONFIG_DIR}/waybar"

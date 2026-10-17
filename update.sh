@@ -44,16 +44,69 @@ echo -e "${MAGENTA}${BOLD}╚═════════════════
 echo ""
 
 echo -e "${BLUE}[1/5] Repository aktualisieren...${NC}"
+CONFIG_DIR="${HOME}/.config"
+INSTALLED_VER_FILE="${CONFIG_DIR}/hypr/VERSION"
+VERSION_FILE="${REPO_DIR}/VERSION"
+LAST_COMMIT_FILE="${CONFIG_DIR}/hypr/.installed_commit"
+
+CURRENT_VER="1.0"
+if [[ -f "${INSTALLED_VER_FILE}" ]]; then
+    CURRENT_VER="$(tr -d '[:space:]' < "${INSTALLED_VER_FILE}" 2>/dev/null || echo "1.0")"
+elif [[ -f "${VERSION_FILE}" ]]; then
+    CURRENT_VER="$(tr -d '[:space:]' < "${VERSION_FILE}" 2>/dev/null || echo "1.0")"
+fi
+if ! [[ "${CURRENT_VER}" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    CURRENT_VER="1.0"
+fi
+
+LAST_INSTALLED_COMMIT=""
+[[ -f "${LAST_COMMIT_FILE}" ]] && LAST_INSTALLED_COMMIT="$(cat "${LAST_COMMIT_FILE}" 2>/dev/null | tr -d '[:space:]' || true)"
+
+PREV_HEAD=""
+NEW_HEAD=""
+HAS_NEW_COMMITS=false
+
 if command -v git &>/dev/null && [[ -d "${REPO_DIR}/.git" ]]; then
     cd "${REPO_DIR}"
-    git pull origin main || git pull || true
-    echo -e "  ${GREEN}✓${NC} Git-Repository auf dem neuesten Stand"
+    PREV_HEAD="$(git rev-parse HEAD 2>/dev/null || true)"
+    
+    # Git pull ausführen
+    git pull origin main 2>/dev/null || git pull 2>/dev/null || true
+    NEW_HEAD="$(git rev-parse HEAD 2>/dev/null || true)"
+
+    if [[ -n "${PREV_HEAD}" && -n "${NEW_HEAD}" && "${PREV_HEAD}" != "${NEW_HEAD}" ]]; then
+        HAS_NEW_COMMITS=true
+        echo -e "  ${GREEN}✓${NC} Neue Aktualisierungen von GitHub heruntergeladen"
+    elif [[ -n "${LAST_INSTALLED_COMMIT}" && -n "${NEW_HEAD}" && "${LAST_INSTALLED_COMMIT}" != "${NEW_HEAD}" ]]; then
+        HAS_NEW_COMMITS=true
+        echo -e "  ${GREEN}✓${NC} Neue Version/Commits werden im System synchronisiert"
+    elif [[ -z "${LAST_INSTALLED_COMMIT}" ]]; then
+        if [[ -f "${INSTALLED_VER_FILE}" ]]; then
+            HAS_NEW_COMMITS=false
+            echo -e "  ${GREEN}✓${NC} Git-Repository ist bereits auf dem neuesten Stand"
+        else
+            HAS_NEW_COMMITS=true
+            echo -e "  ${GREEN}✓${NC} Erstmalige Versionssynchronisation"
+        fi
+    else
+        echo -e "  ${GREEN}✓${NC} Git-Repository ist bereits auf dem neuesten Stand"
+    fi
 else
     echo -e "  ${YELLOW}⚠${NC} Kein Git-Verzeichnis gefunden – überspringe git pull"
 fi
 
+# Prüfen, ob die VERSION-Datei im Repo geändert wurde
+REPO_VER=""
+[[ -f "${VERSION_FILE}" ]] && REPO_VER="$(tr -d '[:space:]' < "${VERSION_FILE}" 2>/dev/null || true)"
+
+HAS_REAL_UPDATE=false
+if [[ "${HAS_NEW_COMMITS}" == "true" ]]; then
+    HAS_REAL_UPDATE=true
+elif [[ -n "${REPO_VER}" && "${REPO_VER}" != "${CURRENT_VER}" ]]; then
+    HAS_REAL_UPDATE=true
+fi
+
 echo -e "${BLUE}[2/5] Konfigurationen kopieren...${NC}"
-CONFIG_DIR="${HOME}/.config"
 mkdir -p \
     "${CONFIG_DIR}/hypr" \
     "${CONFIG_DIR}/hypr/scripts" \
@@ -113,26 +166,24 @@ fi
 # Wallpapers
 [[ -d "${REPO_DIR}/assets/wallpapers" ]] && cp -n "${REPO_DIR}/assets/wallpapers/"* "${CONFIG_DIR}/hypr/wallpapers/" 2>/dev/null || true
 
-# ── Versionsverwaltung: Version um 0.1 erhöhen ──
-VERSION_FILE="${REPO_DIR}/VERSION"
-INSTALLED_VER_FILE="${CONFIG_DIR}/hypr/VERSION"
-
-CURRENT_VER="1.0"
-if [[ -f "${INSTALLED_VER_FILE}" ]]; then
-    CURRENT_VER="$(tr -d '[:space:]' < "${INSTALLED_VER_FILE}" 2>/dev/null || echo "1.0")"
-elif [[ -f "${VERSION_FILE}" ]]; then
-    CURRENT_VER="$(tr -d '[:space:]' < "${VERSION_FILE}" 2>/dev/null || echo "1.0")"
-fi
-
-if ! [[ "${CURRENT_VER}" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
-    CURRENT_VER="1.0"
-fi
-
-NEW_VER="$(awk "BEGIN {printf \"%.1f\", ${CURRENT_VER} + 0.1}" 2>/dev/null || python3 -c "print(f'{float(\"${CURRENT_VER}\") + 0.1:.1f}')" 2>/dev/null || echo "1.1")"
-
-echo "${NEW_VER}" > "${INSTALLED_VER_FILE}"
-if [[ -d "${REPO_DIR}" && -w "${REPO_DIR}" ]]; then
-    echo "${NEW_VER}" > "${VERSION_FILE}" 2>/dev/null || true
+# ── Versionsverwaltung: Version nur erhöhen, wenn es WIRKLICH ein Update gab ──
+if [[ "${HAS_REAL_UPDATE}" == "true" ]]; then
+    if [[ -n "${REPO_VER}" && "${REPO_VER}" != "${CURRENT_VER}" && "${REPO_VER}" != "1.0" ]]; then
+        NEW_VER="${REPO_VER}"
+    else
+        NEW_VER="$(awk "BEGIN {printf \"%.1f\", ${CURRENT_VER} + 0.1}" 2>/dev/null || python3 -c "print(f'{float(\"${CURRENT_VER}\") + 0.1:.1f}')" 2>/dev/null || echo "1.1")"
+    fi
+    echo "${NEW_VER}" > "${INSTALLED_VER_FILE}"
+    if [[ -d "${REPO_DIR}" && -w "${REPO_DIR}" ]]; then
+        echo "${NEW_VER}" > "${VERSION_FILE}" 2>/dev/null || true
+    fi
+    [[ -n "${NEW_HEAD}" ]] && echo "${NEW_HEAD}" > "${LAST_COMMIT_FILE}" 2>/dev/null || true
+    echo -e "  ${GREEN}✓${NC} Update erkannt: Version wird auf ${BOLD}v${NEW_VER}${NC} aktualisiert (zuvor: v${CURRENT_VER})"
+else
+    NEW_VER="${CURRENT_VER}"
+    echo "${CURRENT_VER}" > "${INSTALLED_VER_FILE}" 2>/dev/null || true
+    [[ -n "${NEW_HEAD}" ]] && echo "${NEW_HEAD}" > "${LAST_COMMIT_FILE}" 2>/dev/null || true
+    echo -e "  ${GREEN}✓${NC} Keine neuen Updates vorhanden – Version bleibt unverändert auf ${BOLD}v${CURRENT_VER}${NC}"
 fi
 
 # Desktop-PC Schutz: Falls kein Backlight vorhanden ist, Widget entfernen
@@ -142,7 +193,11 @@ if [[ ! -d /sys/class/backlight || -z "$(ls -A /sys/class/backlight 2>/dev/null)
     fi
 fi
 
-echo -e "  ${GREEN}✓${NC} Alle Konfigurationsdateien erfolgreich kopiert (Version: ${BOLD}v${NEW_VER}${NC})"
+if [[ "${HAS_REAL_UPDATE}" == "true" ]]; then
+    echo -e "  ${GREEN}✓${NC} Konfigurationen erfolgreich auf Version ${BOLD}v${NEW_VER}${NC} aktualisiert"
+else
+    echo -e "  ${GREEN}✓${NC} Konfigurationen erfolgreich synchronisiert (Version: ${BOLD}v${CURRENT_VER}${NC})"
+fi
 
 echo -e "${BLUE}[3/5] Design & Icons konfigurieren...${NC}"
 if command -v gsettings &>/dev/null; then
@@ -260,8 +315,14 @@ echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}SwayNC Kontrollzentr
 echo -e "${MAGENTA}${BOLD}│${NC}  ${GREEN}✓${NC} ${BOLD}Settings-App${NC} (Version v${NEW_VER} & Update-Zentrum)           ${MAGENTA}${BOLD}│${NC}"
 echo -e "${MAGENTA}${BOLD}└───────────────────────────────────────────────────────────┘${NC}"
 echo ""
-echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}${BOLD}║  Update auf Version ${NEW_VER} erfolgreich abgeschlossen!    ║${NC}"
-echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${NC}"
+if [[ "${HAS_REAL_UPDATE}" == "true" ]]; then
+    echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}${BOLD}║  Update auf Version ${NEW_VER} erfolgreich abgeschlossen!    ║${NC}"
+    echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${NC}"
+else
+    echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}${BOLD}║  System ist aktuell (Version ${NEW_VER}) – Sync abgeschlossen! ║${NC}"
+    echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${NC}"
+fi
 echo -e "  Alle Konfigurationen und Dienste sind aktiv."
 echo ""
