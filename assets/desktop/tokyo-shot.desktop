@@ -1,0 +1,22 @@
+[Desktop Entry]
+Name=Tokyo Shot
+Comment=Screenshot-Tool & Editor für Hyprland
+Exec=tokyo-shot --gui
+Icon=camera-photo
+Terminal=false
+Type=Application
+Categories=Utility;Graphics;
+Keywords=screenshot;snapshot;snip;capture;tokyo;
+Actions=Area;Window;Full;
+
+[Desktop Action Area]
+Name=Bereich aufnehmen
+Exec=tokyo-shot --area
+
+[Desktop Action Window]
+Name=Fenster aufnehmen
+Exec=tokyo-shot --window
+
+[Desktop Action Full]
+Name=Vollbild aufnehmen
+Exec=tokyo-shot --full

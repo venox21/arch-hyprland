@@ -7,6 +7,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 ### Hinzugefügt
 - **Waybar-Layout „Crystal Clear“** (`config/waybar/layouts/crystal/`): Glas-Optik mit hellem Rand, Glanz und Text-Schatten; `classic` bleibt unverändert wählbar.
 - **Waybar-Transparenz-Regler** (Einstellungen → Leisten-Stil und Aussehen): Slider plus Prozentfeld (0 % = deckend, 100 % = durchsichtig), wirkt live per CSS-Reload und wird pro Layout gespeichert.
+- **Eigenes Screenshot-Tool „Tokyo Shot“** (`screenshot/`, `scripts/tokyo-shot`):
+  - Moderner GTK4/libadwaita Screenshot-Hub mit 4 Aufnahmemodi (Bereich, Fenster, Monitor, Vollbild)
+  - Vollwertiger Annotation-Editor mit Cairo: Stift, Richtungspfeile, Rechtecke, Zensurbalken/Unkenntlichmachen
+  - Tokyo-Night-Farbpalette, Undo/Redo (`Strg+Z`/`Strg+Y`), Bild-im-Bild Pin-Funktion
+  - Sofortige Zwischenablage, Zeitverzögerungstimer (0s, 3s, 5s, 10s), Desktop-Eintrag für Rofi
+  - Vollständig in `install.sh`, `update.sh`, `uninstall.sh` und Tastenkürzel (`SUPER + ALT + S`, `SUPER + SHIFT + S`) integriert.
 
 ### Geändert
 - **SDDM-Anmeldebildschirm komplett neu gestaltet** (`assets/sddm/tokyo-night/Main.qml`): große, dünne Uhr, Avatar mit Benutzername (Benutzerwechsel bei mehreren Konten), Passwortfeld als Pille mit Pfeil-Button, Shake-Animation bei falschem Passwort, Feststelltasten-Warnung, Ladeindikator, sanfter Ein-/Ausblend-Übergang, Sitzungswähler, Tastaturlayout-Umschalter sowie Standby/Neustart/Herunterfahren. Benötigt keine zusätzlichen Qt-Module.

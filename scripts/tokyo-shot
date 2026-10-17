@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  Tokyo Shot – CLI-Starter & Wrapper                          ║
+# ╚══════════════════════════════════════════════════════════════╝
+set -Eeuo pipefail
+
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+    wp_sock="$(find "${XDG_RUNTIME_DIR}" -maxdepth 1 -name 'wayland-*' ! -name '*.lock' 2>/dev/null | head -n 1 || true)"
+    if [[ -n "${wp_sock}" ]]; then
+        export WAYLAND_DISPLAY="$(basename "${wp_sock}")"
+    fi
+fi
+
+if [[ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    sig="$(ls -1 "${XDG_RUNTIME_DIR}/hypr" 2>/dev/null | grep -v '\.lock' | head -n 1 || true)"
+    if [[ -n "${sig}" ]]; then
+        export HYPRLAND_INSTANCE_SIGNATURE="${sig}"
+    fi
+fi
+
+# Pfad zu tokyo-shot ermitteln
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP=""
+
+# Prüfe lokales Repo oder ~/.config/hypr/screenshot
+for candidate in \
+    "${SCRIPT_DIR}/../screenshot/app.py" \
+    "${HOME}/.config/hypr/screenshot/app.py" \
+    "${HOME}/arch-hyprland/screenshot/app.py" \
+    "${HOME}/tokyo-hypr-dots/screenshot/app.py"; do
+    if [[ -f "${candidate}" ]]; then
+        APP="$(readlink -f "${candidate}" 2>/dev/null || echo "${candidate}")"
+        break
+    fi
+done
+
+if [[ -z "${APP}" || ! -f "${APP}" ]]; then
+    echo "Fehler: Tokyo Shot (app.py) nicht gefunden!" >&2
+    exit 1
+fi
+
+exec python3 "${APP}" "$@"

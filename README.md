@@ -13,7 +13,7 @@ Ein vollständiges, minimalistisches Hyprland-Desktop-Setup im Tokyo-Night-Stil 
 - 🖼 **Hyprpaper** – Hintergrundbilder mit Wechsel-Funktion
 - 🚀 **Rofi** – App-Launcher und Power-Menü
 - 📋 **Clipboard** – Zwischenablage-Historie mit Suche
-- 📸 **Screenshots** – Vollbild, Bereich und aktives Fenster
+- 📸 **Tokyo Shot (Screenshot-Manager & Editor)** – Eigenes, modernes GTK4/libadwaita Tool mit Live-Editor (Stift, Pfeile, Rechteck, Zensieren, Bild-im-Bild-Pin), Verzögerungstimer und automatischer Zwischenablage
 - 🔐 **SDDM** – Anmeldebildschirm im Tokyo Night Design
 - 💾 **Backup & Restore** – Sichere Installation mit Wiederherstellung
 - 🧪 **Automatisierte Tests** – Konfigurations-, Installations- und Einstellungstests
@@ -95,8 +95,10 @@ Das Skript `update.sh` synchronisiert alle Konfigurationen, setzt die Dateirecht
 | `SUPER + SHIFT + 1-0` | Fenster zu Workspace |
 | `SUPER + Pfeiltasten` | Fokus bewegen |
 | `SUPER + SHIFT + Pfeile` | Fenster verschieben |
-| `SUPER + SHIFT + S` | Screenshot (Bereich) |
+| `SUPER + SHIFT + S` | Screenshot (Bereich aufnehmen & bearbeiten) |
+| `SUPER + Print` | Screenshot (Aktives Fenster) |
 | `Print` | Screenshot (Vollbild) |
+| `SUPER + ALT + S` | Tokyo Shot (Screenshot-Hub & Editor öffnen) |
 | `SUPER + SHIFT + V` | Zwischenablage |
 | `SUPER + SHIFT + X` | Bildschirm sperren |
 | `SUPER + SHIFT + E` | Power-Menü |

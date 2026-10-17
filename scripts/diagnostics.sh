@@ -48,7 +48,7 @@ REQUIRED_PKGS=(
     thunar zsh starship grim slurp wl-clipboard cliphist
     pipewire wireplumber pamixer brightnessctl playerctl
     jq xdg-desktop-portal-hyprland polkit-gnome python-gobject
-    gtk4 libadwaita ttf-jetbrains-mono-nerd noto-fonts sddm
+    python-cairo gtk4 libadwaita ttf-jetbrains-mono-nerd noto-fonts sddm
 )
 
 for pkg in "${REQUIRED_PKGS[@]}"; do

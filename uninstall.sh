@@ -73,6 +73,10 @@ if confirm "Tokyo Night Konfigurationen entfernen?"; then
         "${CONFIG_DIR}/hypr/input.lua"
         "${CONFIG_DIR}/hypr/scripts"
         "${CONFIG_DIR}/hypr/settings"
+        "${CONFIG_DIR}/hypr/screenshot"
+        "${CONFIG_DIR}/tokyo-shot"
+        "${HOME}/.local/bin/tokyo-shot"
+        "${HOME}/.local/share/applications/tokyo-shot.desktop"
         "${CONFIG_DIR}/hypr/hyprlock.conf"
         "${CONFIG_DIR}/hypr/hyprpaper.conf"
     )

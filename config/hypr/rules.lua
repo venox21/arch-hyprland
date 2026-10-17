@@ -73,6 +73,25 @@ hl.window_rule({
     opacity = "0.97 0.93",
 })
 
+-- Tokyo Shot (Screenshot-Manager & Editor)
+hl.window_rule({
+    match = { class = "org.tokyo.shot" },
+    float = true,
+    center = true,
+})
+hl.window_rule({
+    match = { title = ".*Tokyo Shot.*" },
+    float = true,
+    center = true,
+})
+hl.window_rule({
+    match = { title = "Tokyo Shot – Pin" },
+    float = true,
+    pin = true,
+    size = "420 280",
+    move = "100%-430 40",
+})
+
 -- Rofi Fensterregeln (Fallback)
 hl.window_rule({
     match = { class = "rofi" },

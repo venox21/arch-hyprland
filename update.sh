@@ -78,9 +78,22 @@ fi
 [[ -d "${REPO_DIR}/config/gtk-4.0" ]] && cp -f "${REPO_DIR}/config/gtk-4.0/"* "${CONFIG_DIR}/gtk-4.0/" 2>/dev/null || true
 # Settings App
 [[ -d "${REPO_DIR}/settings" ]] && cp -f "${REPO_DIR}/settings/"*.py "${CONFIG_DIR}/hypr/settings/" 2>/dev/null || true
-# Skripte
-[[ -d "${REPO_DIR}/scripts" ]] && cp -f "${REPO_DIR}/scripts/"*.sh "${CONFIG_DIR}/hypr/scripts/" 2>/dev/null || true
-chmod +x "${CONFIG_DIR}/hypr/scripts/"*.sh 2>/dev/null || true
+# Tokyo Shot (Screenshot-Manager & Editor)
+if [[ -d "${REPO_DIR}/screenshot" ]]; then
+    mkdir -p "${CONFIG_DIR}/hypr/screenshot"
+    cp -f "${REPO_DIR}/screenshot/"*.py "${CONFIG_DIR}/hypr/screenshot/" 2>/dev/null || true
+    chmod +x "${CONFIG_DIR}/hypr/screenshot/"*.py 2>/dev/null || true
+fi
+# Skripte (inkl. tokyo-shot)
+[[ -d "${REPO_DIR}/scripts" ]] && cp -f "${REPO_DIR}/scripts/"* "${CONFIG_DIR}/hypr/scripts/" 2>/dev/null || true
+chmod +x "${CONFIG_DIR}/hypr/scripts/"* 2>/dev/null || true
+mkdir -p "${HOME}/.local/bin"
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2>/dev/null || true
+if [[ -f "${REPO_DIR}/assets/desktop/tokyo-shot.desktop" ]]; then
+    mkdir -p "${HOME}/.local/share/applications"
+    cp -f "${REPO_DIR}/assets/desktop/tokyo-shot.desktop" "${HOME}/.local/share/applications/" 2>/dev/null || true
+    update-desktop-database "${HOME}/.local/share/applications" 2>/dev/null || true
+fi
 # Wallpapers
 [[ -d "${REPO_DIR}/assets/wallpapers" ]] && cp -n "${REPO_DIR}/assets/wallpapers/"* "${CONFIG_DIR}/hypr/wallpapers/" 2>/dev/null || true
 

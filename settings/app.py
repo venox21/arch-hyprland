@@ -2193,6 +2193,7 @@ class SettingsWindow(Adw.ApplicationWindow):
             ("SUPER + V", "Fenster schwebend"),
             ("SUPER + F", "Fenster maximieren"),
             ("SUPER + SHIFT + S", "Screenshot (Bereich)"),
+            ("SUPER + ALT + S", "Tokyo Shot (Screenshot-Hub)"),
             ("SUPER + SHIFT + X", "Bildschirm sperren"),
             ("SUPER + SHIFT + E", "Power-Menü"),
             ("SUPER + I", "Einstellungen"),

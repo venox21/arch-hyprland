@@ -149,6 +149,7 @@ OTHER_FILES=(
     "config/rofi/wallpaper.rasi"
     "config/zsh/.zshrc"
     "config/starship/starship.toml"
+    "assets/desktop/tokyo-shot.desktop"
 )
 
 for f in "${OTHER_FILES[@]}"; do
@@ -164,7 +165,7 @@ echo ""
 echo -e "${BLUE}── Hilfsskripte ──${NC}"
 
 SCRIPTS=(
-    screenshot.sh power-menu.sh clipboard.sh wallpaper.sh
+    screenshot.sh tokyo-shot power-menu.sh clipboard.sh wallpaper.sh
     waybar-restart.sh backup.sh diagnostics.sh settings.sh hotkeys.sh
     control-center.sh autostart.sh
 )
@@ -251,6 +252,8 @@ PYTHON_FILES=(
     "settings/app.py"
     "settings/hotkey_manager.py"
     "settings/config_manager.py"
+    "screenshot/shot_core.py"
+    "screenshot/app.py"
 )
 
 for f in "${PYTHON_FILES[@]}"; do

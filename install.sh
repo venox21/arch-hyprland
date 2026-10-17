@@ -223,9 +223,10 @@ PACKAGES=(
     noto-fonts
     papirus-icon-theme
 
-    # Python GTK4 für Settings-App
+    # Python GTK4 für Settings-App & Tokyo Shot
     python
     python-gobject
+    python-cairo
     gtk4
     libadwaita
 
@@ -364,7 +365,7 @@ install_config "${SCRIPT_DIR}/config/starship/starship.toml" "${CONFIG_DIR}/star
 # Phase 4b: Skripte installieren
 # ══════════════════════════════════════════════════════════════
 info "Installiere Hilfsskripte..."
-for script in "${SCRIPT_DIR}"/scripts/*.sh; do
+for script in "${SCRIPT_DIR}"/scripts/*; do
     if [[ -f "${script}" ]]; then
         BASENAME="$(basename "${script}")"
         install_config "${script}" "${CONFIG_DIR}/hypr/scripts/${BASENAME}"
@@ -372,6 +373,27 @@ for script in "${SCRIPT_DIR}"/scripts/*.sh; do
     fi
 done
 success "Alle Skripte installiert und ausführbar"
+
+# Tokyo Shot installieren
+info "Installiere Tokyo Shot Screenshot-Tool & Editor..."
+if [[ -d "${SCRIPT_DIR}/screenshot" ]]; then
+    mkdir -p "${CONFIG_DIR}/hypr/screenshot"
+    cp -a "${SCRIPT_DIR}/screenshot/"* "${CONFIG_DIR}/hypr/screenshot/" 2>/dev/null || true
+    chmod +x "${CONFIG_DIR}/hypr/screenshot/app.py" "${CONFIG_DIR}/hypr/screenshot/shot_core.py" 2>/dev/null || true
+    success "Tokyo Shot installiert"
+fi
+
+# Tokyo Shot CLI verlinken
+mkdir -p "${HOME}/.local/bin"
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2>/dev/null || true
+
+# Desktop-Datei für App-Launcher
+mkdir -p "${HOME}/.local/share/applications"
+if [[ -f "${SCRIPT_DIR}/assets/desktop/tokyo-shot.desktop" ]]; then
+    cp -f "${SCRIPT_DIR}/assets/desktop/tokyo-shot.desktop" "${HOME}/.local/share/applications/"
+    update-desktop-database "${HOME}/.local/share/applications" 2>/dev/null || true
+    success "Tokyo Shot Desktop-Eintrag registriert"
+fi
 
 # GTK Theme & Design
 info "Installiere GTK Tokyo Night Konfiguration..."

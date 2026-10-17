@@ -168,6 +168,9 @@ hl.bind("SUPER + SHIFT + S",         hl.dsp.exec_cmd(scripts .. "/screenshot.sh 
 -- Aktives Fenster
 hl.bind("SUPER + Print",             hl.dsp.exec_cmd(scripts .. "/screenshot.sh window"))
 
+-- Screenshot-Hub & Editor (Tokyo Shot)
+hl.bind("SUPER + ALT + S",           hl.dsp.exec_cmd(scripts .. "/screenshot.sh gui"))
+
 -- ══════════════════════════════════════════════════════════════
 -- ██ Zwischenablage
 -- ══════════════════════════════════════════════════════════════
