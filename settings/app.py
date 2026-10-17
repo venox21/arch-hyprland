@@ -129,6 +129,7 @@ except ImportError:
         Grid = _MockBase
         Switch = _MockBase
         Notebook = _MockBase
+        Spinner = _MockBase
         StringList = type("StringList", (), {"new": staticmethod(lambda items: _MockBase())})
         class IconTheme:
             @staticmethod
@@ -285,24 +286,48 @@ class SettingsWindow(Adw.ApplicationWindow):
                 pass
             return candidates[0] if candidates else "dialog-information-symbolic"
 
-        # ── 10 Seiten-Kategorien auf Deutsch ──
+        # ── Alle 18 Einstellungs-Kategorien vollständig verfügbar ──
         self.pages = [
-            ("Übersicht", [
+            ("Übersicht & Dashboard", [
                 "view-app-grid-symbolic",
                 "view-grid-symbolic",
                 "preferences-system-symbolic",
                 "org.gnome.Settings-symbolic",
             ], self._page_general),
-            ("Bildschirme", [
-                "video-display-symbolic",
-                "preferences-desktop-display-symbolic",
-                "display-symbolic",
-            ], self._page_monitors),
             ("Hyprland Effekte", [
                 "preferences-desktop-theme-symbolic",
                 "video-display-symbolic",
                 "preferences-color-symbolic",
             ], self._page_hyprland_fx),
+            ("Fenster & Animationen", [
+                "preferences-desktop-display-symbolic",
+                "video-display-symbolic",
+                "display-symbolic",
+                "preferences-desktop-theme-symbolic",
+            ], self._page_appearance),
+            ("Leisten-Stil & Waybar", [
+                "view-app-grid-symbolic",
+                "view-grid-symbolic",
+                "open-menu-symbolic",
+                "view-list-symbolic",
+            ], self._page_waybar),
+            ("Farben & Tokyo Night", [
+                "preferences-color-symbolic",
+                "format-color-fill-symbolic",
+                "color-select-symbolic",
+                "applications-graphics-symbolic",
+            ], self._page_colors),
+            ("Hintergrundbilder & SDDM", [
+                "preferences-desktop-wallpaper-symbolic",
+                "image-x-generic-symbolic",
+                "emblem-photos-symbolic",
+                "folder-pictures-symbolic",
+            ], self._page_wallpaper),
+            ("Bildschirme & Monitore", [
+                "video-display-symbolic",
+                "preferences-desktop-display-symbolic",
+                "display-symbolic",
+            ], self._page_monitors),
             ("Eingabegeräte", [
                 "input-mouse-symbolic",
                 "input-keyboard-symbolic",
@@ -318,26 +343,47 @@ class SettingsWindow(Adw.ApplicationWindow):
                 "network-wireless-signal-excellent-symbolic",
                 "network-wired-symbolic",
             ], self._page_network),
-            ("Erscheinungsbild", [
-                "preferences-color-symbolic",
-                "format-color-fill-symbolic",
-                "applications-graphics-symbolic",
-            ], self._page_colors),
-            ("Anwendungen", [
-                "view-app-grid-symbolic",
+            ("Tastenkürzel & Bindings", [
+                "input-keyboard-symbolic",
+                "accessories-keyboard-shortcut-symbolic",
+                "preferences-desktop-keyboard-shortcuts-symbolic",
+            ], self._page_keybinds),
+            ("Uhr und Datum", [
+                "preferences-system-time-symbolic",
+                "alarm-symbolic",
+                "x-office-calendar-symbolic",
+                "appointment-soon-symbolic",
+            ], self._page_clock),
+            ("Systemleistung & Tuning", [
+                "utilities-system-monitor-symbolic",
+                "speedometer-symbolic",
+                "applications-system-symbolic",
+            ], self._page_performance),
+            ("Autostart & Anwendungen", [
+                "media-playback-start-symbolic",
                 "system-run-symbolic",
                 "applications-system-symbolic",
             ], self._page_autostart),
-            ("System & Hardware", [
+            ("Hardware & Treiber", [
                 "preferences-system-devices-symbolic",
                 "computer-symbolic",
                 "applications-system-symbolic",
             ], self._page_hardware),
-            ("Erweiterte Einstellungen", [
-                "preferences-other-symbolic",
+            ("Datensicherung & Backup", [
+                "drive-harddisk-symbolic",
+                "document-save-symbolic",
+                "system-software-update-symbolic",
+            ], self._page_backup),
+            ("Systemdiagnostik & Logs", [
                 "dialog-information-symbolic",
-                "emblem-system-symbolic",
-            ], self._page_advanced),
+                "help-browser-symbolic",
+                "utilities-terminal-symbolic",
+            ], self._page_diagnostics),
+            ("Version & Updates", [
+                "system-software-update-symbolic",
+                "software-update-available-symbolic",
+                "system-software-install-symbolic",
+            ], self._page_version_update),
         ]
 
         for title, icon_candidates, _ in self.pages:
@@ -347,8 +393,8 @@ class SettingsWindow(Adw.ApplicationWindow):
             row.set_activatable(True)
             self.nav_list.append(row)
 
-        # Standardmäßig Hyprland FX (Index 2) auswählen wie im Screenshot
-        default_row = self.nav_list.get_row_at_index(2)
+        # Standardmäßig Hyprland Effekte (Index 1) auswählen
+        default_row = self.nav_list.get_row_at_index(1)
         if default_row:
             self.nav_list.select_row(default_row)
 
@@ -978,9 +1024,9 @@ class SettingsWindow(Adw.ApplicationWindow):
                 target_lower in t_lower
                 or t_lower in target_lower
                 or ("monitor" in target_lower and "bildschirm" in t_lower)
-                or ("version" in target_lower and "erweitert" in t_lower)
-                or ("leiste" in target_lower and "erweitert" in t_lower)
-                or ("waybar" in target_lower and "erweitert" in t_lower)
+                or ("waybar" in target_lower and "leiste" in t_lower)
+                or ("keybind" in target_lower and "tasten" in t_lower)
+                or ("wallpaper" in target_lower and "hintergrund" in t_lower)
             ):
                 row = self.nav_list.get_row_at_index(idx)
                 if row:
