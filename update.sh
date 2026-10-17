@@ -89,9 +89,9 @@ fi
 chmod +x "${CONFIG_DIR}/hypr/scripts/"* 2>/dev/null || true
 mkdir -p "${HOME}/.local/bin"
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2>/dev/null || true
-if [[ -f "${REPO_DIR}/assets/desktop/tokyo-shot.desktop" ]]; then
+if [[ -d "${REPO_DIR}/assets/desktop" ]]; then
     mkdir -p "${HOME}/.local/share/applications"
-    cp -f "${REPO_DIR}/assets/desktop/tokyo-shot.desktop" "${HOME}/.local/share/applications/" 2>/dev/null || true
+    cp -f "${REPO_DIR}/assets/desktop/"*.desktop "${HOME}/.local/share/applications/" 2>/dev/null || true
     update-desktop-database "${HOME}/.local/share/applications" 2>/dev/null || true
 fi
 # Wallpapers

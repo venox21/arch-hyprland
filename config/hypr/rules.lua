@@ -92,6 +92,14 @@ hl.window_rule({
     move = "100%-430 40",
 })
 
+-- App-Installer (TUI im Terminal)
+hl.window_rule({
+    match = { class = "tokyo-app-installer" },
+    float = true,
+    size = "860 620",
+    center = true,
+})
+
 -- Rofi Fensterregeln (Fallback)
 hl.window_rule({
     match = { class = "rofi" },

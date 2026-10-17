@@ -77,6 +77,7 @@ if confirm "Tokyo Night Konfigurationen entfernen?"; then
         "${CONFIG_DIR}/tokyo-shot"
         "${HOME}/.local/bin/tokyo-shot"
         "${HOME}/.local/share/applications/tokyo-shot.desktop"
+        "${HOME}/.local/share/applications/tokyo-app-installer.desktop"
         "${CONFIG_DIR}/hypr/hyprlock.conf"
         "${CONFIG_DIR}/hypr/hyprpaper.conf"
     )

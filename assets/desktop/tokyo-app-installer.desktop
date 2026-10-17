@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=App Installer
+GenericName=Arch Linux & AUR App Installer
+Comment=Beliebte Programme interaktiv via yay & pacman installieren
+Exec=kitty --class tokyo-app-installer --title "App Installer" -e bash -c "if [[ -x \"${HOME}/.config/hypr/scripts/app-installer.sh\" ]]; then \"${HOME}/.config/hypr/scripts/app-installer.sh\"; elif [[ -x \"${HOME}/arch-hyprland/install-apps.sh\" ]]; then \"${HOME}/arch-hyprland/install-apps.sh\"; else echo 'App-Installer Skript nicht gefunden.'; fi; echo ''; read -r -p 'Drücke Enter zum Schließen...' _dummy"
+Icon=system-software-install
+Terminal=false
+Type=Application
+Categories=System;Settings;PackageManager;Utility;
+Keywords=apps;app installer;installer;software;install;yay;aur;tokyo;spotify;steam;chrome;vscode;obsidian;

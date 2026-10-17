@@ -150,6 +150,7 @@ OTHER_FILES=(
     "config/zsh/.zshrc"
     "config/starship/starship.toml"
     "assets/desktop/tokyo-shot.desktop"
+    "assets/desktop/tokyo-app-installer.desktop"
 )
 
 for f in "${OTHER_FILES[@]}"; do
