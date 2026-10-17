@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  Tokyo Night – Cyber-Security Quick Launcher CLI Starter     ║
+# ╚══════════════════════════════════════════════════════════════╝
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP=""
+
+for candidate in \
+    "${SCRIPT_DIR}/cyber-menu.sh" \
+    "${HOME}/.config/hypr/scripts/cyber-menu.sh" \
+    "${HOME}/arch-hyprland/scripts/cyber-menu.sh" \
+    "${HOME}/arch-hyrland/scripts/cyber-menu.sh" \
+    "${HOME}/tokyo-hypr-dots/scripts/cyber-menu.sh" \
+    "${HOME}/Desktop/hyprland/tokyo-hypr-dots/scripts/cyber-menu.sh"; do
+    if [[ -f "${candidate}" ]]; then
+        APP="${candidate}"
+        break
+    fi
+done
+
+if [[ -z "${APP}" || ! -f "${APP}" ]]; then
+    echo "Fehler: scripts/cyber-menu.sh nicht gefunden!" >&2
+    exit 1
+fi
+
+exec bash "${APP}" "$@"

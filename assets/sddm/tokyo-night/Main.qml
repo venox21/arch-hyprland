@@ -316,16 +316,18 @@ Rectangle {
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
 
+                    property bool showPassword: false
+
                     TextField {
                         id: passwordField
                         anchors.left: lockIcon.right
                         anchors.leftMargin: 10
-                        anchors.right: capsLockIcon.visible ? capsLockIcon.left : parent.right
-                        anchors.rightMargin: 14
+                        anchors.right: eyeToggleBtn.left
+                        anchors.rightMargin: 6
                         anchors.verticalCenter: parent.verticalCenter
                         placeholderText: "Password ••••••••"
                         placeholderTextColor: root.fgMuted
-                        echoMode: TextInput.Password
+                        echoMode: passwordCapsule.showPassword ? TextInput.Normal : TextInput.Password
                         passwordCharacter: "\u25CF"
                         font.family: root.uiFont
                         font.pixelSize: 13
@@ -340,11 +342,44 @@ Rectangle {
                         Keys.onEnterPressed: root.doLogin()
                     }
 
+                    // Auge-Button (Passwort einblenden/ausblenden)
+                    Rectangle {
+                        id: eyeToggleBtn
+                        width: 28
+                        height: 28
+                        radius: 14
+                        anchors.right: capsLockIcon.visible ? capsLockIcon.left : parent.right
+                        anchors.rightMargin: capsLockIcon.visible ? 4 : 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: eyeMouse.containsMouse ? Qt.rgba(255, 255, 255, 0.12) : "transparent"
+                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: passwordCapsule.showPassword ? "\uf070" : "\uf06e"
+                            font.family: root.uiFont
+                            font.pixelSize: 13
+                            color: eyeMouse.containsMouse ? root.neonCyan : (passwordCapsule.showPassword ? root.neonCyan : root.fgMuted)
+                            Behavior on color { ColorAnimation { duration: 120 } }
+                        }
+
+                        MouseArea {
+                            id: eyeMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                passwordCapsule.showPassword = !passwordCapsule.showPassword
+                                passwordField.forceActiveFocus()
+                            }
+                        }
+                    }
+
                     // CapsLock Indikator
                     Text {
                         id: capsLockIcon
                         anchors.right: parent.right
-                        anchors.rightMargin: 14
+                        anchors.rightMargin: 12
                         anchors.verticalCenter: parent.verticalCenter
                         visible: (typeof keyboard !== "undefined" && keyboard && keyboard.capsLock) ? true : false
                         text: "\uf062"

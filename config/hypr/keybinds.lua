@@ -25,6 +25,9 @@ hl.bind("SUPER + E",             hl.dsp.exec_cmd(fileManager))
 -- App-Launcher (Rofi)
 hl.bind("SUPER + D",             hl.dsp.exec_cmd(menu))
 
+-- Cyber-Security & Pentesting Schnellmenü (Rofi)
+hl.bind("SUPER + SHIFT + C",     hl.dsp.exec_cmd(scripts .. "/cyber-menu.sh"))
+
 -- Browser
 hl.bind("SUPER + B",             hl.dsp.exec_cmd(browser))
 

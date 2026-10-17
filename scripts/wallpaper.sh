@@ -103,6 +103,14 @@ apply_wallpaper() {
     # Aktuelles Bild kopieren (hyprpaper benötigt echte Datei)
     cp -f "${target}" "${CURRENT_LINK}"
 
+    # SDDM Login-Screen Hintergrund automatisch synchronisieren
+    local sddm_bg="/usr/share/sddm/themes/tokyo-night/background.jpg"
+    if [[ -w "${sddm_bg}" ]]; then
+        cp -f "${CURRENT_LINK}" "${sddm_bg}" 2>/dev/null || true
+    elif sudo -n true 2>/dev/null; then
+        sudo cp -f "${CURRENT_LINK}" "${sddm_bg}" 2>/dev/null || true
+    fi
+
     # Hyprpaper aktualisieren
     if pgrep -x hyprpaper &>/dev/null && command -v hyprctl &>/dev/null; then
         hyprctl hyprpaper unload all 2>/dev/null || true

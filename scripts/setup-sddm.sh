@@ -53,9 +53,10 @@ fi
 CURRENT_WP="${USER_HOME}/.config/hypr/wallpapers/current.jpg"
 if [[ -f "${CURRENT_WP}" ]]; then
     sudo cp -f "${CURRENT_WP}" "${THEME_DEST}/background.jpg" 2>/dev/null || true
-    sudo chmod 644 "${THEME_DEST}/background.jpg" 2>/dev/null || true
     echo -e "  ${GREEN}✓${NC} Aktuelles Desktop-Wallpaper als Login-Hintergrund synchronisiert"
 fi
+sudo touch "${THEME_DEST}/background.jpg" 2>/dev/null || true
+sudo chmod 666 "${THEME_DEST}/background.jpg" 2>/dev/null || true
 echo -e "  ${GREEN}✓${NC} Modernes Tokyo Night Theme kopiert (Main.qml, theme.conf, metadata)"
 
 # 4. SDDM-Konfiguration sicherstellen

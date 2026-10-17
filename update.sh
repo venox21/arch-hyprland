@@ -215,6 +215,7 @@ ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-app-installer" "${HOME}/.local/bin/tokyo-app-installer" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cleaner" "${HOME}/.local/bin/tokyo-cleaner" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-hardware-check" "${HOME}/.local/bin/tokyo-hardware-check" 2>/dev/null || true
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cyber" "${HOME}/.local/bin/tokyo-cyber" 2>/dev/null || true
 if [[ -d "${REPO_DIR}/assets/desktop" ]]; then
     mkdir -p "${HOME}/.local/share/applications"
     cp -f "${REPO_DIR}/assets/desktop/"*.desktop "${HOME}/.local/share/applications/" 2>/dev/null || true
@@ -309,11 +310,11 @@ if sudo -n true 2>/dev/null || sudo -v; then
         sudo chmod -R 755 /usr/share/sddm/themes/tokyo-night 2>/dev/null || true
         sudo mkdir -p /etc/sddm.conf.d
         echo -e "[Theme]\nCurrent=tokyo-night" | sudo tee /etc/sddm.conf.d/tokyo-night.conf >/dev/null 2>&1 || true
-        # Wallpaper synchronisieren falls vorhanden
         if [[ -f "${CONFIG_DIR}/hypr/wallpapers/current.jpg" ]]; then
             sudo cp -f "${CONFIG_DIR}/hypr/wallpapers/current.jpg" /usr/share/sddm/themes/tokyo-night/background.jpg 2>/dev/null || true
-            sudo chmod 644 /usr/share/sddm/themes/tokyo-night/background.jpg 2>/dev/null || true
         fi
+        sudo touch /usr/share/sddm/themes/tokyo-night/background.jpg 2>/dev/null || true
+        sudo chmod 666 /usr/share/sddm/themes/tokyo-night/background.jpg 2>/dev/null || true
         # QML-Bytecode Cache leeren
         sudo rm -rf /var/lib/sddm/.cache 2>/dev/null || true
         echo -e "  ${GREEN}✓${NC} SDDM Login-Theme aktualisiert & QML-Cache geleert"
