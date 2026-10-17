@@ -83,6 +83,8 @@ except ImportError:
         def attach(self, *a, **kw): pass
         def queue_draw(self, *a, **kw): pass
         def set_pixel_size(self, *a, **kw): pass
+        def set_child(self, *a, **kw): pass
+        def get_child(self, *a, **kw): return self
         def get_row_at_index(self, *a, **kw): return self
         def get_index(self, *a, **kw): return 0
         @classmethod
@@ -109,6 +111,7 @@ except ImportError:
         Box = _MockBase
         Button = _MockBase
         ListBox = _MockBase
+        ListBoxRow = _MockBase
         DrawingArea = _MockBase
         CssProvider = _MockBase
         StyleContext = _MockBase
@@ -188,7 +191,7 @@ class SettingsWindow(Adw.ApplicationWindow):
             pass
 
         self.set_title("Tokyo Night – Einstellungen")
-        self.set_default_size(980, 700)
+        self.set_default_size(1020, 720)
         self.set_resizable(True)
 
         # WM_CLASS für Fensterregeln setzen
@@ -200,6 +203,12 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         self.split_view = Adw.NavigationSplitView()
         self.split_view.set_vexpand(True)
+        if hasattr(self.split_view, "set_min_sidebar_width"):
+            self.split_view.set_min_sidebar_width(240)
+            self.split_view.set_max_sidebar_width(320)
+            self.split_view.set_sidebar_width_fraction(0.26)
+        if hasattr(self.split_view, "set_collapsed"):
+            self.split_view.set_collapsed(False)
         root_box.append(self.split_view)
 
         # ── Footer mit Power-Buttons (Ausschalten & Neustart wie im Screenshot) ──
@@ -227,6 +236,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         # Sidebar erstellen
         sidebar_page = Adw.NavigationPage(title="Einstellungen")
         sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        sidebar_box.set_size_request(240, -1)
         sidebar_page.set_child(sidebar_box)
 
         # Header für Sidebar: Arch Logo + "Einstellungen"
@@ -387,10 +397,28 @@ class SettingsWindow(Adw.ApplicationWindow):
         ]
 
         for title, icon_candidates, _ in self.pages:
-            row = Adw.ActionRow(title=title)
+            row = Gtk.ListBoxRow()
+            row.add_css_class("nav-item-row")
+
+            row_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+            row_box.set_margin_start(10)
+            row_box.set_margin_end(10)
+            row_box.set_margin_top(8)
+            row_box.set_margin_bottom(8)
+
             chosen_icon = _get_best_icon(icon_candidates)
-            row.set_icon_name(chosen_icon)
-            row.set_activatable(True)
+            icon_img = Gtk.Image.new_from_icon_name(chosen_icon)
+            icon_img.set_pixel_size(18)
+            icon_img.add_css_class("nav-item-icon")
+            row_box.append(icon_img)
+
+            title_lbl = Gtk.Label(label=title)
+            title_lbl.set_halign(Gtk.Align.START)
+            title_lbl.set_hexpand(True)
+            title_lbl.add_css_class("nav-item-title")
+            row_box.append(title_lbl)
+
+            row.set_child(row_box)
             self.nav_list.append(row)
 
         # Standardmäßig Hyprland Effekte (Index 1) auswählen
@@ -486,10 +514,10 @@ class SettingsWindow(Adw.ApplicationWindow):
         }
 
         .navigation-sidebar row {
-            padding: 9px 12px;
+            padding: 2px 4px;
             margin: 2px 4px;
             border-radius: 10px;
-            color: #a9b1d6;
+            color: #c0caf5;
             background-color: transparent;
             transition: all 140ms cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid transparent;
@@ -497,7 +525,7 @@ class SettingsWindow(Adw.ApplicationWindow):
 
         .navigation-sidebar row:hover {
             background-color: rgba(122, 162, 247, 0.09);
-            color: #c0caf5;
+            color: #ffffff;
         }
 
         .navigation-sidebar row:selected {
@@ -509,9 +537,25 @@ class SettingsWindow(Adw.ApplicationWindow):
             box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
         }
 
-        .navigation-sidebar row image {
-            margin-right: 8px;
+        .nav-item-icon {
             color: #7aa2f7;
+            min-width: 18px;
+            min-height: 18px;
+        }
+
+        .navigation-sidebar row:selected .nav-item-icon {
+            color: #00f0ff;
+        }
+
+        .nav-item-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #c0caf5;
+        }
+
+        .navigation-sidebar row:selected .nav-item-title {
+            color: #ffffff;
+            font-weight: 700;
         }
 
         /* SearchEntry in Sidebar */
@@ -2121,7 +2165,10 @@ class SettingsWindow(Adw.ApplicationWindow):
             res_row.set_selected(res_list.index(cur_res) if cur_res in res_list else 0)
             group.add(res_row)
 
-            hz_row = Adw.ComboRow(title="Bildwiederholrate (Hz)")
+            hz_row = Adw.ComboRow(
+                title="Bildwiederholrate (Hz)",
+                subtitle="Wähle die Bildwiederholrate für optimale Flüssigkeit",
+            )
             group.add(hz_row)
 
             def fill_hz(keep_current: bool):
