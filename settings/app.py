@@ -1394,7 +1394,7 @@ class SettingsWindow(Adw.ApplicationWindow):
                       "positions": {}, "sizes": {}, "visible": []}
         # Umrechnung logisch → Bildschirm (während des Ziehens eingefroren)
         view = {"factor": 1.0, "bx": 0.0, "by": 0.0, "ox": 0.0, "oy": 0.0}
-        scale_base = [1.0, 1.25, 1.5, 1.75, 2.0]
+        scale_base = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
         preview = Gtk.DrawingArea()
 
         def redraw(*_):
