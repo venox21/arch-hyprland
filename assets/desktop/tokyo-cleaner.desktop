@@ -2,7 +2,7 @@
 Name=System Cleaner
 GenericName=Arch Linux Maintenance & Cleanup
 Comment=Paket-Caches, verwaiste Pakete und System-Logs bereinigen
-Exec=kitty --class tokyo-system-cleaner --title "System Cleaner" -e bash -c "if [[ -x \"${HOME}/.config/hypr/scripts/clean-system.sh\" ]]; then \"${HOME}/.config/hypr/scripts/clean-system.sh\"; else bash \"$(dirname \"$(readlink -f \"$0\" 2>/dev/null || echo \"$HOME\")\")/../scripts/clean-system.sh\"; fi; echo ''; read -r -p 'Drücke Enter zum Schließen...' _dummy"
+Exec=kitty --class tokyo-system-cleaner --title "System Cleaner" bash -c "for s in \"${HOME}/.config/hypr/scripts/clean-system.sh\" \"${HOME}/arch-hyprland/scripts/clean-system.sh\" \"${HOME}/arch-hyrland/scripts/clean-system.sh\" \"${HOME}/tokyo-hypr-dots/scripts/clean-system.sh\" \"${HOME}/Desktop/hyprland/tokyo-hypr-dots/scripts/clean-system.sh\"; do if [[ -f \"${s}\" ]]; then bash \"${s}\"; exit 0; fi; done; echo 'Cleaner Skript nicht gefunden.'; echo ''; read -r -p 'Drücke Enter zum Schließen...' _dummy"
 Icon=edit-clear
 Terminal=false
 Type=Application

@@ -2,7 +2,7 @@
 Name=Hardware & Treiber Check
 GenericName=Hardware & Driver Assistant
 Comment=Automatische Erkennung und Treiberkonfiguration für CPU, GPU und Laptop
-Exec=kitty --class tokyo-hardware-check --title "Hardware & Treiber Check" -e bash -c "if [[ -x \"${HOME}/.config/hypr/scripts/hardware-check.sh\" ]]; then \"${HOME}/.config/hypr/scripts/hardware-check.sh\"; else bash \"$(dirname \"$(readlink -f \"$0\" 2>/dev/null || echo \"$HOME\")\")/../scripts/hardware-check.sh\"; fi; echo ''; read -r -p 'Drücke Enter zum Schließen...' _dummy"
+Exec=kitty --class tokyo-hardware-check --title "Hardware & Treiber Check" bash -c "for s in \"${HOME}/.config/hypr/scripts/hardware-check.sh\" \"${HOME}/arch-hyprland/scripts/hardware-check.sh\" \"${HOME}/arch-hyrland/scripts/hardware-check.sh\" \"${HOME}/tokyo-hypr-dots/scripts/hardware-check.sh\" \"${HOME}/Desktop/hyprland/tokyo-hypr-dots/scripts/hardware-check.sh\"; do if [[ -f \"${s}\" ]]; then bash \"${s}\"; exit 0; fi; done; echo 'Hardware-Check Skript nicht gefunden.'; echo ''; read -r -p 'Drücke Enter zum Schließen...' _dummy"
 Icon=preferences-system-devices
 Terminal=false
 Type=Application

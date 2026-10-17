@@ -2635,7 +2635,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         app_btn = Gtk.Button(label="Installer starten", valign=Gtk.Align.CENTER)
         app_btn.connect("clicked", lambda _: os.system(
             "kitty --title 'App-Installer' bash -c '"
-            "for p in ~/.config/hypr/scripts/app-installer.sh ~/Desktop/hyprland/tokyo-hypr-dots/scripts/app-installer.sh ~/arch-hyprland/scripts/app-installer.sh ~/tokyo-hypr-dots/scripts/app-installer.sh; do "
+            "for p in ~/.config/hypr/scripts/app-installer.sh ~/arch-hyprland/scripts/app-installer.sh ~/arch-hyrland/scripts/app-installer.sh ~/Desktop/hyprland/tokyo-hypr-dots/scripts/app-installer.sh ~/tokyo-hypr-dots/scripts/app-installer.sh; do "
             "if [[ -f \"$p\" ]]; then bash \"$p\"; exit 0; fi; done; "
             "echo \"App-Installer Skript nicht gefunden.\"; echo; read -p \"Drücke Enter zum Schließen...\"' &"
         ))

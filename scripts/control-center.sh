@@ -117,7 +117,7 @@ wifi_menu() {
                 if command -v nm-connection-editor &>/dev/null; then
                     nm-connection-editor &
                 elif command -v kitty &>/dev/null && command -v nmtui &>/dev/null; then
-                    kitty --class floating_kitty -e nmtui &
+                    kitty --class floating_kitty nmtui &
                 fi
                 return 0
                 ;;
@@ -174,7 +174,7 @@ wifi_menu() {
     elif command -v nm-connection-editor &>/dev/null; then
         nm-connection-editor &
     elif command -v kitty &>/dev/null && command -v nmtui &>/dev/null; then
-        kitty --class floating_kitty -e nmtui &
+        kitty --class floating_kitty nmtui &
     fi
 }
 
@@ -282,7 +282,7 @@ bluetooth_menu() {
                 ;;
             "󰑐  Nach neuen Geräten scannen (bluetoothctl)")
                 if command -v kitty &>/dev/null; then
-                    kitty --class floating_kitty -e bash -c "echo -e '\033[1;34mStarte Bluetooth-Scan...\033[0m Drücke Strg+C zum Beenden.'; bluetoothctl scan on" &
+                    kitty --class floating_kitty bash -c "echo -e '\033[1;34mStarte Bluetooth-Scan...\033[0m Drücke Strg+C zum Beenden.'; bluetoothctl scan on" &
                 else
                     notify "Bluetooth-Scan" "Tipp: Installiere 'blueman' für eine komfortable grafische Bluetooth-Verwaltung" "dialog-information"
                 fi
@@ -309,7 +309,7 @@ bluetooth_menu() {
             fi
         fi
     elif command -v kitty &>/dev/null; then
-        kitty --class floating_kitty -e bluetoothctl &
+        kitty --class floating_kitty bluetoothctl &
     fi
 }
 
@@ -468,7 +468,7 @@ cleaner_launch() {
     fi
 
     if command -v kitty &>/dev/null; then
-        kitty --class tokyo-system-cleaner --title "System-Cleaner" -e bash -c "bash '${clean_script}'; echo ''; read -r -p 'Drücke Enter zum Schließen...' _dummy" &
+        kitty --class tokyo-system-cleaner --title "System-Cleaner" bash -c "bash '${clean_script}'; echo ''; read -r -p 'Drücke Enter zum Schließen...' _dummy" &
     else
         bash "${clean_script}" &
     fi
