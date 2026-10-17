@@ -9,6 +9,7 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 - **Waybar-Transparenz-Regler** (Einstellungen → Leisten-Stil und Aussehen): Slider plus Prozentfeld (0 % = deckend, 100 % = durchsichtig), wirkt live per CSS-Reload und wird pro Layout gespeichert.
 
 ### Geändert
+- **SDDM-Anmeldebildschirm komplett neu gestaltet** (`assets/sddm/tokyo-night/Main.qml`): große, dünne Uhr, Avatar mit Benutzername (Benutzerwechsel bei mehreren Konten), Passwortfeld als Pille mit Pfeil-Button, Shake-Animation bei falschem Passwort, Feststelltasten-Warnung, Ladeindikator, sanfter Ein-/Ausblend-Übergang, Sitzungswähler, Tastaturlayout-Umschalter sowie Standby/Neustart/Herunterfahren. Benötigt keine zusätzlichen Qt-Module.
 - Waybar-Layerregel: `ignore_alpha` von 0.3 auf 0.01, damit auch sehr transparente Leisten unscharf bleiben.
 - Die bisherige, wirkungslose Einstellung `waybar.transparency` wurde durch `waybar.opacity_by_layout` ersetzt.
 
