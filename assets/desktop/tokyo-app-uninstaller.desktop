@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=App Uninstaller
+GenericName=Arch Linux & AUR App Uninstaller
+Comment=Programme und Konfigurations-Reste interaktiv & restlos deinstallieren
+Exec=sh -c 'for p in "$HOME/.local/bin/tokyo-app-uninstaller" "$HOME/.config/hypr/scripts/tokyo-app-uninstaller" "$HOME/arch-hyprland/scripts/tokyo-app-uninstaller" "$HOME/tokyo-hypr-dots/scripts/tokyo-app-uninstaller" "$HOME/Desktop/hyprland/tokyo-hypr-dots/scripts/tokyo-app-uninstaller"; do if [ -f "$p" ]; then exec bash "$p" "$@"; fi; done; PATH="$HOME/.local/bin:$HOME/.config/hypr/scripts:$PATH" exec tokyo-app-uninstaller "$@"' _ %u
+Icon=edit-delete
+Terminal=false
+Type=Application
+Categories=System;Settings;PackageManager;Utility;
+Keywords=apps;app uninstaller;uninstaller;deinstallieren;entfernen;remove;purge;clean;restlos;orphan;yay;pacman;tokyo;

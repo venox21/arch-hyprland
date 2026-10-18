@@ -470,11 +470,12 @@ fi
 mkdir -p "${HOME}/.local/bin"
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-app-installer" "${HOME}/.local/bin/tokyo-app-installer" 2>/dev/null || true
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-app-uninstaller" "${HOME}/.local/bin/tokyo-app-uninstaller" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cleaner" "${HOME}/.local/bin/tokyo-cleaner" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-hardware-check" "${HOME}/.local/bin/tokyo-hardware-check" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cyber" "${HOME}/.local/bin/tokyo-cyber" 2>/dev/null || true
 if sudo -n true 2>/dev/null; then
-    for bin in tokyo-shot tokyo-app-installer tokyo-cleaner tokyo-hardware-check tokyo-cyber; do
+    for bin in tokyo-shot tokyo-app-installer tokyo-app-uninstaller tokyo-cleaner tokyo-hardware-check tokyo-cyber; do
         sudo ln -sf "${CONFIG_DIR}/hypr/scripts/${bin}" "/usr/local/bin/${bin}" 2>/dev/null || true
     done
 fi
@@ -484,7 +485,7 @@ mkdir -p "${HOME}/.local/share/applications"
 if [[ -d "${SCRIPT_DIR}/assets/desktop" ]]; then
     cp -f "${SCRIPT_DIR}/assets/desktop/"*.desktop "${HOME}/.local/share/applications/" 2>/dev/null || true
     update-desktop-database "${HOME}/.local/share/applications" 2>/dev/null || true
-    success "Desktop-Einträge registriert (Tokyo Shot, App Installer, System Cleaner, Hardware-Check)"
+    success "Desktop-Einträge registriert (Tokyo Shot, App Installer, App Uninstaller, System Cleaner, Hardware-Check)"
 fi
 
 # GTK Theme & Design

@@ -3711,14 +3711,30 @@ class SettingsWindow(Adw.ApplicationWindow):
         )
         app_btn = Gtk.Button(label="Installer starten", valign=Gtk.Align.CENTER)
         app_btn.connect("clicked", lambda _: os.system(
-            "kitty --title 'App-Installer' bash -c '"
-            "for p in ~/.config/hypr/scripts/app-installer.sh ~/arch-hyprland/scripts/app-installer.sh ~/arch-hyrland/scripts/app-installer.sh ~/Desktop/hyprland/tokyo-hypr-dots/scripts/app-installer.sh ~/tokyo-hypr-dots/scripts/app-installer.sh; do "
+            "kitty --class tokyo-app-installer --title 'App-Installer' bash -c '"
+            "for p in ~/.local/bin/tokyo-app-installer ~/.config/hypr/scripts/app-installer.sh ~/arch-hyprland/scripts/app-installer.sh ~/arch-hyrland/scripts/app-installer.sh ~/Desktop/hyprland/tokyo-hypr-dots/scripts/app-installer.sh ~/tokyo-hypr-dots/scripts/app-installer.sh; do "
             "if [[ -f \"$p\" ]]; then bash \"$p\"; exit 0; fi; done; "
             "echo \"App-Installer Skript nicht gefunden.\"; echo; read -p \"Drücke Enter zum Schließen...\"' &"
         ))
         app_action.add_suffix(app_btn)
         app_action.set_activatable_widget(app_btn)
         actions_group.add(app_action)
+
+        uninstaller_action = Adw.ActionRow(
+            title="TUI App-Uninstaller öffnen (Restlos löschen)",
+            subtitle="Programme auswählen und samt Caches, Abhängigkeiten & Konfigurationen restlos entfernen"
+        )
+        uninstaller_btn = Gtk.Button(label="Uninstaller starten", valign=Gtk.Align.CENTER)
+        uninstaller_btn.add_css_class("destructive-action")
+        uninstaller_btn.connect("clicked", lambda _: os.system(
+            "kitty --class tokyo-app-uninstaller --title 'App-Uninstaller' bash -c '"
+            "for p in ~/.local/bin/tokyo-app-uninstaller ~/.config/hypr/scripts/app-uninstaller.sh ~/arch-hyprland/scripts/app-uninstaller.sh ~/arch-hyrland/scripts/app-uninstaller.sh ~/Desktop/hyprland/tokyo-hypr-dots/scripts/app-uninstaller.sh ~/tokyo-hypr-dots/scripts/app-uninstaller.sh; do "
+            "if [[ -f \"$p\" ]]; then bash \"$p\"; exit 0; fi; done; "
+            "echo \"App-Uninstaller Skript nicht gefunden.\"; echo; read -p \"Drücke Enter zum Schließen...\"' &"
+        ))
+        uninstaller_action.add_suffix(uninstaller_btn)
+        uninstaller_action.set_activatable_widget(uninstaller_btn)
+        actions_group.add(uninstaller_action)
 
         box.append(actions_group)
         return box
@@ -3755,10 +3771,19 @@ class SettingsWindow(Adw.ApplicationWindow):
         # System Cleaner
         clean_row = Adw.ActionRow(title="Arch System-Cleaner", subtitle="Bereinigt Pacman/yay Caches, verwaiste Pakete und Systemd-Logs")
         clean_btn = Gtk.Button(label="Starten", valign=Gtk.Align.CENTER)
-        clean_btn.connect("clicked", lambda _: os.system("kitty --title 'System-Cleaner' bash -c '~/.config/hypr/scripts/clean-system.sh; echo; read -p \"Drücke Enter...\"' &"))
+        clean_btn.connect("clicked", lambda _: os.system("kitty --class tokyo-system-cleaner --title 'System-Cleaner' bash -c '~/.config/hypr/scripts/clean-system.sh; echo; read -p \"Drücke Enter...\"' &"))
         clean_row.add_suffix(clean_btn)
         clean_row.set_activatable_widget(clean_btn)
         group.add(clean_row)
+
+        # App Uninstaller
+        uninst_row = Adw.ActionRow(title="Restloser App-Uninstaller", subtitle="Wähle Programme aus und entferne sie inklusive ~/.config und ~/.cache restlos")
+        uninst_btn = Gtk.Button(label="Starten", valign=Gtk.Align.CENTER)
+        uninst_btn.add_css_class("destructive-action")
+        uninst_btn.connect("clicked", lambda _: os.system("kitty --class tokyo-app-uninstaller --title 'App-Uninstaller' bash -c 'for p in ~/.local/bin/tokyo-app-uninstaller ~/.config/hypr/scripts/app-uninstaller.sh ~/arch-hyprland/scripts/app-uninstaller.sh ~/tokyo-hypr-dots/scripts/app-uninstaller.sh; do if [[ -f \"$p\" ]]; then bash \"$p\"; exit 0; fi; done' &"))
+        uninst_row.add_suffix(uninst_btn)
+        uninst_row.set_activatable_widget(uninst_btn)
+        group.add(uninst_row)
 
         box.append(group)
         return box

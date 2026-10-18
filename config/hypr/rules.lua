@@ -107,6 +107,14 @@ hl.window_rule({
     center = true,
 })
 
+-- App-Uninstaller (TUI im Terminal)
+hl.window_rule({
+    match = { class = "tokyo-app-uninstaller" },
+    float = true,
+    size = "860 620",
+    center = true,
+})
+
 -- System-Cleaner (TUI im Terminal)
 hl.window_rule({
     match = { class = "tokyo-system-cleaner" },
