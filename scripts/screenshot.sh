@@ -11,7 +11,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 for candidate in \
     "${SCRIPT_DIR}/tokyo-shot" \
     "${HOME}/.local/bin/tokyo-shot" \
-    "${HOME}/.config/hypr/scripts/tokyo-shot"; do
+    "${HOME}/.config/hypr/scripts/tokyo-shot" \
+    "${HOME}/arch-hyprland/scripts/tokyo-shot" \
+    "${HOME}/tokyo-hypr-dots/scripts/tokyo-shot" \
+    "${HOME}/Desktop/hyprland/tokyo-hypr-dots/scripts/tokyo-shot"; do
     if [[ -f "${candidate}" ]]; then
         exec bash "${candidate}" "$@"
     fi

@@ -10,6 +10,10 @@ hl.on("hyprland.start", function()
 end)
 
 -- ── Umgebungsvariablen ───────────────────────────────────────
+local home = os.getenv("HOME") or ""
+local current_path = os.getenv("PATH") or "/usr/local/bin:/usr/bin:/bin"
+hl.env("PATH", home .. "/.local/bin:" .. home .. "/.config/hypr/scripts:" .. current_path)
+
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
 hl.env("XDG_SESSION_TYPE",    "wayland")
 hl.env("XDG_SESSION_DESKTOP", "Hyprland")

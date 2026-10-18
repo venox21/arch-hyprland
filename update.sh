@@ -219,6 +219,11 @@ ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-app-installer" "${HOME}/.local/bin/toky
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cleaner" "${HOME}/.local/bin/tokyo-cleaner" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-hardware-check" "${HOME}/.local/bin/tokyo-hardware-check" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cyber" "${HOME}/.local/bin/tokyo-cyber" 2>/dev/null || true
+if sudo -n true 2>/dev/null; then
+    for bin in tokyo-shot tokyo-app-installer tokyo-cleaner tokyo-hardware-check tokyo-cyber; do
+        sudo ln -sf "${CONFIG_DIR}/hypr/scripts/${bin}" "/usr/local/bin/${bin}" 2>/dev/null || true
+    done
+fi
 if [[ -d "${REPO_DIR}/assets/desktop" ]]; then
     mkdir -p "${HOME}/.local/share/applications"
     cp -f "${REPO_DIR}/assets/desktop/"*.desktop "${HOME}/.local/share/applications/" 2>/dev/null || true
@@ -424,6 +429,9 @@ else
     echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════════╗${NC}"
     echo -e "${GREEN}${BOLD}║  System ist aktuell (Version ${NEW_VER}) – Sync abgeschlossen! ║${NC}"
     echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${NC}"
+fi
+if command -v hyprctl &>/dev/null && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    hyprctl reload >/dev/null 2>&1 || true
 fi
 echo -e "  Alle Konfigurationen und Dienste sind aktiv."
 echo ""

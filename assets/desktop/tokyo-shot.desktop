@@ -1,22 +1,23 @@
 [Desktop Entry]
 Name=Tokyo Shot
-Comment=Screenshot-Tool & Editor für Hyprland
-Exec=tokyo-shot --gui
+GenericName=Screenshot Hub & Editor
+Comment=Moderner Screenshot-Manager und Annotation-Editor für Hyprland
+Exec=sh -c 'for p in "$HOME/.local/bin/tokyo-shot" "$HOME/.config/hypr/scripts/tokyo-shot" "$HOME/arch-hyprland/scripts/tokyo-shot" "$HOME/tokyo-hypr-dots/scripts/tokyo-shot" "$HOME/Desktop/hyprland/tokyo-hypr-dots/scripts/tokyo-shot"; do if [ -f "$p" ]; then exec bash "$p" --gui "$@"; fi; done; PATH="$HOME/.local/bin:$HOME/.config/hypr/scripts:$PATH" exec tokyo-shot --gui "$@"' _ %u
 Icon=camera-photo
 Terminal=false
 Type=Application
 Categories=Utility;Graphics;
-Keywords=screenshot;snapshot;snip;capture;tokyo;
+Keywords=screenshot;snapshot;snip;capture;tokyo;shot;
 Actions=Area;Window;Full;
 
 [Desktop Action Area]
 Name=Bereich aufnehmen
-Exec=tokyo-shot --area
+Exec=sh -c 'for p in "$HOME/.local/bin/tokyo-shot" "$HOME/.config/hypr/scripts/tokyo-shot" "$HOME/arch-hyprland/scripts/tokyo-shot" "$HOME/tokyo-hypr-dots/scripts/tokyo-shot" "$HOME/Desktop/hyprland/tokyo-hypr-dots/scripts/tokyo-shot"; do if [ -f "$p" ]; then exec bash "$p" --area "$@"; fi; done; PATH="$HOME/.local/bin:$HOME/.config/hypr/scripts:$PATH" exec tokyo-shot --area "$@"' _ %u
 
 [Desktop Action Window]
 Name=Fenster aufnehmen
-Exec=tokyo-shot --window
+Exec=sh -c 'for p in "$HOME/.local/bin/tokyo-shot" "$HOME/.config/hypr/scripts/tokyo-shot" "$HOME/arch-hyprland/scripts/tokyo-shot" "$HOME/tokyo-hypr-dots/scripts/tokyo-shot" "$HOME/Desktop/hyprland/tokyo-hypr-dots/scripts/tokyo-shot"; do if [ -f "$p" ]; then exec bash "$p" --window "$@"; fi; done; PATH="$HOME/.local/bin:$HOME/.config/hypr/scripts:$PATH" exec tokyo-shot --window "$@"' _ %u
 
 [Desktop Action Full]
 Name=Vollbild aufnehmen
-Exec=tokyo-shot --full
+Exec=sh -c 'for p in "$HOME/.local/bin/tokyo-shot" "$HOME/.config/hypr/scripts/tokyo-shot" "$HOME/arch-hyprland/scripts/tokyo-shot" "$HOME/tokyo-hypr-dots/scripts/tokyo-shot" "$HOME/Desktop/hyprland/tokyo-hypr-dots/scripts/tokyo-shot"; do if [ -f "$p" ]; then exec bash "$p" --full "$@"; fi; done; PATH="$HOME/.local/bin:$HOME/.config/hypr/scripts:$PATH" exec tokyo-shot --full "$@"' _ %u

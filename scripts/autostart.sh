@@ -56,6 +56,13 @@ if [[ -n "${REPO_DIR}" && -d "${REPO_DIR}" ]]; then
     fi
     mkdir -p "${HOME}/.local/bin"
     ln -sf "${HOME}/.config/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2>/dev/null || true
+    if [[ -d "${REPO_DIR}/assets/desktop" ]]; then
+        mkdir -p "${HOME}/.local/share/applications"
+        cp -f "${REPO_DIR}/assets/desktop/"*.desktop "${HOME}/.local/share/applications/" 2>/dev/null || true
+        if command -v update-desktop-database &>/dev/null; then
+            update-desktop-database "${HOME}/.local/share/applications" 2>/dev/null || true
+        fi
+    fi
     [[ -d "${REPO_DIR}/assets/wallpapers" ]] && cp -n "${REPO_DIR}/assets/wallpapers/"* "${WP_DIR}/" 2>/dev/null || true
 
     # Desktop-PC Schutz: Falls kein Backlight vorhanden ist, Widget entfernen um SwayNC-Absturz zu verhindern
@@ -78,8 +85,9 @@ if [[ ! -f "${CURRENT_WP}" || ! -s "${CURRENT_WP}" ]]; then
 fi
 
 # ── 4. XDG Desktop Portal & Umgebungsvariablen ───────────────
-dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP 2>/dev/null || true
-systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP 2>/dev/null || true
+export PATH="${HOME}/.local/bin:${HOME}/.config/hypr/scripts:${PATH}"
+dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP PATH 2>/dev/null || true
+systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP PATH 2>/dev/null || true
 
 # GTK Dunkles Tokyo Night Design systemweit setzen
 if command -v gsettings &>/dev/null; then

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Cyber-Security Tools
 Comment=Tokyo Night Pentesting & Security Quick Launcher
-Exec=bash -c "~/.config/hypr/scripts/cyber-menu.sh"
+Exec=sh -c 'for p in "$HOME/.config/hypr/scripts/cyber-menu.sh" "$HOME/arch-hyprland/scripts/cyber-menu.sh" "$HOME/tokyo-hypr-dots/scripts/cyber-menu.sh" "$HOME/Desktop/hyprland/tokyo-hypr-dots/scripts/cyber-menu.sh"; do if [ -f "$p" ]; then exec bash "$p" "$@"; fi; done' _ %u
 Icon=security-high
 Terminal=false
 Type=Application

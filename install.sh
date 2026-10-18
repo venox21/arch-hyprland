@@ -472,6 +472,12 @@ ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-app-installer" "${HOME}/.local/bin/tokyo-app-installer" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cleaner" "${HOME}/.local/bin/tokyo-cleaner" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-hardware-check" "${HOME}/.local/bin/tokyo-hardware-check" 2>/dev/null || true
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cyber" "${HOME}/.local/bin/tokyo-cyber" 2>/dev/null || true
+if sudo -n true 2>/dev/null; then
+    for bin in tokyo-shot tokyo-app-installer tokyo-cleaner tokyo-hardware-check tokyo-cyber; do
+        sudo ln -sf "${CONFIG_DIR}/hypr/scripts/${bin}" "/usr/local/bin/${bin}" 2>/dev/null || true
+    done
+fi
 
 # Desktop-Dateien für App-Launcher (Rofi drun)
 mkdir -p "${HOME}/.local/share/applications"
