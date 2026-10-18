@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Firewall Manager
+GenericName=UFW Firewall Configuration
+Comment=UFW Firewall-Grundschutz und Port-Regeln verwalten
+Exec=sh -c 'for p in "$HOME/.local/bin/tokyo-firewall" "$HOME/.config/hypr/scripts/tokyo-firewall" "$HOME/arch-hyprland/scripts/tokyo-firewall" "$HOME/tokyo-hypr-dots/scripts/tokyo-firewall" "$HOME/Desktop/hyprland/tokyo-hypr-dots/scripts/tokyo-firewall"; do if [ -f "$p" ]; then exec bash "$p" "$@"; fi; done; PATH="$HOME/.local/bin:$HOME/.config/hypr/scripts:$PATH" exec tokyo-firewall "$@"' _ %u
+Icon=security-high
+Terminal=false
+Type=Application
+Categories=System;Settings;Security;Network;Utility;
+Keywords=firewall;ufw;security;network;port;rules;block;allow;tokyo;

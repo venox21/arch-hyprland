@@ -153,6 +153,7 @@ OTHER_FILES=(
     "assets/desktop/tokyo-app-installer.desktop"
     "assets/desktop/tokyo-app-uninstaller.desktop"
     "assets/desktop/tokyo-cleaner.desktop"
+    "assets/desktop/tokyo-firewall.desktop"
     "assets/desktop/tokyo-hardware-check.desktop"
     "assets/desktop/tokyo-cyber.desktop"
     "VERSION"
@@ -174,7 +175,8 @@ SCRIPTS=(
     screenshot.sh tokyo-shot power-menu.sh clipboard.sh wallpaper.sh
     waybar-restart.sh backup.sh diagnostics.sh settings.sh hotkeys.sh
     control-center.sh autostart.sh app-installer.sh app-uninstaller.sh gamemode.sh clean-system.sh
-    hardware-check.sh tokyo-app-installer tokyo-app-uninstaller tokyo-cleaner tokyo-hardware-check
+    setup-firewall.sh hardware-check.sh tokyo-app-installer tokyo-app-uninstaller tokyo-cleaner
+    tokyo-firewall tokyo-hardware-check
 )
 
 for s in "${SCRIPTS[@]}"; do

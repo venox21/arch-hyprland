@@ -123,6 +123,14 @@ hl.window_rule({
     center = true,
 })
 
+-- Firewall-Manager (TUI im Terminal)
+hl.window_rule({
+    match = { class = "tokyo-firewall" },
+    float = true,
+    size = "860 620",
+    center = true,
+})
+
 -- Rofi Fensterregeln (Fallback)
 hl.window_rule({
     match = { class = "rofi" },

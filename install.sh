@@ -300,6 +300,8 @@ PACKAGES=(
     bluez-utils
     blueman
     wlsunset
+    ufw
+    smartmontools
 )
 
 # Bereits installierte Pakete ermitteln
@@ -472,10 +474,11 @@ ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-app-installer" "${HOME}/.local/bin/tokyo-app-installer" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-app-uninstaller" "${HOME}/.local/bin/tokyo-app-uninstaller" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cleaner" "${HOME}/.local/bin/tokyo-cleaner" 2>/dev/null || true
+ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-firewall" "${HOME}/.local/bin/tokyo-firewall" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-hardware-check" "${HOME}/.local/bin/tokyo-hardware-check" 2>/dev/null || true
 ln -sf "${CONFIG_DIR}/hypr/scripts/tokyo-cyber" "${HOME}/.local/bin/tokyo-cyber" 2>/dev/null || true
 if sudo -n true 2>/dev/null; then
-    for bin in tokyo-shot tokyo-app-installer tokyo-app-uninstaller tokyo-cleaner tokyo-hardware-check tokyo-cyber; do
+    for bin in tokyo-shot tokyo-app-installer tokyo-app-uninstaller tokyo-cleaner tokyo-firewall tokyo-hardware-check tokyo-cyber; do
         sudo ln -sf "${CONFIG_DIR}/hypr/scripts/${bin}" "/usr/local/bin/${bin}" 2>/dev/null || true
     done
 fi
@@ -485,7 +488,7 @@ mkdir -p "${HOME}/.local/share/applications"
 if [[ -d "${SCRIPT_DIR}/assets/desktop" ]]; then
     cp -f "${SCRIPT_DIR}/assets/desktop/"*.desktop "${HOME}/.local/share/applications/" 2>/dev/null || true
     update-desktop-database "${HOME}/.local/share/applications" 2>/dev/null || true
-    success "Desktop-Einträge registriert (Tokyo Shot, App Installer, App Uninstaller, System Cleaner, Hardware-Check)"
+    success "Desktop-Einträge registriert (Tokyo Shot, App Installer, App Uninstaller, System Cleaner, Firewall, Hardware-Check)"
 fi
 
 # GTK Theme & Design
@@ -685,6 +688,17 @@ info "Aktiviere Systemd-Dienste..."
 sudo systemctl enable --now NetworkManager.service 2>/dev/null || true
 sudo systemctl enable --now bluetooth.service 2>/dev/null || true
 success "NetworkManager und Bluetooth aktiviert"
+
+# UFW Firewall Grundschutz aktivieren (Eingehend blockiert, Ausgehend erlaubt)
+if command -v ufw &>/dev/null; then
+    info "Konfiguriere UFW Firewall-Grundschutz..."
+    sudo ufw default deny incoming 2>/dev/null || true
+    sudo ufw default allow outgoing 2>/dev/null || true
+    sudo ufw default deny routed 2>/dev/null || true
+    sudo systemctl enable --now ufw.service 2>/dev/null || true
+    sudo ufw --force enable 2>/dev/null || true
+    success "UFW Firewall-Grundschutz aktiv (eingehend blockiert, ausgehend erlaubt)"
+fi
 
 # Polkit-Regel & Sudoers für Uhrzeit & Zeitzone
 if [[ -f "${SCRIPT_DIR}/assets/polkit/10-tokyo-timedate.rules" ]]; then

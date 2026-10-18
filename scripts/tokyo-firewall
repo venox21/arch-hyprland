@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  Tokyo Night – Firewall-Manager CLI Starter & Wrapper        ║
+# ╚══════════════════════════════════════════════════════════════╝
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP=""
+
+for candidate in \
+    "${SCRIPT_DIR}/setup-firewall.sh" \
+    "${HOME}/.config/hypr/scripts/setup-firewall.sh" \
+    "${HOME}/arch-hyprland/scripts/setup-firewall.sh" \
+    "${HOME}/arch-hyrland/scripts/setup-firewall.sh" \
+    "${HOME}/tokyo-hypr-dots/scripts/setup-firewall.sh" \
+    "${HOME}/Desktop/hyprland/tokyo-hypr-dots/scripts/setup-firewall.sh"; do
+    if [[ -f "${candidate}" ]]; then
+        APP="${candidate}"
+        break
+    fi
+done
+
+if [[ -z "${APP}" || ! -f "${APP}" ]]; then
+    echo "Fehler: scripts/setup-firewall.sh nicht gefunden!" >&2
+    if command -v notify-send &>/dev/null; then
+        notify-send -u critical -i dialog-error "Firewall Manager" "Skript setup-firewall.sh nicht gefunden. Bitte ./update.sh ausführen."
+    fi
+    exit 1
+fi
+
+# Wenn bereits in einem interaktiven Terminal gestartet: direkt ausführen
+if [ -t 0 ] && [ -t 1 ]; then
+    exec bash "${APP}" "$@"
+fi
+
+# Andernfalls Kitty als schwebendes Fenster öffnen
+if command -v kitty &>/dev/null; then
+    exec kitty --class tokyo-firewall --title "Firewall-Manager" bash "${APP}" "$@"
+else
+    exec bash "${APP}" "$@"
+fi

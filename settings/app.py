@@ -3736,6 +3736,21 @@ class SettingsWindow(Adw.ApplicationWindow):
         uninstaller_action.set_activatable_widget(uninstaller_btn)
         actions_group.add(uninstaller_action)
 
+        firewall_action = Adw.ActionRow(
+            title="UFW Firewall verwalten",
+            subtitle="Netzwerk-Grundschutz, eingehende Verbindungen blockieren & Portfreigaben verwalten"
+        )
+        firewall_btn = Gtk.Button(label="Firewall öffnen", valign=Gtk.Align.CENTER)
+        firewall_btn.connect("clicked", lambda _: os.system(
+            "kitty --class tokyo-firewall --title 'Firewall-Manager' bash -c '"
+            "for p in ~/.local/bin/tokyo-firewall ~/.config/hypr/scripts/setup-firewall.sh ~/arch-hyprland/scripts/setup-firewall.sh ~/tokyo-hypr-dots/scripts/setup-firewall.sh ~/Desktop/hyprland/tokyo-hypr-dots/scripts/setup-firewall.sh; do "
+            "if [[ -f \"$p\" ]]; then bash \"$p\"; exit 0; fi; done; "
+            "echo \"Firewall-Skript nicht gefunden.\"; echo; read -p \"Drücke Enter zum Schließen...\"' &"
+        ))
+        firewall_action.add_suffix(firewall_btn)
+        firewall_action.set_activatable_widget(firewall_btn)
+        actions_group.add(firewall_action)
+
         box.append(actions_group)
         return box
 
@@ -3745,7 +3760,7 @@ class SettingsWindow(Adw.ApplicationWindow):
         box.set_margin_top(16)
         box.set_margin_bottom(16)
 
-        group = Adw.PreferencesGroup(title="Diagnostik & Prüfungen", description="Systemprüfung, Treiberstatus und Fehlersuche")
+        group = Adw.PreferencesGroup(title="Diagnostik & Prüfungen", description="Systemprüfung, Treiberstatus, Festplatten und Fehlersuche")
 
         # Hardware-Check ausführen
         hw_row = Adw.ActionRow(title="Hardware- & Treiber-Check", subtitle="Automatische Prüfung für CPU-Microcode, GPU (Nvidia/Mesa) und Laptop-Akku")
@@ -3760,8 +3775,8 @@ class SettingsWindow(Adw.ApplicationWindow):
         hw_row.set_activatable_widget(hw_btn)
         group.add(hw_row)
 
-        # Diagnose ausführen
-        diag_row = Adw.ActionRow(title="System-Diagnose ausführen (Doctor)", subtitle="Prüft Systempakete, Wayland-Portals, Audio und Konfigurationen")
+        # Diagnose ausführen (Doctor)
+        diag_row = Adw.ActionRow(title="System-Diagnose ausführen (Doctor)", subtitle="Prüft Pakete, Failed Units, Festplattenplatz, SMART-Status, Firewall & Journal")
         diag_btn = Gtk.Button(label="Starten", valign=Gtk.Align.CENTER)
         diag_btn.connect("clicked", lambda _: os.system("kitty --title 'Diagnose' bash -c '~/.config/hypr/scripts/diagnostics.sh 2>/dev/null || ./doctor.sh; echo; read -p \"Drücke Enter...\"' &"))
         diag_row.add_suffix(diag_btn)
@@ -3784,6 +3799,14 @@ class SettingsWindow(Adw.ApplicationWindow):
         uninst_row.add_suffix(uninst_btn)
         uninst_row.set_activatable_widget(uninst_btn)
         group.add(uninst_row)
+
+        # UFW Firewall
+        fw_row = Adw.ActionRow(title="UFW Firewall-Manager", subtitle="Eingehende Ports blockieren, Ausnahmen (SSH, Syncthing, Pentest) konfigurieren")
+        fw_btn = Gtk.Button(label="Öffnen", valign=Gtk.Align.CENTER)
+        fw_btn.connect("clicked", lambda _: os.system("kitty --class tokyo-firewall --title 'Firewall-Manager' bash -c 'for p in ~/.local/bin/tokyo-firewall ~/.config/hypr/scripts/setup-firewall.sh ~/arch-hyprland/scripts/setup-firewall.sh ~/tokyo-hypr-dots/scripts/setup-firewall.sh; do if [[ -f \"$p\" ]]; then bash \"$p\"; exit 0; fi; done' &"))
+        fw_row.add_suffix(fw_btn)
+        fw_row.set_activatable_widget(fw_btn)
+        group.add(fw_row)
 
         box.append(group)
         return box
