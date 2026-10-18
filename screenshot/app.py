@@ -48,6 +48,7 @@ TOKYO_COLORS = {
     "fg":       "#c0caf5",
     "fg_muted": "#7982a9",
     "blue":     "#7aa2f7",
+    "cyan":     "#7dcfff",
     "red":      "#f7768e",
     "green":    "#9ece6a",
     "yellow":   "#e0af68",
@@ -57,52 +58,221 @@ TOKYO_COLORS = {
 }
 
 ANNOTATION_PALETTE = [
-    ("#f7768e", "Rot"),
-    ("#7aa2f7", "Blau"),
-    ("#9ece6a", "Grün"),
-    ("#e0af68", "Gelb"),
-    ("#bb9af7", "Lila"),
-    ("#73daca", "Türkis"),
-    ("#ffffff", "Weiß"),
-    ("#1a1b26", "Dunkel"),
+    ("#f7768e", "Rot (#f7768e)"),
+    ("#7aa2f7", "Blau (#7aa2f7)"),
+    ("#73daca", "Cyan (#73daca)"),
+    ("#9ece6a", "Grün (#9ece6a)"),
+    ("#e0af68", "Gelb (#e0af68)"),
+    ("#bb9af7", "Lila (#bb9af7)"),
+    ("#ffffff", "Weiß (#ffffff)"),
+    ("#1a1b26", "Dunkel (#1a1b26)"),
 ]
 
 APP_CSS = """
-/* Tokyo Shot Theme */
-window.tokyo-shot {
+/* ══════════════════════════════════════════════════════════════
+ * Tokyo Shot – Tokyo Night Cyber Neon Theme
+ * ══════════════════════════════════════════════════════════════ */
+
+window, window.tokyo-shot, .tokyo-shot {
     background-color: #1a1b26;
     color: #c0caf5;
 }
 
-.shot-card {
-    background-color: rgba(36, 40, 59, 0.7);
-    border-radius: 12px;
-    border: 1px solid rgba(122, 162, 247, 0.2);
-    padding: 12px;
+headerbar {
+    background-color: #16161e;
+    border-bottom: 1px solid rgba(122, 162, 247, 0.22);
+    color: #c0caf5;
+    padding: 6px 10px;
 }
 
-.mode-btn {
-    border-radius: 10px;
-    padding: 14px 18px;
-    font-weight: bold;
+headerbar .title, headerbar windowhandle label {
+    font-weight: 800;
+    color: #ffffff;
     font-size: 14px;
-    transition: all 180ms ease;
 }
 
-.mode-btn:hover {
-    background-color: rgba(122, 162, 247, 0.15);
+/* ── Hero / Kopfzeile ── */
+.hero-box {
+    padding: 6px 0 2px 0;
 }
 
+.hero-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+}
+
+.hero-subtitle {
+    font-size: 12.5px;
+    color: #7982a9;
+    font-weight: 500;
+}
+
+/* ── Aufnahmekacheln (Mode Cards) ── */
+.shot-card {
+    background: rgba(36, 40, 59, 0.75);
+    border-radius: 16px;
+    border: 1.5px solid rgba(122, 162, 247, 0.22);
+    padding: 14px 18px;
+    transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.shot-card:hover {
+    background: rgba(41, 46, 66, 0.95);
+    border-color: #7aa2f7;
+    box-shadow: 0 0 18px rgba(122, 162, 247, 0.35), 0 6px 20px rgba(0, 0, 0, 0.45);
+    transform: translateY(-1px);
+}
+
+.shot-card:active {
+    background: rgba(122, 162, 247, 0.22);
+    border-color: #00f0ff;
+    transform: translateY(0);
+}
+
+.mode-icon {
+    font-size: 28px;
+    color: #7aa2f7;
+    margin-bottom: 4px;
+}
+
+.mode-title {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.mode-desc {
+    font-size: 11.5px;
+    color: #7982a9;
+}
+
+/* ── Optionen & Einstellungen ── */
+preferencesgroup, .preferences-group {
+    background-color: transparent;
+}
+
+preferencesgroup > box > label {
+    font-weight: 700;
+    color: #7aa2f7;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+list.boxed-list {
+    background-color: rgba(36, 40, 59, 0.65);
+    border: 1px solid rgba(122, 162, 247, 0.2);
+    border-radius: 14px;
+    color: #c0caf5;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+list.boxed-list > row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 10px 14px;
+    color: #c0caf5;
+}
+
+list.boxed-list > row:last-child {
+    border-bottom: none;
+}
+
+actionrow, switchrow {
+    color: #c0caf5;
+}
+
+/* ── Buttons ── */
+button.suggested-action {
+    background: linear-gradient(135deg, #7aa2f7 0%, #00f0ff 100%);
+    color: #10121c;
+    font-weight: 800;
+    font-size: 12.5px;
+    border-radius: 10px;
+    border: none;
+    padding: 6px 14px;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+    transition: all 160ms ease;
+}
+
+button.suggested-action:hover {
+    box-shadow: 0 0 18px rgba(0, 240, 255, 0.65);
+    transform: scale(1.02);
+}
+
+.secondary-btn {
+    background-color: rgba(36, 40, 59, 0.85);
+    border: 1px solid rgba(122, 162, 247, 0.25);
+    border-radius: 10px;
+    color: #c0caf5;
+    padding: 7px 14px;
+    font-weight: 600;
+    font-size: 12px;
+    transition: all 160ms ease;
+}
+
+.secondary-btn:hover {
+    background-color: rgba(122, 162, 247, 0.2);
+    border-color: #7aa2f7;
+    color: #ffffff;
+}
+
+/* ── Werkzeuge im Editor ── */
+.tool-btn {
+    border-radius: 10px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 4px;
+    font-size: 15px;
+    background-color: rgba(36, 40, 59, 0.85);
+    border: 1px solid rgba(122, 162, 247, 0.25);
+    color: #c0caf5;
+    transition: all 140ms ease;
+}
+
+.tool-btn:hover {
+    background-color: rgba(122, 162, 247, 0.2);
+    border-color: #7aa2f7;
+    color: #ffffff;
+}
+
+.tool-btn:checked {
+    background: #7aa2f7;
+    color: #1a1b26;
+    border-color: #00f0ff;
+    box-shadow: 0 0 10px rgba(122, 162, 247, 0.65);
+}
+
+/* ── Farbpalette ── */
 .color-dot {
     border-radius: 9999px;
-    min-width: 24px;
-    min-height: 24px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    min-width: 22px;
+    min-height: 22px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    margin: 2px;
+    transition: all 140ms ease;
+}
+
+.color-dot:hover {
+    transform: scale(1.15);
+    border-color: #ffffff;
 }
 
 .color-dot.active {
     border-color: #ffffff;
-    box-shadow: 0 0 6px rgba(122, 162, 247, 0.8);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+    transform: scale(1.22);
+}
+
+/* ── Zeichenfläche & Scrollbereich ── */
+.canvas-scroller {
+    background-color: #13141c;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dim-label {
+    color: #7982a9;
 }
 """
 
@@ -123,17 +293,21 @@ if HAS_GTK:
 
         def __init__(self, file_path, on_closed_cb=None):
             super().__init__()
+            # Dunkles Tokyo Night Theme erzwingen
+            try:
+                Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+            except Exception:
+                pass
+
             self.set_title("Tokyo Shot – Editor")
-            self.set_default_size(1024, 680)
             self.add_css_class("tokyo-shot")
 
             self.file_path = file_path
             self.on_closed_cb = on_closed_cb
-            self.original_pixbuf = None
-            self.current_surface = None
+            self.img_surface = None
 
             # Zeichen-Status
-            self.tool = "brush"  # brush, arrow, rect, blur, text
+            self.tool = "brush"  # brush, arrow, rect, blur
             self.current_color = "#f7768e"
             self.line_width = 4
             self.history = []
@@ -149,23 +323,38 @@ if HAS_GTK:
             self._setup_shortcuts()
 
         def _load_image(self):
-            try:
-                self.original_pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.file_path)
-                w = self.original_pixbuf.get_width()
-                h = self.original_pixbuf.get_height()
-                
-                # Cairo Image Surface erzeugen
-                self.img_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
-                cr = cairo.Context(self.img_surface)
-                Gdk.cairo_set_source_pixbuf(cr, self.original_pixbuf, 0, 0)
-                cr.paint()
+            if not os.path.exists(self.file_path):
+                shot_core.notify(f"Datei nicht gefunden: {self.file_path}", title="Tokyo Shot", critical=True)
+                return
 
-                # History mit Ausgangszustand initialisieren
+            try:
+                # 1. Bevorzugt: Direktes natives Cairo PNG-Laden
+                self.img_surface = cairo.ImageSurface.create_from_png(self.file_path)
+            except Exception:
+                # 2. Fallback über GdkPixbuf
+                try:
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.file_path)
+                    w = pixbuf.get_width()
+                    h = pixbuf.get_height()
+                    self.img_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
+                    pixels = pixbuf.get_pixels()
+                    stride = pixbuf.get_rowstride()
+                    surf = cairo.ImageSurface.create_for_data(
+                        bytearray(pixels), cairo.FORMAT_ARGB32, w, h, stride
+                    )
+                    cr = cairo.Context(self.img_surface)
+                    cr.set_source_surface(surf, 0, 0)
+                    cr.paint()
+                except Exception as e:
+                    shot_core.notify(f"Fehler beim Laden des Screenshots: {e}", title="Tokyo Shot", critical=True)
+                    return
+
+            if self.img_surface:
                 self._push_history()
-            except Exception as e:
-                shot_core.notify(f"Fehler beim Laden: {e}", title="Tokyo Shot", critical=True)
 
         def _push_history(self):
+            if not self.img_surface:
+                return
             w = self.img_surface.get_width()
             h = self.img_surface.get_height()
             copy_surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
@@ -173,23 +362,23 @@ if HAS_GTK:
             cr.set_source_surface(self.img_surface, 0, 0)
             cr.paint()
             self.history.append(copy_surf)
-            # Begrenze History auf 25 Schritte
             if len(self.history) > 25:
                 self.history.pop(0)
             self.redo_stack.clear()
             self._update_undo_buttons()
 
         def _setup_ui(self):
-            main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-            self.set_content(main_box)
+            toolbar_view = Adw.ToolbarView()
+            self.set_content(toolbar_view)
 
             # ── Headerbar ────────────────────────────────────
             header = Adw.HeaderBar()
-            main_box.append(header)
+            header.set_show_title(True)
+            toolbar_view.add_top_bar(header)
 
             # Werkzeugleiste links
-            tool_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
-            tool_box.set_margin_start(6)
+            tool_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+            tool_box.set_margin_start(4)
 
             tools = [
                 ("brush",  "✏", "Freihand-Stift"),
@@ -201,6 +390,7 @@ if HAS_GTK:
             self.tool_buttons = {}
             for t_id, icon, tip in tools:
                 btn = Gtk.ToggleButton(label=icon)
+                btn.add_css_class("tool-btn")
                 btn.set_tooltip_text(tip)
                 btn.connect("toggled", self._on_tool_toggled, t_id)
                 tool_box.append(btn)
@@ -211,22 +401,24 @@ if HAS_GTK:
 
             # Farbpalette
             color_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
-            color_box.set_margin_start(12)
+            color_box.set_margin_start(14)
             self.color_buttons = []
             for hex_val, tip in ANNOTATION_PALETTE:
                 c_btn = Gtk.Button()
                 c_btn.set_tooltip_text(tip)
                 c_btn.add_css_class("color-dot")
                 
-                # Punkt mit Farbe füllen
                 try:
                     provider = Gtk.CssProvider()
-                    css = f"button {{ background-color: {hex_val}; border-radius: 9999px; min-width: 20px; min-height: 20px; }}"
+                    css = f"button {{ background-color: {hex_val}; border-radius: 9999px; min-width: 22px; min-height: 22px; }}"
                     provider.load_from_data(css.encode())
                     if hasattr(c_btn, "get_style_context"):
                         c_btn.get_style_context().add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
                 except Exception:
                     pass
+                
+                if hex_val == self.current_color:
+                    c_btn.add_css_class("active")
                 
                 c_btn.connect("clicked", self._on_color_selected, hex_val)
                 color_box.append(c_btn)
@@ -236,15 +428,17 @@ if HAS_GTK:
 
             # Aktionen rechts im Header
             act_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-            act_box.set_margin_end(6)
+            act_box.set_margin_end(4)
 
             # Undo / Redo
             self.undo_btn = Gtk.Button(label="↩")
+            self.undo_btn.add_css_class("tool-btn")
             self.undo_btn.set_tooltip_text("Rückgängig (Strg+Z)")
             self.undo_btn.connect("clicked", lambda b: self.undo())
             act_box.append(self.undo_btn)
 
             self.redo_btn = Gtk.Button(label="↪")
+            self.redo_btn.add_css_class("tool-btn")
             self.redo_btn.set_tooltip_text("Wiederholen (Strg+Y)")
             self.redo_btn.connect("clicked", lambda b: self.redo())
             act_box.append(self.redo_btn)
@@ -252,18 +446,20 @@ if HAS_GTK:
             # Kopieren
             copy_btn = Gtk.Button(label="📋 Kopieren")
             copy_btn.add_css_class("suggested-action")
-            copy_btn.set_tooltip_text("In Zwischenablage kopieren")
+            copy_btn.set_tooltip_text("In Zwischenablage kopieren (Strg+C)")
             copy_btn.connect("clicked", self._on_copy_clicked)
             act_box.append(copy_btn)
 
-            # Speichern unter
+            # Speichern
             save_btn = Gtk.Button(label="💾 Speichern")
-            save_btn.set_tooltip_text("Änderungen speichern")
+            save_btn.add_css_class("secondary-btn")
+            save_btn.set_tooltip_text("Änderungen speichern (Strg+S)")
             save_btn.connect("clicked", self._on_save_clicked)
             act_box.append(save_btn)
 
             # Pin / Bild-im-Bild
             pin_btn = Gtk.Button(label="📌")
+            pin_btn.add_css_class("tool-btn")
             pin_btn.set_tooltip_text("Als schwebendes Bild-im-Bild anheften")
             pin_btn.connect("clicked", self._on_pin_clicked)
             act_box.append(pin_btn)
@@ -274,14 +470,22 @@ if HAS_GTK:
             self.scroller = Gtk.ScrolledWindow()
             self.scroller.set_hexpand(True)
             self.scroller.set_vexpand(True)
-            main_box.append(self.scroller)
+            self.scroller.set_min_content_width(700)
+            self.scroller.set_min_content_height(450)
+            self.scroller.add_css_class("canvas-scroller")
+            toolbar_view.set_content(self.scroller)
 
             self.drawing_area = Gtk.DrawingArea()
-            w = self.img_surface.get_width() if self.img_surface else 400
-            h = self.img_surface.get_height() if self.img_surface else 300
+            w = self.img_surface.get_width() if self.img_surface else 800
+            h = self.img_surface.get_height() if self.img_surface else 500
             self.drawing_area.set_content_width(w)
             self.drawing_area.set_content_height(h)
             self.drawing_area.set_draw_func(self._draw_func)
+
+            # Fenstergröße intelligent an Screenshot anpassen
+            win_w = max(860, min(w + 64, 1500))
+            win_h = max(560, min(h + 130, 960))
+            self.set_default_size(win_w, win_h)
 
             # Gesten für Mausklicks und Ziehen
             drag = Gtk.GestureDrag()
@@ -299,26 +503,21 @@ if HAS_GTK:
 
         def _on_key_pressed(self, controller, keyval, keycode, state):
             is_ctrl = bool(state & Gdk.ModifierType.CONTROL_MASK)
-            # Strg+Z -> Undo
             if is_ctrl and keyval in (Gdk.KEY_z, Gdk.KEY_Z):
                 if state & Gdk.ModifierType.SHIFT_MASK:
                     self.redo()
                 else:
                     self.undo()
                 return True
-            # Strg+Y -> Redo
             if is_ctrl and keyval in (Gdk.KEY_y, Gdk.KEY_Y):
                 self.redo()
                 return True
-            # Strg+C -> Kopieren
             if is_ctrl and keyval in (Gdk.KEY_c, Gdk.KEY_C):
                 self._on_copy_clicked(None)
                 return True
-            # Strg+S -> Speichern
             if is_ctrl and keyval in (Gdk.KEY_s, Gdk.KEY_S):
                 self._on_save_clicked(None)
                 return True
-            # Escape -> Schließen
             if keyval == Gdk.KEY_Escape:
                 self.close()
                 return True
@@ -333,6 +532,11 @@ if HAS_GTK:
 
         def _on_color_selected(self, button, hex_val):
             self.current_color = hex_val
+            for btn, val in self.color_buttons:
+                if val == hex_val:
+                    btn.add_css_class("active")
+                else:
+                    btn.remove_css_class("active")
 
         def _update_undo_buttons(self):
             self.undo_btn.set_sensitive(len(self.history) > 1)
@@ -344,7 +548,6 @@ if HAS_GTK:
                 self.redo_stack.append(last)
                 target = self.history[-1]
                 
-                # Auf Surface übertragen
                 cr = cairo.Context(self.img_surface)
                 cr.set_operator(cairo.OPERATOR_SOURCE)
                 cr.set_source_surface(target, 0, 0)
@@ -389,7 +592,6 @@ if HAS_GTK:
             end_x = self.start_point[0] + offset_x
             end_y = self.start_point[1] + offset_y
             
-            # Dauerhaft in img_surface rendern
             cr = cairo.Context(self.img_surface)
             self._render_shape(cr, self.start_point, (end_x, end_y), self.current_stroke, is_permanent=True)
             
@@ -428,14 +630,12 @@ if HAS_GTK:
                 cr.set_source_rgba(*rgba)
                 cr.set_line_width(self.line_width)
                 cr.set_line_cap(cairo.LINE_CAP_ROUND)
-                # Linie
                 cr.move_to(p1[0], p1[1])
                 cr.line_to(p2[0], p2[1])
                 cr.stroke()
                 
-                # Pfeilspitze
                 angle = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
-                arrow_len = 16
+                arrow_len = 18
                 arrow_angle = math.pi / 6
                 
                 x1 = p2[0] - arrow_len * math.cos(angle - arrow_angle)
@@ -450,17 +650,15 @@ if HAS_GTK:
                 cr.fill()
 
             elif self.tool == "blur":
-                # Zensur-Balken / Zensur-Rechteck
                 x = min(p1[0], p2[0])
                 y = min(p1[1], p2[1])
                 w = abs(p2[0] - p1[0])
                 h = abs(p2[1] - p1[1])
                 
-                # Schwarzer/Dunkler Tokyo Night Balken mit leichtem Rand
-                cr.set_source_rgba(0.1, 0.11, 0.15, 0.98)
+                cr.set_source_rgba(0.08, 0.09, 0.13, 0.98)
                 cr.rectangle(x, y, w, h)
                 cr.fill()
-                cr.set_source_rgba(0.48, 0.64, 0.97, 0.6)
+                cr.set_source_rgba(0.48, 0.64, 0.97, 0.7)
                 cr.set_line_width(1.5)
                 cr.rectangle(x, y, w, h)
                 cr.stroke()
@@ -469,11 +667,9 @@ if HAS_GTK:
             if not self.img_surface:
                 return
 
-            # Hauptbild rendern
             cr.set_source_surface(self.img_surface, 0, 0)
             cr.paint()
 
-            # Live-Vorschau der aktuellen Geste
             if self.start_point and self.current_point:
                 self._render_shape(cr, self.start_point, self.current_point, self.current_stroke, is_permanent=False)
 
@@ -492,13 +688,11 @@ if HAS_GTK:
                 shot_core.notify(f"Gespeichert:\n{self.file_path}", title="Tokyo Shot")
 
         def _on_copy_clicked(self, button):
-            # Speichere aktuellen Stand und kopiere in Zwischenablage
             if self._save_surface(self.file_path):
                 shot_core.copy_file_to_clipboard(self.file_path)
                 shot_core.notify("Screenshot in die Zwischenablage kopiert!", title="Tokyo Shot")
 
         def _on_pin_clicked(self, button):
-            """Screenshot als kleines, schwebendes Bild-im-Bild Fenster anheften."""
             self._save_surface(self.file_path)
             pin_win = PinWindow(self.file_path)
             pin_win.present()
@@ -509,6 +703,11 @@ if HAS_GTK:
 
         def __init__(self, file_path):
             super().__init__()
+            try:
+                Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+            except Exception:
+                pass
+
             self.set_title("Tokyo Shot – Pin")
             self.add_css_class("tokyo-shot-pin")
             self.set_default_size(360, 240)
@@ -516,6 +715,184 @@ if HAS_GTK:
             pic = Gtk.Picture.new_for_filename(file_path)
             pic.set_can_shrink(True)
             self.set_child(pic)
+
+
+    class MainWindow(Adw.ApplicationWindow):
+        """Kompaktes, modernes Aufnahme-Dashboard mit Kacheln und Galerie."""
+
+        def __init__(self, app):
+            super().__init__(application=app)
+            self.app = app
+            try:
+                Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+            except Exception:
+                pass
+
+            self.set_title("Tokyo Shot")
+            self.set_default_size(620, 640)
+            self.add_css_class("tokyo-shot")
+
+            toolbar_view = Adw.ToolbarView()
+            self.set_content(toolbar_view)
+
+            # Headerbar
+            header = Adw.HeaderBar()
+            header.set_show_title(True)
+            toolbar_view.add_top_bar(header)
+
+            # Scrolled Container
+            scroller = Gtk.ScrolledWindow()
+            scroller.set_vexpand(True)
+            scroller.set_hexpand(True)
+            scroller.set_min_content_width(580)
+            scroller.set_min_content_height(560)
+            toolbar_view.set_content(scroller)
+
+            content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18)
+            content_box.set_margin_top(16)
+            content_box.set_margin_bottom(24)
+            content_box.set_margin_start(24)
+            content_box.set_margin_end(24)
+            scroller.set_child(content_box)
+
+            # ── Hero / Titel ─────────────────────────────────────
+            hero_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+            hero_box.add_css_class("hero-box")
+
+            title_lbl = Gtk.Label(label="Tokyo Shot")
+            title_lbl.add_css_class("hero-title")
+            title_lbl.set_xalign(0)
+
+            sub_lbl = Gtk.Label(label="Wähle einen Aufnahmemodus für Hyprland")
+            sub_lbl.add_css_class("hero-subtitle")
+            sub_lbl.set_xalign(0)
+
+            hero_box.append(title_lbl)
+            hero_box.append(sub_lbl)
+            content_box.append(hero_box)
+
+            # ── 4 Große Aufnahmekacheln ──────────────────────────
+            grid = Gtk.Grid()
+            grid.set_column_spacing(14)
+            grid.set_row_spacing(14)
+            grid.set_column_homogeneous(True)
+            grid.set_row_homogeneous(True)
+            grid.set_hexpand(True)
+
+            modes = [
+                ("area",    "⛶", "Bereich",     "Auswahl mit der Maus aufziehen", 0, 0),
+                ("window",  "🗔", "Fenster",     "Aktives oder gewähltes Fenster",  1, 0),
+                ("monitor", "🖥", "Monitor",     "Aktuellen Bildschirm aufnehmen", 0, 1),
+                ("full",    "🖼", "Vollbild",    "Gesamte Anzeigefläche",          1, 1),
+            ]
+
+            for m_id, icon, label, tip, col, row in modes:
+                card = Gtk.Button()
+                card.add_css_class("shot-card")
+                card.set_tooltip_text(tip)
+                
+                box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+                box.set_valign(Gtk.Align.CENTER)
+
+                lbl_icon = Gtk.Label(label=icon)
+                lbl_icon.add_css_class("mode-icon")
+
+                lbl_main = Gtk.Label(label=label)
+                lbl_main.add_css_class("mode-title")
+
+                lbl_sub = Gtk.Label(label=tip)
+                lbl_sub.add_css_class("mode-desc")
+                lbl_sub.set_wrap(True)
+                lbl_sub.set_justify(Gtk.Justification.CENTER)
+
+                box.append(lbl_icon)
+                box.append(lbl_main)
+                box.append(lbl_sub)
+                card.set_child(box)
+
+                card.connect("clicked", self._on_mode_clicked, m_id)
+                grid.attach(card, col, row, 1, 1)
+
+            content_box.append(grid)
+
+            # ── Aufnahmeoptionen ─────────────────────────────────
+            opt_group = Adw.PreferencesGroup()
+            opt_group.set_title("Aufnahmeoptionen")
+            
+            # Timer / Verzögerung
+            delay_row = Adw.ActionRow(title="Verzögerungstimer")
+            delay_row.set_subtitle("Vor der Aufnahme warten")
+            self.delay_combo = Gtk.DropDown.new_from_strings(["Sofort (0s)", "3 Sekunden", "5 Sekunden", "10 Sekunden"])
+            delay_row.add_suffix(self.delay_combo)
+            opt_group.add(delay_row)
+
+            # Schalter: Nach Aufnahme editieren
+            self.edit_switch = Adw.SwitchRow(title="Im Editor öffnen")
+            self.edit_switch.set_subtitle("Screenshot direkt nach Aufnahme beschriften oder zuschneiden")
+            self.edit_switch.set_active(self.app.cfg.get("edit_after_capture", True))
+            self.edit_switch.connect("notify::active", self._on_opt_changed, "edit_after_capture")
+            opt_group.add(self.edit_switch)
+
+            # Schalter: In Zwischenablage kopieren
+            self.clip_switch = Adw.SwitchRow(title="Automatisch in Zwischenablage")
+            self.clip_switch.set_subtitle("Bild nach der Aufnahme sofort in die Zwischenablage legen")
+            self.clip_switch.set_active(self.app.cfg.get("copy_to_clipboard", True))
+            self.clip_switch.connect("notify::active", self._on_opt_changed, "copy_to_clipboard")
+            opt_group.add(self.clip_switch)
+
+            # Schalter: Mauszeiger
+            self.pointer_switch = Adw.SwitchRow(title="Mauszeiger aufnehmen")
+            self.pointer_switch.set_subtitle("Cursor im Screenshot sichtbar lassen")
+            self.pointer_switch.set_active(self.app.cfg.get("pointer", False))
+            self.pointer_switch.connect("notify::active", self._on_opt_changed, "pointer")
+            opt_group.add(self.pointer_switch)
+
+            content_box.append(opt_group)
+
+            # ── Galerie der letzten Screenshots ──────────────────
+            recent = shot_core.list_screenshots(self.app.cfg)
+            recent_group = Adw.PreferencesGroup()
+            recent_group.set_title("Verlauf & Speicherort")
+            
+            recent_row = Adw.ActionRow()
+            dir_path = shot_core.screenshot_dir(self.app.cfg)
+            recent_row.set_title(f"📁 {len(recent)} Screenshots gespeichert")
+            recent_row.set_subtitle(dir_path)
+
+            btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            
+            open_dir_btn = Gtk.Button(label="Ordner öffnen")
+            open_dir_btn.add_css_class("secondary-btn")
+            open_dir_btn.connect("clicked", lambda b: subprocess.Popen(["thunar", dir_path]))
+            btn_box.append(open_dir_btn)
+
+            if recent:
+                latest_edit_btn = Gtk.Button(label="Letzten bearbeiten")
+                latest_edit_btn.add_css_class("suggested-action")
+                latest_edit_btn.connect("clicked", lambda b: self._open_in_editor(recent[0]))
+                btn_box.append(latest_edit_btn)
+
+            recent_row.add_suffix(btn_box)
+            recent_group.add(recent_row)
+            content_box.append(recent_group)
+
+        def _on_opt_changed(self, switch, gparam, key):
+            self.app.cfg[key] = switch.get_active()
+            shot_core.save_config(self.app.cfg)
+
+        def _get_selected_delay(self):
+            idx = self.delay_combo.get_selected()
+            return [0, 3, 5, 10][idx] if idx < 4 else 0
+
+        def _on_mode_clicked(self, button, mode):
+            delay = self._get_selected_delay()
+            self.app._execute_capture(mode, delay=delay)
+
+        def _open_in_editor(self, path):
+            if HAS_CAIRO:
+                editor = AnnotationEditor(path)
+                self.app.add_window(editor)
+                editor.present()
 
 
     class TokyoShotApp(Adw.Application):
@@ -529,6 +906,11 @@ if HAS_GTK:
 
         def do_startup(self):
             Adw.Application.do_startup(self)
+            try:
+                Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+            except Exception:
+                pass
+
             # Custom CSS laden
             try:
                 provider = Gtk.CssProvider()
@@ -542,6 +924,11 @@ if HAS_GTK:
                 print(f"Hinweis beim Laden des CSS: {e}", file=sys.stderr)
 
         def do_activate(self):
+            try:
+                Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+            except Exception:
+                pass
+
             # Falls direkt eine Datei editiert werden soll
             if self.target_file and os.path.exists(self.target_file):
                 editor = AnnotationEditor(self.target_file)
@@ -582,153 +969,11 @@ if HAS_GTK:
                     else:
                         self.quit()
                 else:
-                    # Abbruch
                     self.quit()
             except Exception as e:
                 shot_core.notify(f"Aufnahme fehlgeschlagen: {e}", critical=True)
                 self.quit()
             return False
-
-
-    class MainWindow(Adw.ApplicationWindow):
-        """Kompaktes, modernes Aufnahme-Dashboard mit Kacheln und Galerie."""
-
-        def __init__(self, app):
-            super().__init__(application=app)
-            self.app = app
-            self.set_title("Tokyo Shot")
-            self.set_default_size(540, 520)
-            self.add_css_class("tokyo-shot")
-
-            main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-            main_box.set_margin_top(16)
-            main_box.set_margin_bottom(16)
-            main_box.set_margin_start(20)
-            main_box.set_margin_end(20)
-            self.set_content(main_box)
-
-            # Headerbar
-            header = Adw.HeaderBar()
-            main_box.append(header)
-
-            # Titel & Beschreibung
-            title_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-            title_lbl = Gtk.Label(label="Tokyo Shot")
-            title_lbl.add_css_class("title-1")
-            sub_lbl = Gtk.Label(label="Wähle einen Aufnahmemodus")
-            sub_lbl.add_css_class("dim-label")
-            title_box.append(title_lbl)
-            title_box.append(sub_lbl)
-            main_box.append(title_box)
-
-            # ── 4 Große Aufnahmekacheln ──────────────────────────
-            grid = Gtk.Grid()
-            grid.set_column_spacing(12)
-            grid.set_row_spacing(12)
-            grid.set_hexpand(True)
-            grid.set_halign(Gtk.Align.CENTER)
-
-            modes = [
-                ("area",    "⛶ Bereich",      "Auswahl mit der Maus aufziehen", 0, 0),
-                ("window",  "🗔 Fenster",      "Aktives oder gewähltes Fenster",  1, 0),
-                ("monitor", "🖥 Monitor",      "Aktuellen Bildschirm aufnehmen", 0, 1),
-                ("full",    "🖼 Vollbild",     "Gesamte Anzeigefläche",          1, 1),
-            ]
-
-            for m_id, label, tip, col, row in modes:
-                card = Gtk.Button()
-                card.add_css_class("mode-btn")
-                card.add_css_class("shot-card")
-                card.set_tooltip_text(tip)
-                
-                box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-                box.set_margin_top(8)
-                box.set_margin_bottom(8)
-                box.set_margin_start(16)
-                box.set_margin_end(16)
-
-                lbl_main = Gtk.Label(label=label)
-                lbl_main.add_css_class("heading")
-                lbl_sub = Gtk.Label(label=tip)
-                lbl_sub.add_css_class("caption")
-                lbl_sub.add_css_class("dim-label")
-
-                box.append(lbl_main)
-                box.append(lbl_sub)
-                card.set_child(box)
-
-                card.connect("clicked", self._on_mode_clicked, m_id)
-                grid.attach(card, col, row, 1, 1)
-
-            main_box.append(grid)
-
-            # ── Einstellungen & Optionen ─────────────────────────
-            opt_group = Adw.PreferencesGroup(title="Aufnahmeoptionen")
-            
-            # Timer / Verzögerung
-            delay_row = Adw.ActionRow(title="Verzögerungstimer")
-            self.delay_combo = Gtk.DropDown.new_from_strings(["Sofort (0s)", "3 Sekunden", "5 Sekunden", "10 Sekunden"])
-            delay_row.add_suffix(self.delay_combo)
-            opt_group.add(delay_row)
-
-            # Schalter: Nach Aufnahme editieren
-            self.edit_switch = Adw.SwitchRow(title="Im Editor öffnen")
-            self.edit_switch.set_subtitle("Screenshot direkt nach Aufnahme beschriften oder zuschneiden")
-            self.edit_switch.set_active(self.app.cfg.get("edit_after_capture", True))
-            self.edit_switch.connect("notify::active", self._on_opt_changed, "edit_after_capture")
-            opt_group.add(self.edit_switch)
-
-            # Schalter: In Zwischenablage kopieren
-            self.clip_switch = Adw.SwitchRow(title="Automatisch in Zwischenablage")
-            self.clip_switch.set_subtitle("Bild nach der Aufnahme sofort kopieren")
-            self.clip_switch.set_active(self.app.cfg.get("copy_to_clipboard", True))
-            self.clip_switch.connect("notify::active", self._on_opt_changed, "copy_to_clipboard")
-            opt_group.add(self.clip_switch)
-
-            # Schalter: Mauszeiger
-            self.pointer_switch = Adw.SwitchRow(title="Mauszeiger aufnehmen")
-            self.pointer_switch.set_active(self.app.cfg.get("pointer", False))
-            self.pointer_switch.connect("notify::active", self._on_opt_changed, "pointer")
-            opt_group.add(self.pointer_switch)
-
-            main_box.append(opt_group)
-
-            # ── Galerie der letzten Screenshots ──────────────────
-            recent = shot_core.list_screenshots(self.app.cfg)
-            if recent:
-                recent_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-                recent_lbl = Gtk.Label(label=f"📁 {len(recent)} Screenshots in {shot_core.screenshot_dir(self.app.cfg)}")
-                recent_lbl.add_css_class("dim-label")
-                recent_box.append(recent_lbl)
-
-                open_dir_btn = Gtk.Button(label="Ordner öffnen")
-                open_dir_btn.connect("clicked", lambda b: subprocess.Popen(["thunar", shot_core.screenshot_dir(self.app.cfg)]))
-                recent_box.append(open_dir_btn)
-
-                # Letzten Screenshot editieren
-                latest_edit_btn = Gtk.Button(label="Letzten bearbeiten")
-                latest_edit_btn.connect("clicked", lambda b: self._open_in_editor(recent[0]))
-                recent_box.append(latest_edit_btn)
-
-                main_box.append(recent_box)
-
-        def _on_opt_changed(self, switch, gparam, key):
-            self.app.cfg[key] = switch.get_active()
-            shot_core.save_config(self.app.cfg)
-
-        def _get_selected_delay(self):
-            idx = self.delay_combo.get_selected()
-            return [0, 3, 5, 10][idx] if idx < 4 else 0
-
-        def _on_mode_clicked(self, button, mode):
-            delay = self._get_selected_delay()
-            self.app._execute_capture(mode, delay=delay)
-
-        def _open_in_editor(self, path):
-            if HAS_CAIRO:
-                editor = AnnotationEditor(path)
-                self.app.add_window(editor)
-                editor.present()
 
 
 # ── CLI & Einstiegspunkt ─────────────────────────────────────
@@ -750,7 +995,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Modus ermitteln
     mode = None
     if args.area or args.mode == "area":
         mode = "area"
@@ -800,7 +1044,6 @@ def main():
         err_msg = "Tokyo Shot GUI benötigt GTK4 und Libadwaita.\nBitte ausführen: sudo pacman -S python-gobject gtk4 libadwaita python-cairo"
         print(f"Fehler: {err_msg}", file=sys.stderr)
         shot_core.notify(err_msg, critical=True)
-        # Fallback wenn kein GTK installiert ist
         if mode and mode != "gui":
             saved = shot_core.capture(mode, cfg, delay=args.delay)
             if saved:

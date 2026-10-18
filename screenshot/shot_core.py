@@ -36,10 +36,9 @@ CAPTURE_MODES = ("area", "window", "monitor", "full")
 # Tokyo-Night-Optik für die slurp-Auswahl
 SLURP_STYLE = [
     "-d",
-    "-b", "#1a1b2666",
+    "-b", "#1a1b2699",
     "-c", "#7aa2f7ff",
     "-s", "#7aa2f722",
-    "-B", "#7aa2f744",
     "-w", "2",
 ]
 
@@ -233,9 +232,14 @@ def run_slurp(extra_args, stdin_text=None, cfg=None):
         except OSError:
             freezer = None
 
+    cmd_args = list(SLURP_STYLE)
+    if stdin_text:
+        cmd_args += ["-B", "#7aa2f744"]
+    cmd_args += list(extra_args)
+
     try:
         res = subprocess.run(
-            ["slurp", *SLURP_STYLE, *extra_args],
+            ["slurp", *cmd_args],
             input=stdin_text,
             capture_output=True,
             text=True,

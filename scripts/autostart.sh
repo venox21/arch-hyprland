@@ -47,8 +47,15 @@ if [[ -n "${REPO_DIR}" && -d "${REPO_DIR}" ]]; then
     [[ -d "${REPO_DIR}/config/gtk-3.0" ]] && cp -f "${REPO_DIR}/config/gtk-3.0/"* "${HOME}/.config/gtk-3.0/" 2>/dev/null || true
     [[ -d "${REPO_DIR}/config/gtk-4.0" ]] && cp -f "${REPO_DIR}/config/gtk-4.0/"* "${HOME}/.config/gtk-4.0/" 2>/dev/null || true
     [[ -d "${REPO_DIR}/settings" ]] && cp -f "${REPO_DIR}/settings/"*.py "${HOME}/.config/hypr/settings/" 2>/dev/null || true
-    [[ -d "${REPO_DIR}/scripts" ]] && cp -f "${REPO_DIR}/scripts/"*.sh "${HOME}/.config/hypr/scripts/" 2>/dev/null || true
-    chmod +x "${HOME}/.config/hypr/scripts/"*.sh 2>/dev/null || true
+    [[ -d "${REPO_DIR}/scripts" ]] && cp -f "${REPO_DIR}/scripts/"* "${HOME}/.config/hypr/scripts/" 2>/dev/null || true
+    chmod +x "${HOME}/.config/hypr/scripts/"* 2>/dev/null || true
+    if [[ -d "${REPO_DIR}/screenshot" ]]; then
+        mkdir -p "${HOME}/.config/hypr/screenshot"
+        cp -f "${REPO_DIR}/screenshot/"*.py "${HOME}/.config/hypr/screenshot/" 2>/dev/null || true
+        chmod +x "${HOME}/.config/hypr/screenshot/"*.py 2>/dev/null || true
+    fi
+    mkdir -p "${HOME}/.local/bin"
+    ln -sf "${HOME}/.config/hypr/scripts/tokyo-shot" "${HOME}/.local/bin/tokyo-shot" 2>/dev/null || true
     [[ -d "${REPO_DIR}/assets/wallpapers" ]] && cp -n "${REPO_DIR}/assets/wallpapers/"* "${WP_DIR}/" 2>/dev/null || true
 
     # Desktop-PC Schutz: Falls kein Backlight vorhanden ist, Widget entfernen um SwayNC-Absturz zu verhindern

@@ -78,6 +78,13 @@ hl.window_rule({
     match = { class = "org.tokyo.shot" },
     float = true,
     center = true,
+    size = "620 640",
+})
+hl.window_rule({
+    match = { title = "Tokyo Shot – Editor" },
+    float = true,
+    center = true,
+    size = "1100 760",
 })
 hl.window_rule({
     match = { title = ".*Tokyo Shot.*" },
