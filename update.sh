@@ -335,15 +335,20 @@ fi
 
 echo -e "${BLUE}[4/5] Optionale Pakete & Abhängigkeiten prüfen...${NC}"
 MISSING_PKGS=()
-for pkg in papirus-icon-theme blueman python-gobject gtk4 libadwaita python-cairo gum; do
+for pkg in papirus-icon-theme blueman python-gobject gtk4 libadwaita python-cairo gum ufw smartmontools; do
     if ! pacman -Qi "${pkg}" &>/dev/null; then
         MISSING_PKGS+=("${pkg}")
     fi
 done
 
 if [[ ${#MISSING_PKGS[@]} -gt 0 ]]; then
-    echo -e "  ${YELLOW}Hinweis: Folgende Pakete fehlen für GUI-Tools & Installer:${NC} ${MISSING_PKGS[*]}"
-    echo -e "  Installieren mit: ${BOLD}sudo pacman -S --needed ${MISSING_PKGS[*]}${NC}"
+    echo -e "  ${YELLOW}Hinweis: Folgende empfohlene Pakete fehlen noch:${NC} ${MISSING_PKGS[*]}"
+    if sudo -n true 2>/dev/null; then
+        echo -e "  ${BLUE}Installiere fehlende Pakete automatisch via pacman...${NC}"
+        sudo pacman -S --needed --noconfirm "${MISSING_PKGS[@]}" 2>/dev/null || true
+    else
+        echo -e "  Installieren mit: ${BOLD}sudo pacman -S --needed ${MISSING_PKGS[*]}${NC}"
+    fi
 fi
 
 if [[ -f "${REPO_DIR}/scripts/hardware-check.sh" ]]; then
